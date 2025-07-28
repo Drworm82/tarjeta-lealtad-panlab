@@ -29,28 +29,18 @@ const addStampBtn = document.getElementById('add-stamp-btn');
 const redeemBtn = document.getElementById('redeem-btn');
 const resetBtn = document.getElementById('reset-btn');
 
+// Nuevas referencias para el login
+const userDisplay = document.getElementById('user-display');
+const authBtn = document.getElementById('auth-btn');
+
 // --- Funciones para interactuar con Firebase ---
 
-// Iniciar sesión de forma anónima o mantener la sesión
-function signInAnonymously() {
-    auth.signInAnonymously()
-        .then((userCredential) => {
-            currentUser = userCredential.user;
-            console.log("Usuario anónimo logueado:", currentUser.uid);
-            loadStamps(); // Carga los sellos después de identificar al usuario
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.error("Error al iniciar sesión anónima:", errorCode, errorMessage);
-            messageDisplay.textContent = "Error al conectar la tarjeta. Intenta de nuevo.";
-        });
-}
-
-// Cargar sellos desde Firestore para el usuario actual
+// Función para cargar los sellos del usuario actual
 function loadStamps() {
-    if (!currentUser) {
+    if (!currentUser || !currentUser.uid) { // Asegurarse de que currentUser y su UID existen
         console.warn("No hay usuario autenticado para cargar sellos.");
+        currentStamps = 0; // Mostrar 0 sellos si no hay usuario
+        updateDisplay();
         return;
     }
     const userRef = db.collection('loyaltyCards').doc(currentUser.uid);
@@ -71,10 +61,10 @@ function loadStamps() {
     });
 }
 
-// Guardar sellos en Firestore para el usuario actual
+// Función para guardar los sellos del usuario actual
 function saveStamps() {
-    if (!currentUser) {
-        console.warn("No hay usuario autenticado para guardar sellos.");
+    if (!currentUser || !currentUser.uid) { // Asegurarse de que currentUser y su UID existen
+        console.warn("No hay usuario autenticado para guardar sellos. No se guardará.");
         return;
     }
     const userRef = db.collection('loyaltyCards').doc(currentUser.uid);
@@ -88,7 +78,65 @@ function saveStamps() {
         });
 }
 
-// --- Lógica de la Interfaz (similar a la anterior) ---
+// Manejar el cambio de estado de autenticación (cuando un usuario inicia/cierra sesión)
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        // Usuario logueado (anónimo o con proveedor)
+        currentUser = user;
+        console.log("Usuario actual:", currentUser.uid, currentUser.isAnonymous ? "(Anónimo)" : `(Autenticado: ${currentUser.displayName || currentUser.email})`);
+        userDisplay.textContent = `Hola, ${currentUser.displayName || currentUser.email || 'Invitado'}!`;
+        authBtn.textContent = 'Cerrar Sesión';
+        loadStamps(); // Cargar sellos para el usuario actual
+    } else {
+        // No hay usuario logueado, intentar login anónimo
+        currentUser = null;
+        userDisplay.textContent = 'Invitado';
+        authBtn.textContent = 'Iniciar Sesión / Registrarse';
+        signInAnonymously(); // Mantener el flujo anónimo si no hay otra sesión
+    }
+});
+
+// --- Lógica para Google Sign-In ---
+function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // Esto se dispara en onAuthStateChanged, donde se maneja el currentUser
+            console.log("Inicio de sesión con Google exitoso:", result.user.displayName);
+            // Si el usuario era anónimo y ahora inicia sesión con Google,
+            // vinculamos la cuenta anónima a la cuenta de Google para mantener los sellos.
+            if (result.credential.accessToken && result.user.isAnonymous) {
+                // Esto es más avanzado: vincula la cuenta anónima a la de Google
+                // Pero en este caso, onAuthStateChanged manejará la carga de sellos del nuevo UID
+                // Para una migración real de datos, necesitarías una lógica más compleja
+                // que lea los sellos del UID anónimo ANTES de cambiar el currentUser
+                // y luego los escriba en el nuevo UID del usuario de Google.
+                // Por simplicidad, por ahora simplemente cargaremos los sellos del nuevo UID.
+            }
+        })
+        .catch((error) => {
+            console.error("Error al iniciar sesión con Google:", error);
+            messageDisplay.textContent = `Error al iniciar sesión: ${error.message}`;
+        });
+}
+
+function signOutUser() {
+    auth.signOut()
+        .then(() => {
+            console.log("Sesión cerrada.");
+            // onAuthStateChanged se disparará y volverá al usuario anónimo.
+            currentStamps = 0; // Reiniciar los sellos visualmente
+            updateDisplay();
+            messageDisplay.textContent = 'Sesión cerrada. Puedes iniciar sesión o continuar como invitado.';
+        })
+        .catch((error) => {
+            console.error("Error al cerrar sesión:", error);
+            messageDisplay.textContent = `Error al cerrar sesión: ${error.message}`;
+        });
+}
+
+
+// --- Lógica de la Interfaz ---
 
 function updateDisplay() {
     stampsDisplay.innerHTML = '';
@@ -146,6 +194,14 @@ resetBtn.addEventListener('click', () => {
     }
 });
 
-// --- Inicio de la Aplicación ---
-// Cuando la aplicación carga, intenta autenticar un usuario anónimo
-signInAnonymously();
+authBtn.addEventListener('click', () => {
+    if (currentUser && !currentUser.isAnonymous) { // Si el usuario no es anónimo, significa que está logueado con Google
+        signOutUser();
+    } else {
+        signInWithGoogle(); // Si es anónimo o no hay nadie, intenta Google Sign-In
+    }
+});
+
+
+// NOTA: onAuthStateChanged ya maneja el inicio de la aplicación
+// y la lógica de signInAnonymously().
