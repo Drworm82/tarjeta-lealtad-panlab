@@ -5,6 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cafetería - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos básicos para la sección de administración */
+        #admin-section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        #admin-section.hidden {
+            display: none;
+        }
+        #admin-section input, #admin-section button {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #admin-section button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+        }
+        #admin-section button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -16,15 +45,34 @@
             <button id="auth-btn">Iniciar Sesión / Registrarse</button>
         </div>
 
-        <div class="stamp-card">
-            <div id="stamps-display" class="stamps-grid">
-                </div>
-            <p id="message"></p>
+        <div id="client-section">
+            <div class="stamp-card">
+                <div id="stamps-display" class="stamps-grid">
+                    </div>
+                <p id="message"></p>
+            </div>
+            <button id="add-stamp-btn" class="client-control">Añadir Sello</button>
+            <button id="redeem-btn" class="hidden client-control">Canjear Recompensa</button>
+            <button id="reset-btn" class="hidden client-control">Reiniciar Tarjeta</button>
         </div>
 
-        <button id="add-stamp-btn">Añadir Sello</button>
-        <button id="redeem-btn" class="hidden">Canjear Recompensa</button>
-        <button id="reset-btn" class="hidden">Reiniciar Tarjeta</button>
+        <div id="admin-section" class="hidden">
+            <h2>Panel de Administración</h2>
+            <p>Solo para personal autorizado.</p>
+            <div>
+                <input type="email" id="client-email-input" placeholder="Email del cliente" />
+                <button id="search-client-btn">Buscar Cliente</button>
+            </div>
+            <div id="admin-client-info">
+                </div>
+            <div>
+                <button id="admin-add-stamp-btn" disabled>Añadir Sello a Cliente</button>
+                <button id="admin-redeem-btn" disabled>Canjear Sello de Cliente</button>
+                <button id="admin-reset-btn" disabled>Reiniciar Tarjeta de Cliente</button>
+            </div>
+            <p id="admin-message" style="color: red;"></p>
+        </div>
+
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
