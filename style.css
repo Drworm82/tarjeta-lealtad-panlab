@@ -118,14 +118,26 @@ h2, h3 {
     color: #ccc;
     background-color: #fff;
     transition: all 0.3s ease;
+    overflow: hidden; /* Asegura que la imagen no se salga */
 }
 
+/* MODIFICADO: Estilo para los sellos obtenidos (con imagen) */
 .stamp.obtained {
     border-color: #4CAF50;
-    background-color: #4CAF50;
-    color: white;
+    background-color: #4CAF50; /* Puedes dejar un color de fondo si la imagen es transparente */
+    color: white; /* El texto 1-10 no se mostrará, pero lo dejo por si acaso */
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    display: flex; /* Asegura que la imagen esté centrada */
+    align-items: center;
+    justify-content: center;
 }
+
+.stamp.obtained img {
+    width: 100%; /* Ajusta la imagen al tamaño del círculo */
+    height: 100%;
+    object-fit: cover; /* Recorta la imagen para que quepa */
+}
+
 
 /* Estilos para el panel de administración */
 input[type="email"], select {
@@ -136,6 +148,34 @@ input[type="email"], select {
     border-radius: 4px;
     box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }
+
+/* Estilo para el contenedor del QR del usuario */
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.qr-container p {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.qr-container img {
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: white;
+    max-width: 100%; /* Asegura que el QR no se desborde en móviles */
+    height: auto;
+}
+
 
 /* Nuevo estilo para botones de acción generales, como buscar cliente, generar reporte, mostrar QR, etc. */
 .action-button {
@@ -187,8 +227,7 @@ input[type="email"], select {
 #show-client-qr-btn:hover, #admin-scan-qr-btn:hover { background-color: #138496; }
 
 
-#client-qr-display,
-#user-qr-display { /* AÑADIDO: user-qr-display para estilos consistentes */
+#client-qr-display { /* Solo el admin QR display tiene botones de cerrar */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -200,16 +239,14 @@ input[type="email"], select {
     background-color: #f9f9f9;
 }
 
-#client-qr-display img,
-#user-qr-display img { /* AÑADIDO: user-qr-display para estilos consistentes */
+#client-qr-display img {
     margin-bottom: 15px;
     border: 1px solid #ccc;
     padding: 5px;
     background-color: white;
 }
 
-#client-qr-display button,
-#user-qr-display button { /* AÑADIDO: user-qr-display para estilos consistentes */
+#client-qr-display button {
     background-color: #6c757d;
     color: white;
     border: none;
@@ -217,8 +254,7 @@ input[type="email"], select {
     border-radius: 5px;
     cursor: pointer;
 }
-#client-qr-display button:hover,
-#user-qr-display button:hover { /* AÑADIDO: user-qr-display para estilos consistentes */
+#client-qr-display button:hover {
     background-color: #5a6268;
 }
 
