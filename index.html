@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafetería "El Grano de Oro" - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Opcional: Si tienes un favicon, descomenta y ajusta la ruta -->
+    <!-- <link rel="icon" href="favicon.ico" type="image/x-icon"> -->
+
+    <!-- Importar la librería HTML5-QRCODE (para el escáner) -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Importar Toastify CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <!-- Importar Toastify JS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
 </head>
 <body>
     <header>
@@ -20,10 +26,12 @@
     </header>
 
     <main>
+        <!-- Sección de la Tarjeta de Lealtad (Visible para clientes) -->
         <section id="loyalty-card" class="hidden">
             <h2>Tu Tarjeta de Lealtad</h2>
             <div id="stamps-display">
-                </div>
+                <!-- Los sellos se generarán aquí por JavaScript -->
+            </div>
             <p id="message">¡Bienvenido! Acumula sellos por cada café.</p>
             <div class="confetti-container" id="confetti-container"></div>
             <div id="qr-section">
@@ -33,15 +41,19 @@
             </div>
         </section>
 
+        <!-- Sección del Historial de Transacciones (Visible para clientes) -->
         <section id="history-section" class="hidden">
             <h3>Tu Historial de Sellos</h3>
             <ul id="stamps-history-list">
-                </ul>
+                <!-- El historial se generará aquí por JavaScript -->
+            </ul>
         </section>
 
+        <!-- Sección del Panel de Administración (Visible solo para admins) -->
         <section id="admin-section" class="hidden">
             <h2>Panel de Administración</h2>
 
+            <!-- Búsqueda de Cliente / Escáner QR -->
             <div class="admin-input-group">
                 <input type="text" id="client-uid-input" placeholder="Email o UID del Cliente">
                 <button id="search-client-btn">Buscar Cliente</button>
@@ -54,6 +66,7 @@
                 <p><strong>Sellos Actuales:</strong> <span id="admin-current-stamps">N/A</span></p>
             </div>
 
+            <!-- Acciones de Administración -->
             <div class="admin-actions">
                 <button id="add-stamp-btn">Añadir Sello</button>
                 <button id="remove-stamp-btn">Quitar Sello</button>
@@ -63,6 +76,7 @@
             <p id="admin-message"></p>
         </section>
 
+        <!-- Dashboard de Administración (Visible solo para admins) -->
         <section id="admin-dashboard" class="hidden">
             <h3>Resumen del Programa de Lealtad</h3>
             <div class="dashboard-stats">
@@ -81,6 +95,7 @@
             </div>
         </section>
 
+        <!-- Sección de Reportes y Analíticas (Visible solo para admins) -->
         <section id="report-section" class="hidden">
             <h3>Reportes y Analíticas Básicas</h3>
             <div class="report-controls">
@@ -100,17 +115,21 @@
                 <p>Cafés Gratuitos Canjeados: <strong id="rewards-redeemed-stat">0</strong></p>
                 <p>Tarjetas Reiniciadas: <strong id="cards-reset-stat">0</strong></p>
                 <p>Sellos Quitados: <strong id="stamps-removed-stat">0</strong></p>
-                </div>
+                <!-- Más métricas aquí si es necesario -->
+            </div>
         </section>
     </main>
 
+    <!-- Overlay del Escáner QR (oculto por defecto) -->
     <div id="qr-scanner-overlay" class="hidden">
         <div id="qr-scanner-container">
-            <div id="reader"></div> <button id="close-scanner-btn">X</button>
+            <div id="reader"></div> <!-- Aquí se inicializará el lector QR -->
+            <button id="close-scanner-btn">X</button>
         </div>
         <p id="scanner-message">Escaneando...</p>
     </div>
 
-    <script src="script.js"></script>
+    <!-- El script.js debe ser de tipo 'module' para las importaciones de Firebase modular -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
