@@ -20,7 +20,8 @@ const db = getFirestore(app);
 
 // Variables para referencias a elementos del DOM (se inicializan en DOMContentLoaded)
 let loginBtn, logoutBtn, userIdDisplay, userEmailDisplay, userPointsDisplay, messageDisplay, adminSection, userSection;
-let stampsDisplay, progressMessage;
+let stampsDisplay, progressMessage, userFreeCoffeesDisplay; // AÑADIDO: userFreeCoffeesDisplay
+let showUserQrBtn, userQRDisplay, closeUserQrDisplay; // AÑADIDO: elementos QR del usuario
 let adminEmailInput, searchClientBtn, clientInfoDiv, addStampBtn, removeStampBtn, redeemCoffeeBtn, resetCardBtn;
 let totalClientsDisplay, pendingFreeCoffeesDisplay, averageStampsDisplay;
 let generateReportBtn, reportPeriodSelect, reportResultsDiv;
@@ -44,6 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     stampsDisplay = document.getElementById('stamps-display');
     progressMessage = document.getElementById('progress-message');
+    userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay'); // AÑADIDO
+
+    showUserQrBtn = document.getElementById('showUserQrBtn'); // AÑADIDO
+    userQRDisplay = document.getElementById('user-qr-display'); // AÑADIDO
+    closeUserQrDisplay = document.getElementById('closeUserQrDisplay'); // AÑADIDO
+
 
     adminEmailInput = document.getElementById('admin-email-input');
     searchClientBtn = document.getElementById('search-client-btn');
@@ -61,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminScanQRBtn = document.getElementById('admin-scan-qr-btn');
     clientQRDisplay = document.getElementById('client-qr-display');
     closeQrDisplayBtn = document.getElementById('close-qr-display');
+
 
     // --- Funciones de Autenticación ---
 
@@ -88,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     // --- Manejo del Estado de Autenticación (Este es el controlador principal de UI) ---
-    // Este listener debe ser el único lugar donde se decida qué sección mostrar
     onAuthStateChanged(auth, async (user) => {
         // Ocultar todas las secciones por defecto para evitar "flashes" de contenido
         if (userSection) userSection.style.display = 'none';
@@ -156,13 +164,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const currentStamps = userData.stamps || 0;
+                const freeCoffees = userData.freeCoffees || 0; // OBTENER CAFÉS GRATIS
+
                 if (userPointsDisplay) userPointsDisplay.textContent = `Sellos: ${currentStamps}`;
+                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees; // MOSTRAR CAFÉS GRATIS
+
                 updateStampsDisplay(currentStamps);
                 updateProgressMessage(currentStamps);
             } else {
                 console.warn("Documento de usuario no encontrado al cargar la tarjeta.");
                 updateStampsDisplay(0);
                 updateProgressMessage(0);
+                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0'; // Si no hay documento, 0 cafés gratis
             }
         } catch (error) {
             console.error("Error al cargar tarjeta de usuario:", error);
@@ -204,13 +217,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userIdDisplay) userIdDisplay.textContent = 'ID: N/A';
         if (userEmailDisplay) userEmailDisplay.textContent = 'Email: N/A';
         if (userPointsDisplay) userPointsDisplay.textContent = 'Sellos: 0';
+        if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0'; // AÑADIDO: Limpiar también cafés gratis
         if (stampsDisplay) stampsDisplay.innerHTML = '';
         if (progressMessage) {
             progressMessage.textContent = '';
             progressMessage.style.backgroundColor = '';
             progressMessage.style.color = '';
         }
+        // AÑADIDO: Ocultar y limpiar el QR del usuario al cerrar sesión
+        if (userQRDisplay) {
+            userQRDisplay.style.display = 'none';
+            userQRDisplay.innerHTML = '';
+        }
     }
+
+    // AÑADIDO: Lógica para mostrar QR del usuario
+    if (showUserQrBtn) {
+        showUserQrBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (user && userQRDisplay) {
+                userQRDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${user.uid}" alt="QR de Mi Tarjeta">`;
+                userQRDisplay.style.display = 'flex';
+            } else {
+                showMessage("No se pudo generar el QR. Por favor, inicia sesión.", 'error');
+            }
+        });
+    }
+
+    if (closeUserQrDisplay) {
+        closeUserQrDisplay.addEventListener('click', () => {
+            if (userQRDisplay) {
+                userQRDisplay.style.display = 'none';
+                userQRDisplay.innerHTML = '';
+            }
+        });
+    }
+
 
     // --- Funciones del Panel de Administración ---
 
@@ -305,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Sellos Actuales:</strong> <span id="admin-client-stamps">${client.stamps || 0}</span></p>
                 <p><strong>Cafés Gratis Pendientes:</strong> <span id="admin-client-freecoffees">${client.freeCoffees || 0}</span></p>
                 <div id="admin-client-stamps-display" class="stamps-grid"></div>
-                <p><button id="show-client-qr-btn">Mostrar QR del Cliente</button></p>
+                <p><button id="show-client-qr-btn" class="action-button">Mostrar QR del Cliente</button></p>
             `;
             const adminClientStampsDisplay = clientInfoDiv.querySelector('#admin-client-stamps-display');
             updateAdminClientStampsDisplay(client.stamps || 0, adminClientStampsDisplay);
@@ -620,6 +662,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clientInfoDiv) clientInfoDiv.innerHTML = '<p>No hay cliente cargado.</p>';
         if (adminEmailInput) adminEmailInput.value = '';
         if (reportResultsDiv) reportResultsDiv.innerHTML = '';
+        // AÑADIDO: Ocultar y limpiar el QR del admin
+        if (clientQRDisplay) {
+            clientQRDisplay.style.display = 'none';
+            clientQRDisplay.innerHTML = '';
+        }
     }
 
     // --- Función para mostrar mensajes al usuario ---
