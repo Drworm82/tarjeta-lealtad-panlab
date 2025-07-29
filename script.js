@@ -1,5 +1,5 @@
 // Este console.log es para verificar que el script se está cargando.
-console.log("************ SCRIPT.JS ESTÁ CARGANDO ************");
+console.log("************ SCRIPT.JS ESTÁ CARGANDO ************"); //
 
 const MAX_STAMPS = 10;
 let currentStamps = 0;
@@ -95,7 +95,7 @@ function saveStamps() {
     // Guardar el email del usuario al actualizar la tarjeta (importante para el admin)
     userRef.set({ stamps: currentStamps, email: currentUser.email || 'anonymo.us' })
         .then(() => {
-            console.log("Sellos guardados con éxito para el cliente.");
+            console.log("Sellos guardados con éxito para el cliente."); //
         })
         .catch((error) => {
             console.error("Error al guardar los sellos del cliente:", error);
@@ -174,7 +174,7 @@ async function updateClientStamps(uid, newStamps) {
 function signInAnonymously() {
     auth.signInAnonymously()
         .then(() => {
-            console.log("Inicio de sesión anónimo exitoso.");
+            console.log("Inicio de sesión anónimo exitoso."); //
             // onAuthStateChanged se disparará después de esto.
         })
         .catch((error) => {
@@ -195,7 +195,7 @@ auth.onAuthStateChanged((user) => {
 
         // Determinar si es administrador
         if (ADMIN_EMAILS.includes(userEmail)) {
-            console.log("Administrador logueado:", userEmail, "UID:", currentUser.uid); // <--- ¡AQUÍ ESTÁ TU UID!
+            console.log("Administrador logueado:", userEmail, "UID:", currentUser.uid); // // <--- ¡AQUÍ ESTÁ TU UID!
             clientSection.classList.add('hidden'); // Ocultar sección de cliente
             adminSection.classList.remove('hidden'); // Mostrar sección de administración
             // Ocultar botones de cliente si estás en modo admin
@@ -208,22 +208,31 @@ auth.onAuthStateChanged((user) => {
             adminRedeemBtn.disabled = true;
             adminResetBtn.disabled = true;
         } else {
-            console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid); // <--- Opcionalmente, el UID del cliente
+            // USUARIO NO ES ADMINISTRADOR (cliente normal)
+            console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid); //
             clientSection.classList.remove('hidden'); // Mostrar sección de cliente
             adminSection.classList.add('hidden'); // Ocultar sección de administración
-            // Asegurar que los botones de cliente sean visibles
-            document.querySelectorAll('.client-control').forEach(btn => btn.classList.remove('hidden'));
+
+            // OCULTAR LOS BOTONES DE CONTROL DE SELLOS PARA EL CLIENTE NORMAL
+            addStampBtn.classList.add('hidden');
+            redeemBtn.classList.add('hidden');
+            resetBtn.classList.add('hidden');
+            
             loadStamps(); // Cargar sellos del cliente
         }
     } else {
-        // No hay usuario logueado o sesión cerrada
+        // No hay usuario logueado o sesión cerrada (usuario anónimo)
         currentUser = null;
         userDisplay.textContent = 'Invitado';
         authBtn.textContent = 'Iniciar Sesión / Registrarse';
         clientSection.classList.remove('hidden'); // Mostrar sección de cliente
         adminSection.classList.add('hidden'); // Ocultar sección de administración
-        // Asegurar que los botones de cliente sean visibles (para anónimo)
-        document.querySelectorAll('.client-control').forEach(btn => btn.classList.remove('hidden'));
+
+        // OCULTAR LOS BOTONES DE CONTROL DE SELLOS TAMBIÉN PARA USUARIOS ANÓNIMOS
+        addStampBtn.classList.add('hidden');
+        redeemBtn.classList.add('hidden');
+        resetBtn.classList.add('hidden');
+
         signInAnonymously(); // Mantener el flujo anónimo para invitados
     }
 });
@@ -277,22 +286,29 @@ function updateDisplay() {
 
     if (currentStamps >= MAX_STAMPS) {
         messageDisplay.textContent = '¡Felicidades! Has ganado un café gratis. 🎉';
-        redeemBtn.classList.remove('hidden');
-        addStampBtn.classList.add('hidden');
-        resetBtn.classList.remove('hidden');
+        // Los botones de canjear/reiniciar serán controlados por el admin, no por el cliente directamente
+        // redeemBtn.classList.remove('hidden'); // Comentado o eliminado
+        // addStampBtn.classList.add('hidden'); // Comentado o eliminado
+        // resetBtn.classList.remove('hidden'); // Comentado o eliminado
     } else {
         const remaining = MAX_STAMPS - currentStamps;
         messageDisplay.textContent = `Te faltan ${remaining} sello${remaining !== 1 ? 's' : ''} para tu café gratis.`;
-        redeemBtn.classList.add('hidden');
-        addStampBtn.classList.remove('hidden');
-        resetBtn.classList.add('hidden');
+        // Los botones de añadir/canjear/reiniciar serán controlados por el admin, no por el cliente directamente
+        // redeemBtn.classList.add('hidden'); // Comentado o eliminado
+        // addStampBtn.classList.remove('hidden'); // Comentado o eliminado
+        // resetBtn.classList.add('hidden'); // Comentado o eliminado
     }
 }
 
 // --- Event Listeners ---
 
+// Los siguientes event listeners para addStampBtn, redeemBtn, resetBtn (cliente)
+// ya no son relevantes si el cliente no los verá. Los mantenemos comentados
+// o los eliminamos para evitar confusión. El control de sellos pasa al admin.
+
+/*
 addStampBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores
+    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
     if (currentStamps < MAX_STAMPS) {
         currentStamps++;
         saveStamps(); // Guarda en Firebase
@@ -301,7 +317,7 @@ addStampBtn.addEventListener('click', () => {
 });
 
 redeemBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores
+    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
     if (currentStamps >= MAX_STAMPS) {
         currentStamps = 0;
         saveStamps(); // Guarda en Firebase
@@ -311,7 +327,7 @@ redeemBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores
+    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
     if (confirm('¿Estás seguro de que quieres reiniciar la tarjeta? Esto borrará todos los sellos.')) {
         currentStamps = 0;
         saveStamps(); // Guarda en Firebase
@@ -319,6 +335,7 @@ resetBtn.addEventListener('click', () => {
         alert('Tarjeta de lealtad reiniciada.');
     }
 });
+*/
 
 authBtn.addEventListener('click', () => {
     if (currentUser && !currentUser.isAnonymous) {
