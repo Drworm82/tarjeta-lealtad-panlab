@@ -1,289 +1,248 @@
+/* style.css */
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f2ed;
+    font-family: Arial, sans-serif;
+    background-color: #f7f3ed; /* Color de fondo suave */
     color: #333;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align items to the top */
+    flex-direction: column;
     min-height: 100vh;
-    box-sizing: border-box;
 }
 
-.container {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    padding: 30px;
-    width: 100%;
-    max-width: 500px;
-    text-align: center;
-    margin-top: 20px; /* Add some top margin */
-    box-sizing: border-box;
+header {
+    background-color: #7a4a2b; /* Marrón oscuro para la cabecera */
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 header h1 {
-    color: #4a2a1a;
-    font-size: 2.2em;
-    margin-bottom: 10px;
+    margin: 0;
+    font-size: 1.8em;
+}
+
+.auth-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-header h1 .coffee-icon {
-    font-size: 1.2em;
-    margin: 0 10px;
-    color: #8b4513; /* Color de taza de café */
-}
-
-header p {
-    color: #6a4a3a;
-    font-size: 1.1em;
-    margin-bottom: 25px;
-}
-
-section {
-    background-color: #fdfaf7;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid #e0d9d1;
-}
-
-#auth-section p {
-    font-size: 1.1em;
-    margin-bottom: 15px;
-    color: #555;
+#user-display {
+    margin-right: 15px;
+    font-weight: bold;
 }
 
 button {
-    background-color: #8b4513;
+    background-color: #a06e4a; /* Marrón más claro para botones */
     color: white;
-    padding: 12px 25px;
     border: none;
-    border-radius: 8px;
+    padding: 10px 15px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    width: auto;
-    display: inline-block;
-    margin-top: 10px;
+    transition: background-color 0.2s ease;
 }
 
 button:hover {
-    background-color: #6a350f;
-    transform: translateY(-2px);
+    background-color: #8a5e3a;
 }
 
 button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
-    transform: none;
 }
 
-#loyalty-card {
-    position: relative; /* Para el confeti */
-    border: 2px dashed #d1c4b3;
-    background-color: #fffaf5;
+main {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    padding: 25px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.card h2 {
+    color: #7a4a2b;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.6em;
+}
+
+/* Estilos de la Tarjeta de Lealtad */
 .stamps-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, 1fr); /* 5 columnas */
     gap: 15px;
-    margin: 20px auto;
-    max-width: 380px;
+    margin-bottom: 20px;
+    justify-items: center;
+    align-items: center;
 }
 
 .stamp {
     width: 60px;
     height: 60px;
-    background-color: #e0b48c; /* Color claro para sellos no obtenidos */
+    background-color: #e0d8cc; /* Color para sello vacío */
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5em;
+    font-size: 1.2em;
     font-weight: bold;
-    color: #7b4a20; /* Color de número para sellos no obtenidos */
-    border: 2px solid #c2a07c;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    color: #7a4a2b;
+    border: 2px solid #a06e4a;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease;
 }
 
 .stamp.obtained {
-    background-color: #5a2e1e; /* Color oscuro para sellos obtenidos */
-    color: #fff; /* Color de texto/icono blanco para sellos obtenidos */
-    font-size: 2em; /* Tamaño más grande para el icono de café */
-    border-color: #4a2a1a;
+    background-color: #a06e4a; /* Color para sello lleno */
+    color: white; /* Color del icono */
+    font-size: 2em; /* Tamaño más grande para el icono */
+    border-color: #7a4a2b;
 }
 
-#message {
-    margin-top: 20px;
+/* Mensajes */
+#message, #admin-message {
+    margin-top: 15px;
     font-size: 1.1em;
     font-weight: bold;
-    color: #555;
 }
 
-/* Estilos de la sección de administración */
-#admin-section h2 {
-    color: #4a2a1a;
-    margin-bottom: 15px;
-}
-
-.admin-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.admin-controls input[type="email"] {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1em;
-    width: calc(100% - 24px); /* Full width minus padding */
-    margin-bottom: 5px;
-}
-
-#admin-client-info {
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 10px;
-    text-align: left;
-    color: #333;
-}
-
-#admin-client-info p {
-    margin: 5px 0;
-    font-size: 0.95em;
-}
-
-.message {
-    margin-top: 10px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-.hidden {
-    display: none;
-}
-
-/* Estilos para los botones de administración */
-.btn-primary {
-    background-color: #007bff; /* Azul */
-}
-.btn-primary:hover {
-    background-color: #0056b3;
-}
-
-.btn-success {
-    background-color: #28a745; /* Verde */
-}
-.btn-success:hover {
-    background-color: #218838;
-}
-
-.btn-danger {
-    background-color: #dc3545; /* Rojo */
-}
-.btn-danger:hover {
-    background-color: #c82333;
-}
-
-.btn-info {
-    background-color: #17a2b8; /* Azul claro/cian */
-}
-.btn-info:hover {
-    background-color: #138496;
-}
-
-.btn-secondary {
-    background-color: #6c757d; /* Gris */
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Estilos del Confeti */
+/* Contenedor de Confeti */
 .confetti-container {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative; /* Para posicionar el confeti relativo a este contenedor */
     width: 100%;
-    height: 100%;
+    height: 100px; /* Altura para el efecto de confeti */
     overflow: hidden;
-    pointer-events: none; /* Make it not interfere with clicks */
-    z-index: 10;
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.5s ease;
+    margin-top: 20px;
+    display: none; /* Oculto por defecto, activado por JS */
 }
 
 .confetti-container.active {
-    opacity: 1;
+    display: block; /* Muestra el contenedor cuando está activo */
 }
 
 .confetti {
     position: absolute;
     width: 10px;
     height: 10px;
-    background-color: #ffd700; /* Gold */
+    background-color: #ccc; /* Color por defecto, sobrescrito por JS */
     border-radius: 50%;
     opacity: 0;
-    animation-duration: 2s;
-    animation-timing-function: ease-out;
     animation-fill-mode: forwards;
 }
 
-/* Variaciones de color para el confeti */
-.confetti:nth-child(2n) { background-color: #ff69b4; /* Hot Pink */ }
-.confetti:nth-child(3n) { background-color: #00ced1; /* Dark Turquoise */ }
-.confetti:nth-child(4n) { background-color: #9370db; /* Medium Purple */ }
-.confetti:nth-child(5n) { background-color: #3cb371; /* Medium Sea Green */ }
-
-/* Posiciones iniciales aleatorias para el confeti */
-.confetti:nth-child(1) { left: 10%; top: -10%; animation-delay: 0s; }
-.confetti:nth-child(2) { left: 20%; top: -5%; animation-delay: 0.2s; }
-.confetti:nth-child(3) { left: 30%; top: -15%; animation-delay: 0.4s; }
-.confetti:nth-child(4) { left: 40%; top: -8%; animation-delay: 0.6s; }
-.confetti:nth-child(5) { left: 50%; top: -12%; animation-delay: 0.8s; }
-.confetti:nth-child(6) { left: 60%; top: -7%; animation-delay: 1s; }
-.confetti:nth-child(7) { left: 70%; top: -14%; animation-delay: 1.2s; }
-.confetti:nth-child(8) { left: 80%; top: -9%; animation-delay: 1.4s; }
-.confetti:nth-child(9) { left: 90%; top: -11%; animation-delay: 1.6s; }
-.confetti:nth-child(10) { left: 5%; top: -18%; animation-delay: 0.1s; }
-.confetti:nth-child(11) { left: 15%; top: -3%; animation-delay: 0.3s; }
-.confetti:nth-child(12) { left: 25%; top: -10%; animation-delay: 0.5s; }
-.confetti:nth-child(13) { left: 35%; top: -6%; animation-delay: 0.7s; }
-.confetti:nth-child(14) { left: 45%; top: -16%; animation-delay: 0.9s; }
-.confetti:nth-child(15) { left: 55%; top: -4%; animation-delay: 1.1s; }
-
-/* Animaciones de caída del confeti */
+/* Animaciones de Confeti (ejemplo de 5 variaciones) */
 @keyframes confetti-fall-1 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-    100% { transform: translate(50px, 600px) rotate(720deg); opacity: 0; }
+    0% { transform: translate(0, -100px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(50px, 300px) rotate(360deg); opacity: 0; }
 }
-
 @keyframes confetti-fall-2 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-    100% { transform: translate(-30px, 620px) rotate(-540deg); opacity: 0; }
+    0% { transform: translate(100px, -150px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(-50px, 350px) rotate(-360deg); opacity: 0; }
 }
-
 @keyframes confetti-fall-3 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-    100% { transform: translate(70px, 650px) rotate(360deg); opacity: 0; }
+    0% { transform: translate(-50px, -200px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(100px, 400px) rotate(720deg); opacity: 0; }
 }
-
 @keyframes confetti-fall-4 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-    100% { transform: translate(-80px, 580px) rotate(720deg); opacity: 0; }
+    0% { transform: translate(150px, -100px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(-100px, 300px) rotate(-720deg); opacity: 0; }
+}
+@keyframes confetti-fall-5 {
+    0% { transform: translate(-100px, -150px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(50px, 350px) rotate(360deg); opacity: 0; }
 }
 
-@keyframes confetti-fall-5 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-    100% { transform: translate(20px, 590px) rotate(-360deg); opacity: 0; }
+
+/* Sección de Administración */
+#admin-section {
+    background-color: #f0ead8; /* Fondo más claro para admin */
+    border: 1px dashed #a06e4a;
+}
+
+.admin-controls, .admin-actions {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en líneas si no hay espacio */
+    gap: 10px; /* Espacio entre los elementos */
+    margin-bottom: 15px;
+    justify-content: center; /* Centra los botones */
+    align-items: center;
+}
+
+.admin-controls label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.admin-controls input[type="text"],
+.admin-controls input[type="email"] {
+    flex-grow: 1; /* Permite que el input crezca */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    max-width: 250px; /* Limita el ancho del input */
+}
+
+.client-info {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.client-info p {
+    margin: 5px 0;
+}
+
+.admin-actions button {
+    flex: 1 1 auto; /* Permite que los botones crezcan y se encojan */
+    min-width: 120px; /* Ancho mínimo para los botones */
+    max-width: 180px; /* Ancho máximo para los botones */
+}
+
+/* Colores específicos para botones de administración */
+#add-stamp-btn { background-color: #28a745; } /* Verde */
+#add-stamp-btn:hover:not(:disabled) { background-color: #218838; }
+#remove-stamp-btn { background-color: #dc3545; } /* Rojo */
+#remove-stamp-btn:hover:not(:disabled) { background-color: #c82333; }
+#redeem-coffee-btn { background-color: #17a2b8; } /* Azul-cian */
+#redeem-coffee-btn:hover:not(:disabled) { background-color: #138496; }
+#reset-stamps-btn { background-color: #6c757d; } /* Gris */
+#reset-stamps-btn:hover:not(:disabled) { background-color: #5a6268; }
+
+/* Para esconder elementos */
+.hidden {
+    display: none !important;
+}
+
+/* Pie de página */
+footer {
+    background-color: #7a4a2b;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-top: 20px;
 }
