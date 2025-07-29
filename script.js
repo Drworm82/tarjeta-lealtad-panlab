@@ -116,6 +116,7 @@ function showToast(message, type = 'info', duration = 3000) {
 
 
 function renderStamps(stampsCount) {
+    const previousStamps = stampsDisplay.children.length > 0 ? Array.from(stampsDisplay.children).filter(s => s.classList.contains('obtained')).length : 0;
     stampsDisplay.innerHTML = ''; // Limpiar sellos existentes
 
     for (let i = 0; i < MAX_STAMPS; i++) {
@@ -124,6 +125,14 @@ function renderStamps(stampsCount) {
         if (i < stampsCount) {
             stamp.classList.add('obtained');
             stamp.innerHTML = '☕';
+            // NUEVO: Si este sello acaba de ser obtenido (i.e., era el primero nuevo), animarlo
+            if (i === stampsCount - 1 && stampsCount > previousStamps) {
+                 stamp.classList.add('animate');
+                 // Eliminar la clase de animación después de que termine para que se pueda repetir
+                 stamp.addEventListener('animationend', () => {
+                     stamp.classList.remove('animate');
+                 }, { once: true });
+            }
         } else {
             stamp.textContent = (i + 1);
         }
@@ -505,7 +514,7 @@ onAuthStateChanged(auth, async user => {
 // Función auxiliar para actualizar la visualización y controles del admin
 async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
     if (docSnapshot.exists()) {
-        const data = docSnapshot.data();
+        const data = docSnap.data();
         const stamps = data.stamps || 0;
         const clientEmailDisplay = data.userEmail || clientId;
         targetClientEmail = clientId;
@@ -879,7 +888,22 @@ addStampBtn.addEventListener('click', async () => {
                 }
             }
         });
+        // NUEVO: Animación visual en el panel de admin si el sello se añadió correctamente
+        if (adminCurrentStampsElement && stampsBefore < MAX_STAMPS) { // Solo animar si no estaba al máximo
+            const stampsSpan = document.createElement('span');
+            stampsSpan.textContent = ' ☕'; // Un pequeño ícono de café
+            stampsSpan.style.display = 'inline-block'; // Para que la animación funcione mejor
+            stampsSpan.classList.add('animate'); // Aplica la clase de animación
+
+            // Añadir temporalmente el ícono animado junto al número de sellos
+            adminCurrentStampsElement.appendChild(stampsSpan);
+
+            stampsSpan.addEventListener('animationend', () => {
+                stampsSpan.remove(); // Eliminar el ícono animado después de la animación
+            }, { once: true });
+        }
         loadAndDisplayHistory(targetClientEmail); // Actualizar el historial visible para el admin
+
 
     } catch (error) {
         console.error("Error al añadir sello:", error);
