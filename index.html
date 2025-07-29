@@ -23,9 +23,14 @@
             <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
             <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
             <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
+            <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
             <div id="stamps-display" class="stamps-grid">
                 </div>
             <p id="progress-message"></p>
+            <p><button id="showUserQrBtn" class="action-button">Mostrar Mi QR</button></p>
+            <div id="user-qr-display" style="display:none;">
+                <button id="closeUserQrDisplay" class="action-button">Cerrar QR</button>
+            </div>
         </section>
 
         <section id="admin-section" style="display:none;">
@@ -38,7 +43,7 @@
 
             <h3>Gestionar Cliente</h3>
             <input type="email" id="admin-email-input" placeholder="Email o UID del cliente">
-            <button id="search-client-btn">Buscar Cliente</button>
+            <button id="search-client-btn" class="action-button">Buscar Cliente</button>
             <div id="client-info">
                 <p>No hay cliente cargado.</p>
             </div>
@@ -48,9 +53,9 @@
                 <button id="redeem-coffee-btn">Canjear Café Gratis</button>
                 <button id="reset-card-btn">Reiniciar Tarjeta</button>
             </div>
-            <button id="admin-scan-qr-btn">Escanear QR (Admin)</button>
+            <button id="admin-scan-qr-btn" class="action-button">Escanear QR (Admin)</button>
             <div id="client-qr-display" style="display:none;">
-                <button id="close-qr-display">Cerrar QR</button>
+                <button id="close-qr-display" class="action-button">Cerrar QR</button>
             </div>
 
             <h3>Reportes</h3>
@@ -60,7 +65,7 @@
                 <option value="90days">Últimos 90 Días</option>
                 <option value="alltime">Todo el Tiempo</option>
             </select>
-            <button id="generate-report-btn">Generar Reporte</button>
+            <button id="generate-report-btn" class="action-button">Generar Reporte</button>
             <div id="report-results">
                 </div>
         </section>
