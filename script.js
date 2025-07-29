@@ -1,7 +1,7 @@
 // --- Importaciones de Firebase SDK (Versión 9 Modular) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, collectionGroup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // --- Configuración de Firebase (TUS CREDENCIALES) ---
 // ASEGÚRATE DE QUE ESTAS CREDENCIALES SON LAS CORRECTAS DE TU PROYECTO FIREBASE
@@ -9,7 +9,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo", 
     authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
     projectId: "mi-cafeteria-lealtad",
-    storageBucket: "mi-cafeteria-lealtad.firebasestorage.app",
+    storageBucket: "mi-cafeteria-lealtad.firebaseapp.com",
     messagingSenderId: "1098066759983",
     appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
 };
@@ -44,6 +44,7 @@ const messageDisplay = document.getElementById('message');
 const confettiContainer = document.querySelector('.confetti-container');
 const qrcodeCanvas = document.getElementById('qrcode-canvas');
 const qrInstruction = document.getElementById('qr-instruction');
+const stampsHistoryList = document.getElementById('stamps-history-list'); // NUEVO
 
 // Elementos del panel de administración
 const adminSection = document.getElementById('admin-section');
@@ -55,6 +56,17 @@ const removeStampBtn = document.getElementById('remove-stamp-btn');
 const redeemCoffeeBtn = document.getElementById('redeem-coffee-btn');
 const resetStampsBtn = document.getElementById('reset-stamps-btn');
 const adminMessage = document.getElementById('admin-message');
+
+// NUEVOS Elementos del DOM para el Dashboard de Administración
+const totalClientsDisplay = document.getElementById('total-clients');
+const freeCoffeesPendingDisplay = document.getElementById('free-coffees-pending');
+const avgStampsDisplay = document.getElementById('avg-stamps');
+
+// NUEVOS Elementos del DOM para Reportes
+const reportPeriodSelect = document.getElementById('report-period');
+const generateReportBtn = document.getElementById('generate-report-btn');
+const reportResultsDiv = document.getElementById('report-results');
+
 
 // --- NUEVOS Elementos del DOM para el Escáner QR ---
 const scanQrBtn = document.getElementById('scan-qr-btn');
@@ -209,6 +221,81 @@ async function getUidByEmail(email) {
     }
 }
 
+// --- Función auxiliar para registrar una transacción en la subcolección ---
+async function logTransaction(uid, type, stampsBefore, stampsAfter, description = '', adminUid = null) {
+    try {
+        const transactionsColRef = collection(db, 'loyaltyCards', uid, 'transactions');
+        await addDoc(transactionsColRef, {
+            type: type,
+            timestamp: serverTimestamp(),
+            stamps_before: stampsBefore,
+            stamps_after: stampsAfter,
+            description: description,
+            admin_uid: adminUid
+        });
+        console.log(`Transacción de tipo '${type}' registrada para UID: ${uid}`);
+    } catch (error) {
+        console.error("Error al registrar la transacción:", error);
+    }
+}
+
+// --- Nueva función para cargar y mostrar el historial del cliente ---
+async function loadAndDisplayHistory(uid) {
+    stampsHistoryList.innerHTML = '<li>Cargando historial...</li>'; // Mensaje de carga
+
+    const transactionsColRef = collection(db, 'loyaltyCards', uid, 'transactions');
+    const q = query(transactionsColRef, orderBy('timestamp', 'desc'), limit(20)); // Carga las 20 últimas
+
+    try {
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            stampsHistoryList.innerHTML = '<li>No hay transacciones registradas aún.</li>';
+            return;
+        }
+
+        stampsHistoryList.innerHTML = ''; // Limpiar el mensaje de carga
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            // Formatear la fecha/hora
+            const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('es-ES', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : 'Fecha desconocida';
+
+            let descriptionText = '';
+
+            switch (data.type) {
+                case 'add_stamp':
+                    descriptionText = `Añadido un sello. Sellos: ${data.stamps_before} → ${data.stamps_after}`;
+                    break;
+                case 'remove_stamp':
+                    descriptionText = `Quitado un sello. Sellos: ${data.stamps_before} → ${data.stamps_after}`;
+                    break;
+                case 'redeem_coffee':
+                    descriptionText = `Café gratis canjeado. Sellos: ${data.stamps_before} → ${data.stamps_after}`;
+                    break;
+                case 'reset_stamps':
+                    descriptionText = `Tarjeta reiniciada. Sellos: ${data.stamps_before} → ${data.stamps_after}`;
+                    break;
+                default:
+                    descriptionText = `Transacción desconocida: ${data.type}`;
+            }
+
+            if (data.description) {
+                descriptionText += ` (${data.description})`;
+            }
+
+            li.innerHTML = `<span class="description">${descriptionText}</span><span class="timestamp">${date}</span>`;
+            stampsHistoryList.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Error al cargar el historial:", error);
+        stampsHistoryList.innerHTML = '<li>Error al cargar el historial.</li>';
+    }
+}
+
 // Observador del estado de autenticación de Firebase
 onAuthStateChanged(auth, async user => {
     console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user ? user.email : "null");
@@ -246,7 +333,9 @@ onAuthStateChanged(auth, async user => {
             setAdminControlsEnabled(false); // Inicia deshabilitado
             clearAdminClientInfo(); // Limpia info de cliente
             enableAdminControlsAfterOperation(); // Habilita búsqueda y escaneo al inicio para el admin
-            
+            loadAdminDashboardSummary(); // Cargar resumen del dashboard al iniciar como admin
+            generateReportBtn.click(); // Generar reporte inicial (ej. de 7 días)
+
             // Si el admin está logueado, asegúrate de detener el listener del cliente normal
             if (clientListener) {
                 clientListener();
@@ -257,6 +346,8 @@ onAuthStateChanged(auth, async user => {
                 qrcodeCanvas.style.display = 'none';
                 qrInstruction.style.display = 'none';
             }
+            // Limpiar historial del cliente si el admin está logueado
+            stampsHistoryList.innerHTML = '<li>No aplicable para administradores.</li>';
         } else { // Este es un usuario normal (no admin)
             adminSection.classList.add('hidden');
             stopQrScanner(); // Asegurarse de que el escáner se detenga si se cambia a usuario normal
@@ -270,6 +361,7 @@ onAuthStateChanged(auth, async user => {
                 qrInstruction.style.display = 'block';
                 generateQRCode(currentUser.uid);
             }
+            loadAndDisplayHistory(currentUser.uid); // Cargar y mostrar historial para el usuario normal
         }
 
         messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
@@ -303,6 +395,8 @@ onAuthStateChanged(auth, async user => {
             qrcodeCanvas.style.display = 'none';
             qrInstruction.style.display = 'none';
         }
+        // Mensaje para historial cuando no hay sesión
+        stampsHistoryList.innerHTML = '<li>Inicia sesión para ver tu historial de transacciones.</li>';
     }
 });
 
@@ -422,6 +516,101 @@ function generateQRCode(uid) {
         qrInstruction.style.color = '#d9534f';
     }
 }
+
+// --- Funciones para el Dashboard de Administración ---
+async function loadAdminDashboardSummary() {
+    console.log("Cargando resumen del dashboard de administración...");
+    try {
+        const loyaltyCardsRef = collection(db, 'loyaltyCards');
+        const querySnapshot = await getDocs(loyaltyCardsRef);
+
+        let totalClients = 0;
+        let freeCoffeesPending = 0;
+        let totalStamps = 0;
+
+        querySnapshot.forEach(doc => {
+            totalClients++;
+            const stamps = doc.data().stamps || 0;
+            totalStamps += stamps;
+            if (stamps >= MAX_STAMPS) {
+                freeCoffeesPending++;
+            }
+        });
+
+        const avgStamps = totalClients > 0 ? (totalStamps / totalClients).toFixed(1) : 0;
+
+        totalClientsDisplay.textContent = totalClients;
+        freeCoffeesPendingDisplay.textContent = freeCoffeesPending;
+        avgStampsDisplay.textContent = avgStamps;
+        console.log("Resumen del dashboard cargado.");
+
+    } catch (error) {
+        console.error("Error al cargar el resumen del dashboard:", error);
+        totalClientsDisplay.textContent = 'Error';
+        freeCoffeesPendingDisplay.textContent = 'Error';
+        avgStampsDisplay.textContent = 'Error';
+    }
+}
+
+// --- Funciones para Reportes ---
+generateReportBtn.addEventListener('click', async () => {
+    const days = parseInt(reportPeriodSelect.value);
+    if (isNaN(days) || days <= 0) {
+        reportResultsDiv.innerHTML = '<p style="color:#d9534f;">Por favor, selecciona un período válido.</p>';
+        return;
+    }
+
+    reportResultsDiv.innerHTML = '<p style="color:#5bc0de;">Generando reporte...</p>';
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    try {
+        const transactionsRef = collectionGroup(db, 'transactions'); // Consulta de colección grupal
+        const q = query(
+            transactionsRef,
+            where('timestamp', '>=', cutoffDate),
+            orderBy('timestamp', 'desc')
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        let stampsAdded = 0;
+        let coffeesRedeemed = 0;
+        let cardsReset = 0;
+        let stampsRemoved = 0;
+
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            switch (data.type) {
+                case 'add_stamp':
+                    stampsAdded++;
+                    break;
+                case 'redeem_coffee':
+                    coffeesRedeemed++;
+                    break;
+                case 'reset_stamps':
+                    cardsReset++;
+                    break;
+                case 'remove_stamp':
+                    stampsRemoved++;
+                    break;
+            }
+        });
+
+        reportResultsDiv.innerHTML = `
+            <h4>Reporte de los últimos ${days} días:</h4>
+            <p>Sellos Añadidos: <strong>${stampsAdded}</strong></p>
+            <p>Cafés Gratuitos Canjeados: <strong>${coffeesRedeemed}</strong></p>
+            <p>Tarjetas Reiniciadas: <strong>${cardsReset}</strong></p>
+            <p>Sellos Quitados: <strong>${stampsRemoved}</strong></p>
+        `;
+
+    } catch (error) {
+        console.error("Error al generar el reporte:", error);
+        reportResultsDiv.innerHTML = `<p style="color:#d9534f;">Error al generar el reporte: ${error.message}</p>`;
+    }
+});
 
 
 // --- Funciones para el Escáner QR (usa html5-qrcode) ---
@@ -589,31 +778,38 @@ addStampBtn.addEventListener('click', async () => {
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
         let updatedStamps = 0;
+        let currentStampsBeforeTransaction = 0;
 
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
-            let currentStamps = 0;
             let userEmail = '';
 
             if (docSnapshot.exists()) {
-                currentStamps = docSnapshot.data().stamps || 0;
+                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
                 userEmail = docSnapshot.data().userEmail || '';
             } else {
                 console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
                 transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || 'desconocido' });
             }
 
-            if (currentStamps < MAX_STAMPS) {
-                updatedStamps = currentStamps + 1;
+            if (currentStampsBeforeTransaction < MAX_STAMPS) {
+                updatedStamps = currentStampsBeforeTransaction + 1;
                 transaction.update(docRef, { stamps: updatedStamps, lastUpdate: new Date() });
                 adminMessage.textContent = `¡Sello añadido con éxito a ${userEmail || targetClientEmail}! Sellos actuales: ${updatedStamps}`;
                 adminMessage.style.color = '#5cb85c';
             } else {
-                updatedStamps = currentStamps;
+                updatedStamps = currentStampsBeforeTransaction; // No se modifican los sellos
                 adminMessage.textContent = `El cliente ${userEmail || targetClientEmail} ya tiene ${MAX_STAMPS} sellos o más. Debe canjear su café primero.`;
                 adminMessage.style.color = '#f0ad4e';
             }
         });
+
+        const finalDocSnap = await getDoc(docRef);
+        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
+
+        if (finalStamps > currentStampsBeforeTransaction && currentStampsBeforeTransaction < MAX_STAMPS) {
+            await logTransaction(targetClientEmail, 'add_stamp', currentStampsBeforeTransaction, finalStamps, 'Compra de café', currentUser.uid);
+        }
 
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
@@ -638,19 +834,20 @@ removeStampBtn.addEventListener('click', async () => {
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
         let newStampsAfterRemove = 0;
+        let currentStampsBeforeTransaction = 0;
 
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
-                const currentStamps = docSnapshot.data().stamps || 0;
+                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
                 const userEmail = docSnapshot.data().userEmail || targetClientEmail;
-                if (currentStamps > 0) {
-                    newStampsAfterRemove = currentStamps - 1;
+                if (currentStampsBeforeTransaction > 0) {
+                    newStampsAfterRemove = currentStampsBeforeTransaction - 1;
                     transaction.update(docRef, { stamps: newStampsAfterRemove, lastUpdate: new Date() });
                     adminMessage.textContent = `Sello quitado con éxito de ${userEmail}. Sellos actuales: ${newStampsAfterRemove}`;
                     adminMessage.style.color = '#5cb85c';
                 } else {
-                    newStampsAfterRemove = currentStamps;
+                    newStampsAfterRemove = currentStampsBeforeTransaction;
                     adminMessage.textContent = `El cliente ${userEmail} no tiene sellos para quitar.`;
                     adminMessage.style.color = '#f0ad4e';
                 }
@@ -660,6 +857,14 @@ removeStampBtn.addEventListener('click', async () => {
                 adminMessage.style.color = '#f0ad4e';
             }
         });
+
+        const finalDocSnap = await getDoc(docRef);
+        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
+
+        if (finalStamps < currentStampsBeforeTransaction && currentStampsBeforeTransaction > 0) {
+            await logTransaction(targetClientEmail, 'remove_stamp', currentStampsBeforeTransaction, finalStamps, 'Sello quitado por error/ajuste', currentUser.uid);
+        }
+
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
@@ -683,28 +888,38 @@ redeemCoffeeBtn.addEventListener('click', async () => {
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
         let newStampsAfterRedeem = 0;
+        let currentStampsBeforeTransaction = 0;
 
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
-                const currentStamps = docSnapshot.data().stamps || 0;
+                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
                 const userEmail = docSnapshot.data().userEmail || targetClientEmail;
-                if (currentStamps >= MAX_STAMPS) {
-                    newStampsAfterRedeem = currentStamps - MAX_STAMPS;
+                if (currentStampsBeforeTransaction >= MAX_STAMPS) {
+                    newStampsAfterRedeem = currentStampsBeforeTransaction - MAX_STAMPS;
                     transaction.update(docRef, { stamps: newStampsAfterRedeem, lastUpdate: new Date() });
                     adminMessage.textContent = `¡Café canjeado para ${userEmail}! Sellos restantes: ${newStampsAfterRedeem}`;
                     adminMessage.style.color = '#5cb85c';
                 } else {
-                    newStampsAfterRedeem = currentStamps;
-                    adminMessage.textContent = `El cliente ${userEmail} no tiene suficientes sellos (${currentStamps}/${MAX_STAMPS}) para canjear un café.`;
+                    newStampsAfterRedeem = currentStampsBeforeTransaction;
+                    adminMessage.textContent = `El cliente ${userEmail} no tiene suficientes sellos (${currentStampsBeforeTransaction}/${MAX_STAMPS}) para canjear un café.`;
                     adminMessage.style.color = '#f0ad4e';
                 }
             } else {
-                newStampsAfterRedeem = 0; // CORREGIDO: la "S" solitaria ha sido eliminada.
+                newStampsAfterRedeem = 0;
                 adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
                 adminMessage.style.color = '#f0ad4e';
             }
         });
+
+        const finalDocSnap = await getDoc(docRef);
+        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
+
+        // Loguear solo si los sellos se redujeron por un canjeo exitoso
+        if (currentStampsBeforeTransaction >= MAX_STAMPS && finalStamps < currentStampsBeforeTransaction) {
+            await logTransaction(targetClientEmail, 'redeem_coffee', currentStampsBeforeTransaction, finalStamps, 'Café gratis canjeado', currentUser.uid);
+        }
+
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
@@ -734,6 +949,9 @@ resetStampsBtn.addEventListener('click', async () => {
 
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        const docSnapshotBefore = await getDoc(docRef); // Obtener antes para el historial
+        const prevStamps = docSnapshotBefore.exists() ? (docSnapshotBefore.data().stamps || 0) : 0;
+
         await setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmailForConfirm }, { merge: true })
             .then(() => {
                 adminMessage.textContent = `¡Tarjeta de ${userEmailForConfirm} reiniciada a 0 sellos con éxito!`;
@@ -744,6 +962,9 @@ resetStampsBtn.addEventListener('click', async () => {
                 adminMessage.textContent = `Error al reiniciar la tarjeta. Por favor, revisa y vuelve a intentarlo.`;
                 adminMessage.style.color = '#d9534f';
             });
+        
+        // Loguear siempre el reinicio
+        await logTransaction(targetClientEmail, 'reset_stamps', prevStamps, 0, 'Tarjeta reiniciada por admin', currentUser.uid);
 
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
