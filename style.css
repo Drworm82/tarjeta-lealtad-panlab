@@ -301,11 +301,11 @@ p {
     }
 
     h2 {
-        font-size: 1.4em; /* Reduce el tamaño de los subtítulos */
+        font-size: 1.4em;
     }
 
     p {
-        font-size: 0.9em; /* Reduce el tamaño de fuente general para párrafos */
+        font-size: 0.9em;
     }
 
     #user-display {
