@@ -31,7 +31,7 @@ let clientListener = null; // Para el usuario normal
 let adminClientListener = null; // Para el cliente cargado en el panel de admin
 
 // Almacena el UID del cliente actualmente seleccionado en el panel de administración
-let targetClientEmail = null;
+let targetClientEmail = null; // Esto en realidad almacena el UID del cliente
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -44,7 +44,7 @@ const messageDisplay = document.getElementById('message');
 const confettiContainer = document.querySelector('.confetti-container');
 const qrcodeCanvas = document.getElementById('qrcode-canvas');
 const qrInstruction = document.getElementById('qr-instruction');
-const stampsHistoryList = document.getElementById('stamps-history-list'); // NUEVO
+const stampsHistoryList = document.getElementById('stamps-history-list');
 
 // Elementos del panel de administración
 const adminSection = document.getElementById('admin-section');
@@ -68,7 +68,7 @@ const generateReportBtn = document.getElementById('generate-report-btn');
 const reportResultsDiv = document.getElementById('report-results');
 
 
-// --- NUEVOS Elementos del DOM para el Escáner QR ---
+// NUEVOS Elementos del DOM para el Escáner QR
 const scanQrBtn = document.getElementById('scan-qr-btn');
 const qrScannerOverlay = document.getElementById('qr-scanner-overlay');
 const closeScannerBtn = document.getElementById('close-scanner-btn');
@@ -197,6 +197,7 @@ function clearAdminClientInfo() {
         adminClientListener = null;
     }
     adminMessage.textContent = '';
+    stampsHistoryList.innerHTML = '<li>No hay transacciones registradas aún para este cliente.</li>'; // Limpiar historial también
 }
 
 // Función para generar el Código QR del cliente (usa QRious.js)
@@ -227,8 +228,13 @@ function generateQRCode(uid) {
 // --- Funciones de Firebase y Lógica de la Aplicación ---
 
 // Función para escuchar y mostrar los sellos del cliente en tiempo real
-// ESTA FUNCIÓN DEBE ESTAR DEFINIDA TEMPRANO EN EL SCRIPT, YA QUE SE LLAMA EN onAuthStateChanged
 function loadAndListenForStamps(uid) {
+    // Asegurarse de que el listener del admin no esté activo si es un cliente normal
+    if (adminClientListener) {
+        adminClientListener();
+        adminClientListener = null;
+    }
+
     if (clientListener) {
         clientListener(); // Desuscribir listener anterior si existe
         clientListener = null;
@@ -295,11 +301,11 @@ async function logTransaction(uid, type, stampsBefore, stampsAfter, description 
 
 // --- Nueva función para cargar y mostrar el historial del cliente ---
 async function loadAndDisplayHistory(uid) {
-    console.log(`loadAndDisplayHistory: Se está ejecutando para UID: ${uid}`); // Añadido para depuración
-    stampsHistoryList.innerHTML = '<li>Cargando historial...</li>'; // Mensaje de carga
+    console.log(`loadAndDisplayHistory: Se está ejecutando para UID: ${uid}`);
+    stampsHistoryList.innerHTML = '<li>Cargando historial...</li>';
 
     const transactionsColRef = collection(db, 'loyaltyCards', uid, 'transactions');
-    const q = query(transactionsColRef, orderBy('timestamp', 'desc'), limit(20)); // Carga las 20 últimas
+    const q = query(transactionsColRef, orderBy('timestamp', 'desc'), limit(20));
 
     try {
         const querySnapshot = await getDocs(q);
@@ -313,7 +319,6 @@ async function loadAndDisplayHistory(uid) {
         querySnapshot.forEach(doc => {
             const data = doc.data();
             const li = document.createElement('li');
-            // Formatear la fecha/hora
             const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('es-ES', {
                 year: 'numeric', month: 'short', day: 'numeric',
                 hour: '2-digit', minute: '2-digit'
@@ -360,27 +365,6 @@ onAuthStateChanged(auth, async user => {
         authBtn.textContent = 'Cerrar Sesión';
         loyaltyCardSection.classList.remove('hidden');
 
-        // IMPORTANTE: Asegúrate de que el email del usuario se guarde con el UID la primera vez que inicia sesión
-        if (currentUser && currentUser.uid) {
-            const userDocRef = doc(db, 'loyaltyCards', currentUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (!userDocSnap.exists()) {
-                await setDoc(userDocRef, {
-                    stamps: 0,
-                    lastUpdate: new Date(),
-                    userEmail: currentUser.email
-                }).then(() => {
-                    console.log(`Tarjeta inicial creada para UID: ${currentUser.uid} con email: ${currentUser.email}`);
-                }).catch(e => console.error("Error al crear la tarjeta inicial:", e));
-            } else {
-                const currentEmailInDb = userDocSnap.data().userEmail;
-                if (currentEmailInDb !== currentUser.email) {
-                    await updateDoc(userDocRef, { userEmail: currentUser.email });
-                    console.log(`Email del usuario actualizado en DB para UID: ${currentUser.uid}`);
-                }
-            }
-        }
-
         // Lógica para mostrar/ocultar panel de administración
         if (currentUser.email === adminUserEmail) {
             adminSection.classList.remove('hidden');
@@ -401,16 +385,14 @@ onAuthStateChanged(auth, async user => {
                 qrcodeCanvas.style.display = 'none';
                 qrInstruction.style.display = 'none';
             }
-            // Limpiar historial del cliente si el admin está logueado
-            stampsHistoryList.innerHTML = '<li>No aplicable para administradores.</li>';
+            // Mensaje para historial en el modo admin
+            stampsHistoryList.innerHTML = '<li>Historial de transacciones del cliente seleccionado aparecerá aquí.</li>';
 
-            // EL ADMINISTRADOR NO TIENE UNA TARJETA DE LEALTAD "PROPIA"
-            // Por lo tanto, no llamamos a loadAndListenForStamps(currentUser.uid) aquí
-            // para el administrador.
 
         } else { // Este es un usuario normal (no admin)
             adminSection.classList.add('hidden');
             stopQrScanner(); // Asegurarse de que el escáner se detenga si se cambia a usuario normal
+            // Asegurarse de que el listener del admin para un cliente cargado se detenga
             if (adminClientListener) {
                 adminClientListener();
                 adminClientListener = null;
@@ -421,14 +403,32 @@ onAuthStateChanged(auth, async user => {
                 qrInstruction.style.display = 'block';
                 generateQRCode(currentUser.uid);
             }
-            loadAndDisplayHistory(currentUser.uid); // <-- ESTA ES LA LÍNEA CLAVE PARA EL HISTORIAL DEL CLIENTE
-        }
+            messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
+            messageDisplay.style.color = '#5bc0de';
+            loadAndListenForStamps(currentUser.uid); // Asegura que se cargan los sellos del cliente
+            loadAndDisplayHistory(currentUser.uid); // Cargar el historial para el usuario normal
 
-        messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
-        messageDisplay.style.color = '#5bc0de';
-        // loadAndListenForStamps siempre debe ir aquí fuera del if/else de admin,
-        // ya que el cliente siempre necesita cargar sus sellos.
-        loadAndListenForStamps(currentUser.uid); // Asegura que se cargan los sellos del cliente
+            // IMPORTANTE: Asegúrate de que el email del usuario se guarde con el UID la primera vez que inicia sesión
+            if (currentUser && currentUser.uid) {
+                const userDocRef = doc(db, 'loyaltyCards', currentUser.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (!userDocSnap.exists()) {
+                    await setDoc(userDocRef, {
+                        stamps: 0,
+                        lastUpdate: new Date(),
+                        userEmail: currentUser.email
+                    }).then(() => {
+                        console.log(`Tarjeta inicial creada para UID: ${currentUser.uid} con email: ${currentUser.email}`);
+                    }).catch(e => console.error("Error al crear la tarjeta inicial:", e));
+                } else {
+                    const currentEmailInDb = userDocSnap.data().userEmail;
+                    if (currentEmailInDb !== currentUser.email) {
+                        await updateDoc(userDocRef, { userEmail: currentUser.email });
+                        console.log(`Email del usuario actualizado en DB para UID: ${currentUser.uid}`);
+                    }
+                }
+            }
+        }
 
     } else { // No hay usuario autenticado
         currentUser = null;
@@ -450,7 +450,7 @@ onAuthStateChanged(auth, async user => {
             adminClientListener();
             adminClientListener = null;
         }
-        clearAdminClientInfo();
+        clearAdminClientInfo(); // Esto también limpia el historial
         stopQrScanner(); // Asegurarse de que el escáner se detenga al cerrar sesión
         // Asegúrate de ocultar el QR del cliente cuando no hay sesión
         if (qrcodeCanvas && qrInstruction) {
@@ -463,9 +463,9 @@ onAuthStateChanged(auth, async user => {
 });
 
 // Función auxiliar para actualizar la visualización y controles del admin
-async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
-    if (docSnapshot.exists()) {
-        const data = docSnap.data();
+async function updateAdminClientDisplayAndControls(clientId, docSnapshot) { // <-- CORREGIDO: Usar docSnapshot
+    if (docSnapshot.exists()) { // <-- CORREGIDO: Usar docSnapshot
+        const data = docSnapshot.data(); // <-- CORREGIDO: Usar docSnapshot
         const stamps = data.stamps || 0;
         const clientEmailDisplay = data.userEmail || clientId;
         targetClientEmail = clientId; // targetClientEmail ahora almacena el UID
@@ -478,7 +478,8 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
         adminMessage.textContent = `Cliente ${clientEmailDisplay} cargado correctamente.`;
         adminMessage.style.color = '#5cb85c';
 
-        if (adminClientListener) adminClientListener(); // Desuscribir listener antiguo
+        // Desuscribir listener antiguo del adminClientListener si existe
+        if (adminClientListener) adminClientListener();
         const clientDocRef = doc(db, 'loyaltyCards', clientId);
         adminClientListener = onSnapshot(clientDocRef, snap => {
             if (snap.exists()) {
@@ -505,8 +506,8 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
         });
 
     } else { // Document does NOT exist
-        clearAdminClientInfo();
-        targetClientEmail = clientId;
+        clearAdminClientInfo(); // Esto también limpia el historial
+        targetClientEmail = clientId; // Mantenemos el ID para intentar crear la tarjeta
         adminMessage.textContent = `Cliente con UID ${clientId} no encontrado. Puedes añadirle un sello para crear su tarjeta.`;
         adminMessage.style.color = '#f0ad4e';
         setAdminControlsEnabled(true, true, 0); // Solo añadir y resetear (resetear significa crear con 0)
@@ -637,7 +638,6 @@ async function startQrScanner() {
         stopQrScanner(); // Detiene el escáner automáticamente
 
         // Simula un clic en el botón de búsqueda después de un pequeño retraso
-        // Esto permite que el DOM se actualice con el valor del input antes de buscar
         setTimeout(() => {
             searchClientBtn.click();
         }, 100);
@@ -749,16 +749,13 @@ searchClientBtn.addEventListener('click', async () => {
     const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
     try {
         const docSnap = await getDoc(clientDocRef);
+        // La función updateAdminClientDisplayAndControls recibe el UID y el docSnap (o null si no existe)
         await updateAdminClientDisplayAndControls(clientIdToSearch, docSnap);
 
         // Cargar y mostrar el historial de transacciones para el cliente seleccionado en el panel de administrador
-        if (docSnap.exists()) {
-             // Solo si el documento existe, cargamos el historial
-            loadAndDisplayHistory(clientIdToSearch);
-        } else {
-            // Si el documento no existe (cliente nuevo), se mostrará un mensaje de "No hay transacciones"
-            stampsHistoryList.innerHTML = '<li>No hay transacciones registradas aún para este cliente.</li>';
-        }
+        // Se carga el historial independientemente de si el documento existe o no,
+        // la función loadAndDisplayHistory maneja el caso de "no transacciones".
+        loadAndDisplayHistory(clientIdToSearch);
 
     } catch (error) {
         console.error("Error al cargar cliente en admin:", error);
@@ -798,7 +795,7 @@ addStampBtn.addEventListener('click', async () => {
                 transaction.set(clientDocRef, {
                     stamps: newStamps,
                     lastUpdate: new Date(),
-                    userEmail: adminEmailInput.value // Usar el email del input si no hay uno guardado
+                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail // Usar el email del input si es email, sino el UID
                 });
                 adminMessage.textContent = `Cliente creado y sello añadido. Total: ${newStamps}`;
                 adminMessage.style.color = '#28a745';
@@ -806,9 +803,9 @@ addStampBtn.addEventListener('click', async () => {
                 // Registrar la transacción de creación/primer sello
                 await logTransaction(
                     targetClientEmail,
-                    'add_stamp', // Type: 'add_stamp'
-                    0,           // Stamps before: 0 (porque no existía)
-                    newStamps,   // Stamps after: 1
+                    'add_stamp',
+                    0,
+                    newStamps,
                     'Primer sello añadido (tarjeta creada)',
                     currentUser.uid
                 );
@@ -821,12 +818,9 @@ addStampBtn.addEventListener('click', async () => {
                     adminMessage.textContent = `Sello añadido. Nuevo total: ${newStamps}`;
                     adminMessage.style.color = '#28a745';
 
-                    // ***************************************************************
-                    // --> ¡¡¡AQUÍ ES DONDE AÑADIRÍAS LA LLAMADA A logTransaction!!! <--
-                    // ***************************************************************
                     await logTransaction(
                         targetClientEmail,
-                        'add_stamp', // <-- Este type debe coincidir con el 'case' en loadAndDisplayHistory
+                        'add_stamp',
                         currentStamps,
                         newStamps,
                         'Sello añadido por administrador',
@@ -839,9 +833,7 @@ addStampBtn.addEventListener('click', async () => {
                 }
             }
         });
-        // Después de una operación exitosa, recargar el historial del cliente para que el admin vea el cambio
-        loadAndDisplayHistory(targetClientEmail); // Asegúrate de que este cliente tiene un historial visible para el admin si lo deseas.
-                                                // Aunque el historial principal es para el usuario final, el admin podría querer verlo en su propio UI.
+        loadAndDisplayHistory(targetClientEmail); // Actualizar el historial visible para el admin
 
     } catch (error) {
         console.error("Error al añadir sello:", error);
@@ -889,7 +881,7 @@ removeStampBtn.addEventListener('click', async () => {
 
                 await logTransaction(
                     targetClientEmail,
-                    'remove_stamp', // Type: 'remove_stamp'
+                    'remove_stamp',
                     currentStamps,
                     newStamps,
                     'Sello quitado por administrador',
@@ -950,7 +942,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
 
                 await logTransaction(
                     targetClientEmail,
-                    'redeem_coffee', // Type: 'redeem_coffee'
+                    'redeem_coffee',
                     currentStamps,
                     newStamps,
                     'Café gratis canjeado por administrador',
@@ -1002,16 +994,16 @@ resetStampsBtn.addEventListener('click', async () => {
                 transaction.set(clientDocRef, {
                     stamps: newStamps,
                     lastUpdate: new Date(),
-                    userEmail: adminEmailInput.value // Usar el email del input si no hay uno guardado
+                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail // Usar el email del input si es email, sino el UID
                 });
                 adminMessage.textContent = `Cliente creado y tarjeta reiniciada (0 sellos).`;
                 adminMessage.style.color = '#6c757d';
 
                 await logTransaction(
                     targetClientEmail,
-                    'reset_stamps', // Type: 'reset_stamps'
-                    0,           // Stamps before: 0 (porque no existía)
-                    newStamps,   // Stamps after: 0
+                    'reset_stamps',
+                    0,
+                    newStamps,
                     'Tarjeta creada/reiniciada a 0 sellos',
                     currentUser.uid
                 );
@@ -1025,7 +1017,7 @@ resetStampsBtn.addEventListener('click', async () => {
 
                 await logTransaction(
                     targetClientEmail,
-                    'reset_stamps', // <-- Este type debe coincidir con el 'case' en loadAndDisplayHistory
+                    'reset_stamps',
                     currentStamps,
                     newStamps,
                     'Tarjeta reiniciada por administrador',
