@@ -1,7 +1,8 @@
 // Importaciones de Firebase SDK (versión modular)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+// Agregamos onSnapshot para escucha en tiempo real
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, getDocs, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Tu configuración de Firebase
 const firebaseConfig = {
@@ -21,7 +22,7 @@ const db = getFirestore(app);
 // Variables para referencias a elementos del DOM (se inicializan en DOMContentLoaded)
 let loginBtn, logoutBtn, userIdDisplay, userEmailDisplay, userPointsDisplay, messageDisplay, adminSection, userSection;
 let stampsDisplay, progressMessage, userFreeCoffeesDisplay;
-let userQrCodeContainer, userQrCodeDisplay; // Contenedor y div para el QR del usuario
+let userQrCodeContainer, userQrCodeDisplay; // Contenedor y canvas para el QR del usuario
 
 let adminEmailInput, searchClientBtn, clientInfoDiv, addStampBtn, removeStampBtn, redeemCoffeeBtn, resetCardBtn;
 let totalClientsDisplay, pendingFreeCoffeesDisplay, averageStampsDisplay;
@@ -31,6 +32,9 @@ let adminScanQRBtn, clientQRDisplay, closeQrDisplayBtn;
 
 // Variables para el cliente actualmente cargado en el panel de administración
 let currentAdminClient = null;
+
+// Variable para guardar el "unsubscriber" de la escucha en tiempo real
+let unsubscribeFromUserCard = null;
 
 // Asegura que el DOM esté completamente cargado antes de interactuar con él
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,9 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
     progressMessage = document.getElementById('progress-message');
     userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay');
 
-    // Referencias para el QR del usuario
+    // Referencias para el QR del usuario (ahora un canvas)
     userQrCodeContainer = document.getElementById('user-qr-container');
-    userQrCodeDisplay = document.getElementById('user-qr-code');
+    userQrCodeDisplay = document.getElementById('user-qr-code'); // Este ahora es el CANVASS
 
 
     adminEmailInput = document.getElementById('admin-email-input');
@@ -89,6 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
             try {
+                // Al cerrar sesión, también detenemos la escucha en tiempo real
+                if (unsubscribeFromUserCard) {
+                    unsubscribeFromUserCard();
+                    unsubscribeFromUserCard = null;
+                }
                 await signOut(auth);
             } catch (error) {
                 console.error("Error al cerrar sesión:", error.message);
@@ -135,9 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userData && userData.isAdmin) {
                 if (adminSection) adminSection.style.display = 'block';
                 loadAdminDashboard();
+                // Si el usuario es admin, asegurarnos de que no estamos escuchando su tarjeta en tiempo real
+                if (unsubscribeFromUserCard) {
+                    unsubscribeFromUserCard();
+                    unsubscribeFromUserCard = null;
+                }
             } else {
                 if (userSection) userSection.style.display = 'block';
-                loadUserCard(user);
+                // Usamos onSnapshot para escuchar cambios en tiempo real en la tarjeta del usuario
+                listenForUserCardChanges(user.uid);
             }
 
         } else {
@@ -147,54 +162,77 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Por favor, inicia sesión.', 'info');
             clearUserCard();
             clearAdminDashboard();
+            // Detener cualquier escucha activa al cerrar sesión
+            if (unsubscribeFromUserCard) {
+                unsubscribeFromUserCard();
+                unsubscribeFromUserCard = null;
+            }
         }
     });
 
     // --- Funciones de la Tarjeta de Lealtad del Usuario ---
 
-    async function loadUserCard(user) {
-        if (!user) return;
+    // Función para escuchar cambios en tiempo real en la tarjeta del usuario
+    function listenForUserCardChanges(uid) {
+        if (!uid) {
+            console.error("UID no proporcionado para escuchar cambios en la tarjeta.");
+            return;
+        }
 
-        if (userIdDisplay) userIdDisplay.textContent = `ID: ${user.uid}`;
-        if (userEmailDisplay) userEmailDisplay.textContent = `Email: ${user.email}`;
+        const userDocRef = doc(db, 'users', uid);
 
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
+        // Si ya hay una suscripción activa, la cerramos primero para evitar duplicados
+        if (unsubscribeFromUserCard) {
+            unsubscribeFromUserCard();
+        }
 
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
+        unsubscribeFromUserCard = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userData = docSnapshot.data();
                 const currentStamps = userData.stamps || 0;
                 const freeCoffees = userData.freeCoffees || 0;
 
+                if (userIdDisplay) userIdDisplay.textContent = `ID: ${userData.uid || uid}`;
+                if (userEmailDisplay) userEmailDisplay.textContent = `Email: ${userData.email || 'N/A'}`;
                 if (userPointsDisplay) userPointsDisplay.textContent = `Sellos: ${currentStamps}`;
                 if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees;
 
                 updateStampsDisplay(currentStamps);
                 updateProgressMessage(currentStamps);
 
-                // AÑADIDO/MODIFICADO: Mostrar el QR del usuario
-                if (userQrCodeDisplay && user.uid) { // Asegura que user.uid exista
-                    userQrCodeDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${user.uid}" alt="QR de Mi Tarjeta">`;
-                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'flex'; // Asegura que el contenedor esté visible
+                // Generar QR (ahora con qrious)
+                if (userQrCodeDisplay) {
+                    try {
+                        // Limpiar el canvas antes de dibujar un nuevo QR
+                        const canvas = userQrCodeDisplay;
+                        const context = canvas.getContext('2d');
+                        if (context) context.clearRect(0, 0, canvas.width, canvas.height); // Asegurar que el contexto existe
+
+                        new QRious({
+                            element: userQrCodeDisplay, // El elemento canvas
+                            value: uid, // El UID es el valor a codificar
+                            size: 150, // Tamaño del QR
+                            level: 'H' // Nivel de corrección de error (L, M, Q, H)
+                        });
+                        if (userQrCodeContainer) userQrCodeContainer.style.display = 'flex';
+                    } catch (qrError) {
+                        console.error("Error al generar QR con qrious:", qrError);
+                        if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+                    }
                 } else {
-                    console.error("UID del usuario no disponible para generar QR o userQrCodeDisplay no encontrado.");
-                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'none'; // Ocultar si no se puede generar
+                    console.error("Elemento canvas 'user-qr-code' no encontrado.");
+                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
                 }
 
             } else {
-                console.warn("Documento de usuario no encontrado al cargar la tarjeta.");
-                updateStampsDisplay(0);
-                updateProgressMessage(0);
-                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
-                // Ocultar QR si no hay documento de usuario
-                if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+                console.warn("Documento de usuario no encontrado o eliminado.");
+                clearUserCard(); // Limpiar si el documento no existe
             }
-        } catch (error) {
-            console.error("Error al cargar tarjeta de usuario:", error);
-            showMessage("Error al cargar tu tarjeta.", 'error');
-            if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
-        }
+        }, (error) => {
+            console.error("Error al escuchar cambios en la tarjeta del usuario:", error);
+            showMessage("Error al cargar tu tarjeta en tiempo real.", 'error');
+            clearUserCard();
+        });
     }
 
     function updateStampsDisplay(stamps) {
@@ -243,11 +281,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Limpiar y ocultar el contenedor del QR del usuario
         if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
-        if (userQrCodeDisplay) userQrCodeDisplay.innerHTML = '';
+        if (userQrCodeDisplay) {
+            // Si es canvas, también se puede limpiar
+            const canvas = userQrCodeDisplay;
+            const context = canvas.getContext('2d');
+            if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
 
     // --- Funciones del Panel de Administración ---
+    // (Estas funciones no necesitan cambios, ya que Firestore las actualizará directamente)
 
     async function loadAdminDashboard() {
         try {
@@ -389,7 +433,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (clientQRDisplay) {
-            clientQRDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${uid}" alt="QR del Cliente">`;
+            // Reutilizamos qrious para el QR del admin también
+            const canvas = document.createElement('canvas');
+            clientQRDisplay.innerHTML = ''; // Limpiar cualquier contenido previo
+            clientQRDisplay.appendChild(canvas);
+            new QRious({
+                element: canvas,
+                value: uid,
+                size: 150,
+                level: 'H'
+            });
             clientQRDisplay.style.display = 'flex';
         }
     }
