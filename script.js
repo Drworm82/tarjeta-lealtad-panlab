@@ -26,6 +26,7 @@ let currentUser = null; // Guardará el objeto de usuario de Firebase
 let adminUserEmail = 'TU_CORREO_DE_ADMIN@ejemplo.com'; // **¡IMPORTANTE! REEMPLAZA CON EL CORREO ELECTRÓNICO DE TU ADMINISTRADOR**
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
 let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
+let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin // <-- ¡ESTA ES LA LÍNEA AÑADIDA!
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -114,7 +115,7 @@ function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
 function clearAdminClientInfo() {
     adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
     setAdminControlsEnabled(false);
-    targetClientEmail = null;
+    targetClientEmail = null; // Esta línea ahora está bien porque targetClientEmail está declarado
     if (adminClientListener) {
         adminClientListener();
         adminClientListener = null;
