@@ -41,19 +41,16 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* gap: 10px; Eliminar gap, usaremos margin en los iconos */
     flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio */
     text-align: center; /* Asegura que el texto se centre si hay salto de línea */
 }
 
 h1 .coffee-icon {
-    font-size: 1.2em; /* Tamaño de las tazas en el título, un poco más grandes */
-    /* Ajuste de margen para separar del texto y entre sí */
-    margin: 0 5px;
-    /* Resetear propiedades que puedan afectar el tamaño del emoji */
+    font-size: 1.2em; /* Tamaño de las tazas en el título */
+    margin: 0 5px; /* Margen horizontal para separarlos del texto */
     vertical-align: middle;
     line-height: 1;
-    display: inline-block; /* Para que margin funcione bien */
+    display: inline-block;
 }
 
 p {
@@ -101,9 +98,16 @@ p {
 }
 
 .stamp {
-    width: 100%; /* El sello ocupa todo el ancho de su celda de grid */
-    padding-bottom: 100%; /* Truco para hacer el elemento cuadrado (aspect ratio) */
-    position: relative; /* Necesario para posicionar el contenido */
+    /* **CAMBIO CLAVE AQUÍ PARA LA PROPORCIÓN DEL CÍRCULO** */
+    /* Usaremos min-width, min-height para asegurar el tamaño mínimo */
+    /* Y flex-basis para que se ajuste en el grid manteniendo la proporción */
+    min-width: 60px; /* Tamaño mínimo que quieres para cada sello */
+    min-height: 60px; /* Mismo valor para ser cuadrado */
+    width: 100%; /* Ocupa todo el ancho de la celda del grid */
+    height: 0; /* Lo ponemos a 0 para que padding-bottom lo defina */
+    padding-bottom: 100%; /* Esto hace que la altura sea igual al ancho, creando un cuadrado */
+    position: relative; /* Para que el contenido interno se posicione bien */
+
     background-color: #e0b07d; /* Color de sello no obtenido */
     border-radius: 50%; /* Forma circular */
     display: flex; /* Usar flexbox para centrar el contenido (número o icono) */
@@ -114,22 +118,26 @@ p {
     color: #fff; /* Color del número */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    /* NO necesitamos transform aquí si usamos flexbox para centrar */
+    /* Eliminar cualquier padding vertical aquí que pueda estirar el círculo */
+    padding-top: 0;
+    padding-bottom: 100%; /* Asegurarse de que el padding-bottom sea el único que define la altura */
 }
 
-/* Contenido dentro del sello (el número o el emoji) */
-.stamp > span { /* Asumiendo que el contenido es un <span>, si es texto directo, esto no aplica */
-    /* Si el contenido es texto directo, el flexbox de .stamp ya lo centra */
+/* El contenido real del sello (número o emoji) necesita estar centrado dentro del sello */
+.stamp > * {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    line-height: 1; /* Asegura que el contenido no tenga altura de línea extra */
+    white-space: nowrap; /* Evita que el texto o emoji se rompa en varias líneas */
 }
+
 
 .stamp.obtained {
     background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
-    color: #fff; /* Color del ícono de café (si aplica) */
-    /* Ajustes específicos para el emoji de la taza */
-    font-size: 2.8em; /* **AUMENTADO** el tamaño del emoji '☕' para que ocupe bien el círculo */
-    line-height: 1; /* Ayuda a centrar verticalmente el emoji */
-    padding-top: 5%; /* Pequeño ajuste vertical para algunos emojis */
-    padding-bottom: 5%;
+    color: #fff; /* Color del ícono de café */
+    font-size: 2.8em; /* Tamaño del emoji '☕' para pantallas grandes */
 }
 
 
@@ -354,13 +362,14 @@ p {
     }
 
     .stamp {
+        /* Para móvil, podemos ajustar el min-width/height si es necesario */
+        min-width: 50px;
+        min-height: 50px;
         font-size: 1.3em; /* Tamaño del número para móvil */
     }
 
     .stamp.obtained {
-        font-size: 2.2em; /* **AUMENTADO** el tamaño del emoji para móviles */
-        padding-top: 0; /* Restablecer padding si no es necesario */
-        padding-bottom: 0; /* Restablecer padding si no es necesario */
+        font-size: 2.2em; /* Tamaño del emoji para móviles, ajustado */
     }
 
     /* Ajustes para botones del admin: Apilarlos */
@@ -401,6 +410,8 @@ p {
         padding: 15px;
     }
     .stamp {
+        min-width: 45px;
+        min-height: 45px;
         font-size: 1.1em; /* Más pequeño para el número en pantallas muy pequeñas */
     }
     .stamp.obtained {
