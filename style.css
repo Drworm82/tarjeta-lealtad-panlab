@@ -15,6 +15,7 @@ body {
     min-height: 100vh; /* Ocupa al menos el 100% del alto de la ventana */
     padding: 20px; /* Padding general para pantallas grandes */
     line-height: 1.6; /* Mejorar legibilidad del texto general */
+    overflow-y: auto; /* Permite desplazamiento vertical si el contenido es demasiado alto */
 }
 
 /* --- Contenedor Principal de la Aplicación --- */
@@ -48,7 +49,7 @@ h1 {
 h1 .coffee-icon {
     font-size: 1.2em; /* Tamaño de las tazas en el título, un poco más grandes */
     vertical-align: middle;
-    margin: 0;
+    margin: 0 5px; /* Pequeño margen horizontal para separarlos del texto y entre sí */
     padding: 0;
 }
 
@@ -102,37 +103,22 @@ p {
     position: relative;
     background-color: #e0b07d; /* Color de sello no obtenido */
     border-radius: 50%; /* Forma circular */
-    display: flex;
+    display: flex; /* Usar flexbox para centrar el contenido (número o icono) */
     justify-content: center;
     align-items: center;
-    font-size: 1.8em;
+    font-size: 1.8em; /* Tamaño del número (1, 2, 3...) */
     font-weight: bold;
     color: #fff; /* Color del número */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    /* Centrar el contenido verticalmente y horizontalmente */
-    text-align: center;
-    line-height: 1; /* Para alinear el texto/icono en el centro */
 }
 
 .stamp.obtained {
     background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
-    color: #fff; /* Color del ícono de café */
-}
-
-/* Si el contenido es un icono, asegurar que se centre visualmente */
-.stamp.obtained::before {
-    content: attr(data-icon); /* Usar un atributo de datos si se implementa un icono */
-    font-size: 1em; /* Ajustar el tamaño si el icono es más grande que el texto */
-}
-
-
-/* El contenido real del sello (número o icono) */
-.stamp > * {
-    position: absolute; /* Posicionar el contenido al centro */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    color: #fff; /* Color del ícono de café (si aplica) */
+    /* Para el ícono de la taza, ajustar el tamaño aquí */
+    font-size: 2.2em; /* Aumenta el tamaño del emoji '☕' para que se vea bien */
+    line-height: 1; /* Ayuda a centrar verticalmente el emoji */
 }
 
 /* Mensaje de la tarjeta del cliente */
@@ -248,7 +234,6 @@ p {
     min-width: 120px; /* Ancho mínimo para que no se hagan demasiado pequeños */
 }
 
-
 #admin-client-controls button:hover {
     background-color: #218838;
 }
@@ -265,22 +250,23 @@ p {
 
 /* Animación para el nuevo sello añadido */
 .stamp.animate-new-stamp {
+    /* No se necesita transform aquí porque el contenido ya está centrado por flexbox */
     animation: newStampPulse 0.7s ease-out forwards;
 }
 
 @keyframes newStampPulse {
     0% {
-        transform: scale(1) translate(-50%, -50%); /* Ajuste para el nuevo posicionamiento */
+        transform: scale(1);
         background-color: #e0b07d; /* Color normal */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     50% {
-        transform: scale(1.15) translate(-50%, -50%); /* Crece un poco */
+        transform: scale(1.15); /* Crece un poco */
         background-color: #a46d3a; /* Un color más oscuro para el "pulso" */
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     }
     100% {
-        transform: scale(1) translate(-50%, -50%); /* Vuelve al tamaño normal */
+        transform: scale(1); /* Vuelve al tamaño normal */
         background-color: #7b4f2c; /* Color de sello obtenido */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
@@ -294,17 +280,17 @@ p {
 @keyframes resetStampFade {
     0% {
         opacity: 1;
-        transform: translateY(0) translate(-50%, -50%); /* Ajuste para el nuevo posicionamiento */
+        transform: translateY(0);
         background-color: #7b4f2c; /* Color del sello obtenido */
     }
     50% {
         opacity: 0.2; /* Se desvanece casi por completo */
-        transform: translateY(-10px) translate(-50%, -50%); /* Se mueve ligeramente hacia arriba */
+        transform: translateY(-10px); /* Se mueve ligeramente hacia arriba */
     }
     100% {
         opacity: 1;
-        transform: translateY(0) translate(-50%, -50%); /* Vuelve al color original del sello no obtenido */
-        background-color: #e0b07d; /* Color original del sello no obtenido */
+        transform: translateY(0);
+        background-color: #e0b07d; /* Vuelve al color original del sello no obtenido */
     }
 }
 
@@ -328,6 +314,7 @@ p {
 
     h1 .coffee-icon {
         font-size: 0.7em; /* Un poco más pequeña en móvil */
+        margin: 0 3px; /* Espacio reducido en móvil */
     }
 
     h2 {
@@ -355,9 +342,14 @@ p {
     }
 
     .stamp {
-        width: 100%; /* Ocupa el ancho completo de su columna */
-        padding-bottom: 100%; /* Mantiene la forma cuadrada */
-        font-size: 1.4em;
+        /* Ya no necesitamos height fijo, padding-bottom hace el círculo */
+        /* font-size para el número */
+        font-size: 1.3em;
+    }
+
+    .stamp.obtained {
+        /* font-size para el emoji en móvil */
+        font-size: 1.8em; /* Ajusta el tamaño del emoji para móviles */
     }
 
     /* Ajustes para botones del admin: Apilarlos */
@@ -398,7 +390,10 @@ p {
         padding: 15px;
     }
     .stamp {
-        font-size: 1.2em;
+        font-size: 1.1em; /* Más pequeño para el número en pantallas muy pequeñas */
+    }
+    .stamp.obtained {
+        font-size: 1.6em; /* Más pequeño para el emoji en pantallas muy pequeñas */
     }
     #stamps-display {
         gap: 6px;
