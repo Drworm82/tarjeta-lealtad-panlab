@@ -114,9 +114,16 @@ section {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-/* Animación para el sello que se añade */
-.stamp.animate {
-    animation: bounceIn 0.5s ease-out;
+/* MODIFICADO: Mantiene el icono de café en CSS, la animación se controlará con una clase JS */
+.stamp.obtained::before {
+    content: '☕'; /* Icono de café para sellos obtenidos */
+    font-size: 1.8em; /* Ajusta el tamaño del emoji */
+    /* La animación se ha movido a .animate-stamp */
+}
+
+/* NUEVA CLASE: Animación para el sello que se añade */
+.stamp.animate-stamp::before {
+    animation: bounceIn 0.5s ease-out; /* Animación simple al añadir */
 }
 
 @keyframes bounceIn {
@@ -593,8 +600,9 @@ input:disabled {
         font-size: 1.2em;
     }
 
+    /* Modificado para que el tamaño del emoji sea consistente en móvil también */
     .stamp.obtained::before {
-        font-size: 1.5em;
+        font-size: 1.5em; /* Ajusta el tamaño del emoji para pantallas más pequeñas */
     }
 
     .admin-input-group {
@@ -650,8 +658,9 @@ input:disabled {
         font-size: 1.1em;
     }
 
+    /* Modificado para que el tamaño del emoji sea consistente en móvil también */
     .stamp.obtained::before {
-        font-size: 1.3em;
+        font-size: 1.3em; /* Ajusta el tamaño del emoji para móviles más pequeños */
     }
 
     .admin-actions button {
