@@ -431,14 +431,14 @@ async function startQrScanner() {
     scannerMessage.style.color = '#7a4a2b';
     qrScannerOverlay.classList.remove('hidden'); // Muestra el overlay del escáner
     
-    // Deshabilitar interacciones en el panel de administración principal
+    // Deshabilitar interacciones en el panel de administración principal y darle feedback visual
     adminSection.style.pointerEvents = 'none'; 
-    adminSection.style.opacity = '0.5'; // Feedback visual
+    adminSection.style.opacity = '0.5'; 
 
     // Inicializa Html5QrcodeScanner si no está ya inicializado
     if (!html5QrCodeScanner) {
         html5QrCodeScanner = new Html5QrcodeScanner(
-            "reader", // ID del div donde se renderizará el escáner
+            "reader", // ID del div donde html5-qrcode montará la vista de la cámara
             { fps: 10, qrbox: { width: 250, height: 250 } }, // Configuración: frames por segundo, tamaño del recuadro de escaneo
             false // verbose=false para menos logs en consola
         );
@@ -459,7 +459,7 @@ async function startQrScanner() {
 
     // Callback para cuando hay un error en el escaneo (ej. no se encuentra QR, poca luz)
     const onScanError = (errorMessage) => {
-        // Para depuración, puedes activar este log si hay problemas de escaneo
+        // Solo para depuración, evita llenar la consola en producción
         // console.warn(`Error de escaneo (no crítico): ${errorMessage}`);
         scannerMessage.textContent = 'Apunta la cámara al código QR. No se detecta QR válido.';
         scannerMessage.style.color = '#f0ad4e';
@@ -481,13 +481,9 @@ async function startQrScanner() {
 async function stopQrScanner() {
     if (html5QrCodeScanner) {
         try {
-            // Verifica el estado del escáner antes de intentar detenerlo o limpiarlo
-            // html5QrCodeScanner.is = Html5QrcodeScanner.State.SCANNING es un error tipográfico común
-            // La forma correcta es verificar el estado interno o simplemente llamar a clear()
             await html5QrCodeScanner.clear(); // Limpia y detiene la cámara
             console.log("Escáner QR detenido y limpiado.");
         } catch (error) {
-            // Este catch es importante porque clear() puede fallar si el escáner no estaba activo
             console.warn("Error al detener el escáner (puede ser normal si ya estaba parado):", error);
         }
     }
@@ -704,7 +700,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
                     adminMessage.style.color = '#f0ad4e';
                 }
             } else {
-                newStampsAfterRedeem = 0;
+S                newStampsAfterRedeem = 0;
                 adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
                 adminMessage.style.color = '#f0ad4e';
             }
