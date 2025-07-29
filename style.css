@@ -1,46 +1,86 @@
-/* --- ANIMACIONES DE SELLOS (NUEVAS) --- */
+/* --- DISEÑO RESPONSIVO (NUEVO) --- */
 
-/* Animación para el nuevo sello añadido */
-.stamp.animate-new-stamp {
-    animation: newStampPulse 0.7s ease-out forwards; /* Define la animación */
+/* Reglas para pantallas más pequeñas (máximo 768px de ancho, típico de tabletas y móviles) */
+@media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduce el padding global */
+    }
+
+    .container {
+        padding: 15px; /* Reduce el padding interno del contenedor principal */
+        margin: 10px auto; /* Ajusta el margen automático */
+        max-width: 95%; /* Permite que ocupe más ancho en pantallas pequeñas */
+    }
+
+    h1 {
+        font-size: 1.8em; /* Reduce el tamaño del título principal */
+    }
+
+    h2 {
+        font-size: 1.4em; /* Reduce el tamaño de los subtítulos */
+    }
+
+    p {
+        font-size: 0.9em; /* Reduce el tamaño de fuente general para párrafos */
+    }
+
+    /* Ajustes para los sellos */
+    #stamps-display {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Hace que los sellos se adapten mejor */
+        gap: 8px; /* Reduce el espacio entre sellos */
+        padding: 10px;
+    }
+
+    .stamp {
+        width: 60px; /* Ajusta el tamaño del sello */
+        height: 60px;
+        font-size: 1.5em; /* Ajusta el tamaño del ícono/número del sello */
+    }
+
+    /* Ajustes para botones */
+    button {
+        padding: 10px 15px; /* Reduce el padding de los botones */
+        font-size: 1em; /* Ajusta el tamaño de fuente de los botones */
+        margin-top: 10px; /* Asegura espacio entre botones */
+    }
+
+    /* Estilos específicos para la sección de administración */
+    #admin-section .input-group input[type="email"],
+    #admin-section .input-group button {
+        width: 100%; /* Hacen que el input y el botón de búsqueda ocupen todo el ancho */
+        margin-bottom: 10px; /* Añade espacio entre ellos en móvil */
+        box-sizing: border-box; /* Asegura que el padding no desborde el ancho */
+    }
+
+    #admin-section .input-group button {
+        margin-left: 0; /* Elimina margen izquierdo si lo tuviera */
+    }
+
+    #admin-client-controls button {
+        width: 100%; /* Los botones de control del admin también ocupan todo el ancho */
+        margin-top: 5px; /* Más compacto */
+    }
+
+    /* Asegurar que la información del cliente en el admin se vea bien */
+    #admin-client-info p {
+        font-size: 0.95em;
+    }
 }
 
-@keyframes newStampPulse {
-    0% {
-        transform: scale(1);
-        background-color: #e0b07d; /* Color normal */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+/* Reglas adicionales para pantallas muy pequeñas (ej. iPhone SE, ancho < 480px) */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5em;
     }
-    50% {
-        transform: scale(1.15); /* Crece un poco */
-        background-color: #a46d3a; /* Un color más oscuro para el "pulso" */
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    h2 {
+        font-size: 1.2em;
     }
-    100% {
-        transform: scale(1); /* Vuelve al tamaño normal */
-        background-color: #7b4f2c; /* Color de sello obtenido */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    .stamp {
+        width: 50px; /* Un poco más pequeños en pantallas muy pequeñas */
+        height: 50px;
+        font-size: 1.3em;
     }
-}
-
-/* Animación para el reinicio/canjeo de sellos */
-.stamp.animate-reset-stamp {
-    animation: resetStampFade 0.7s ease-out forwards; /* Define la animación */
-}
-
-@keyframes resetStampFade {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-        background-color: #7b4f2c; /* Color del sello obtenido */
-    }
-    50% {
-        opacity: 0.2; /* Se desvanece casi por completo */
-        transform: translateY(-10px); /* Se mueve ligeramente hacia arriba */
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        background-color: #e0b07d; /* Vuelve al color original del sello no obtenido */
+    #stamps-display {
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
     }
 }
