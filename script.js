@@ -64,7 +64,7 @@ const avgStampsDisplay = document.getElementById('avg-stamps');
 
 // NUEVOS Elementos del DOM para Reportes
 const reportPeriodSelect = document.getElementById('report-period');
-const generateReportBtn = document.getElementById('generate-report-btn');
+const generateReportBtn = document('generate-report-btn');
 const reportResultsDiv = document.getElementById('report-results');
 
 
@@ -228,16 +228,21 @@ function disableAdminControlsTemporarily() {
     setAdminControlsEnabled(false);
     searchClientBtn.disabled = true;
     adminEmailInput.disabled = true;
-    scanQrBtn.disabled = true; // Deshabilita también el botón de escanear
-    adminSection.style.cursor = 'wait';
+    scanQrBtn.disabled = true;
+    // Añadir clase de carga a la sección principal del admin
+    adminSection.classList.add('loading'); // <-- NUEVO
+    adminMessage.textContent = 'Procesando...'; // Mensaje genérico de procesamiento
+    adminMessage.style.color = '#5bc0de';
 }
 
 // Habilita los controles del panel de administración (después de una operación)
 function enableAdminControlsAfterOperation() {
     searchClientBtn.disabled = false;
     adminEmailInput.disabled = false;
-    scanQrBtn.disabled = false; // Habilita también el botón de escanear
-    adminSection.style.cursor = 'default';
+    scanQrBtn.disabled = false;
+    // Quitar clase de carga
+    adminSection.classList.remove('loading'); // <-- NUEVO
+    adminMessage.textContent = ''; // Limpiar el mensaje de estado
 }
 
 function clearAdminClientInfo() {
@@ -466,20 +471,26 @@ onAuthStateChanged(auth, async user => {
                     await setDoc(userDocRef, {
                         stamps: 0,
                         lastUpdate: new Date(),
-                        userEmail: currentUser.email
+                        userEmail: currentUser.email,
+                        userName: currentUser.displayName || '' // <-- NUEVO: Guarda el nombre
                     }).then(() => {
                         console.log(`Tarjeta inicial creada para UID: ${currentUser.uid} con email: ${currentUser.email}`);
-                        showToast(`Tarjeta inicial creada para ${currentUser.email}.`, 'success'); // Toast para el usuario
+                        showToast(`Tarjeta inicial creada para ${currentUser.displayName || currentUser.email}.`, 'success'); // Toast para el usuario
                     }).catch(e => {
                         console.error("Error al crear la tarjeta inicial:", e);
                         showToast(`Error al crear tu tarjeta inicial: ${e.message}`, 'error'); // Toast para el usuario
                     });
                 } else {
                     const currentEmailInDb = userDocSnap.data().userEmail;
-                    if (currentEmailInDb !== currentUser.email) {
-                        await updateDoc(userDocRef, { userEmail: currentUser.email });
-                        console.log(`Email del usuario actualizado en DB para UID: ${currentUser.uid}`);
-                        showToast(`Email de la tarjeta actualizado a ${currentUser.email}.`, 'info'); // Toast para el usuario
+                    const currentNameInDb = userDocSnap.data().userName || ''; // Obtener el nombre actual
+                    // Actualizar email o nombre si han cambiado
+                    if (currentEmailInDb !== currentUser.email || currentNameInDb !== (currentUser.displayName || '')) { // <-- NUEVO: Comprobar también el nombre
+                        await updateDoc(userDocRef, {
+                            userEmail: currentUser.email,
+                            userName: currentUser.displayName || '' // <-- NUEVO: Actualiza el nombre
+                        });
+                        console.log(`Email/Nombre del usuario actualizado en DB para UID: ${currentUser.uid}`);
+                        showToast(`Tu información de tarjeta ha sido actualizada.`, 'info');
                     }
                 }
             }
@@ -519,18 +530,19 @@ onAuthStateChanged(auth, async user => {
 
 // Función auxiliar para actualizar la visualización y controles del admin
 async function updateAdminClientDisplayAndControls(clientId, docSnapshot) { // <-- Parámetro CORRECTO: docSnapshot
-    if (docSnapshot.exists()) { // <-- USO CORRECTO: docSnapshot
-        const data = docSnapshot.data(); // <-- USO CORRECTO: docSnapshot
+    if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
         const stamps = data.stamps || 0;
         const clientEmailDisplay = data.userEmail || clientId;
+        const clientNameDisplay = data.userName || clientEmailDisplay; // <-- NUEVO: Prioriza el nombre si existe
         targetClientEmail = clientId;
 
         adminClientInfo.innerHTML = `
-            <p>Cliente: <strong>${clientEmailDisplay}</strong> (UID: ${clientId})</p>
-            <p>Sellos actuales: <strong id="admin-current-stamps">${stamps}</strong></p>
+            <p>Cliente: <strong>${clientNameDisplay}</strong> (UID: ${clientId})</p>
+            <p>Email: <strong>${clientEmailDisplay}</strong></p> <p>Sellos actuales: <strong id="admin-current-stamps">${stamps}</strong></p>
         `;
         setAdminControlsEnabled(true, false, stamps);
-        showToast(`Cliente ${clientEmailDisplay} cargado correctamente.`, 'info'); // Usar toast
+        showToast(`Cliente ${clientNameDisplay} cargado correctamente.`, 'info'); // Usar el nombre en el toast
 
         // Desuscribir listener antiguo del adminClientListener si existe
         if (adminClientListener) adminClientListener();
@@ -542,7 +554,7 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) { // <
                 document.getElementById('admin-current-stamps').textContent = latestStamps;
                 setAdminControlsEnabled(true, false, latestStamps);
                 // Aquí podrías mostrar un toast más sutil si solo es una actualización de sellos en tiempo real
-                // showToast(`Sellos actualizados para ${clientEmailDisplay}: ${latestStamps}`, 'info', 1500);
+                // showToast(`Sellos actualizados para ${clientNameDisplay}: ${latestStamps}`, 'info', 1500); // Usar el nombre
             } else {
                 clearAdminClientInfo();
                 showToast(`El cliente con UID ${clientId} ya no existe en la base de datos.`, 'error'); // Usar toast
@@ -669,8 +681,7 @@ async function startQrScanner() {
     qrScannerOverlay.classList.remove('hidden'); // Muestra el overlay del escáner
 
     // Deshabilitar interacciones en el panel de administración principal y darle feedback visual
-    adminSection.style.pointerEvents = 'none';
-    adminSection.style.opacity = '0.5';
+    adminSection.classList.add('loading'); // <-- NUEVO: Añadir clase de carga
 
     // Inicializa Html5QrcodeScanner si no está ya inicializado
     if (!html5QrCodeScanner) {
@@ -729,8 +740,7 @@ async function stopQrScanner() {
     qrScannerOverlay.classList.add('hidden'); // Oculta el overlay del escáner
 
     // Habilitar interacciones en el panel de administración principal
-    adminSection.style.pointerEvents = 'auto';
-    adminSection.style.opacity = '1';
+    adminSection.classList.remove('loading'); // <-- NUEVO: Quitar clase de carga
     scannerMessage.textContent = ''; // Limpiar mensaje del escáner
 }
 
@@ -782,8 +792,8 @@ searchClientBtn.addEventListener('click', async () => {
         return;
     }
 
-    disableAdminControlsTemporarily();
-    adminMessage.textContent = 'Buscando cliente...'; // Mensaje de estado
+    disableAdminControlsTemporarily(); // <-- Usar la función
+    adminMessage.textContent = 'Buscando cliente...'; // Mensaje específico
     adminMessage.style.color = '#5bc0de';
 
     let clientIdToSearch = emailOrUidInput;
@@ -805,13 +815,9 @@ searchClientBtn.addEventListener('click', async () => {
     const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
     try {
         const docSnap = await getDoc(clientDocRef);
-        // Aquí se pasa docSnap, y la función updateAdminClientDisplayAndControls espera 'docSnapshot'
-        // que es el nombre correcto del parámetro dentro de su definición.
         await updateAdminClientDisplayAndControls(clientIdToSearch, docSnap);
 
         // Cargar y mostrar el historial de transacciones para el cliente seleccionado en el panel de administrador
-        // Se carga el historial independientemente de si el documento existe o no,
-        // la función loadAndDisplayHistory maneja el caso de "no transacciones".
         loadAndDisplayHistory(clientIdToSearch);
 
     } catch (error) {
@@ -819,8 +825,7 @@ searchClientBtn.addEventListener('click', async () => {
         showToast(`Error al cargar cliente: ${error.message}`, 'error'); // Usar toast
         clearAdminClientInfo();
     } finally {
-        enableAdminControlsAfterOperation();
-        adminMessage.textContent = ''; // Limpiar el mensaje de estado
+        enableAdminControlsAfterOperation(); // <-- Usar la función
     }
 });
 
@@ -844,8 +849,8 @@ addStampBtn.addEventListener('click', async () => {
     const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
     const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
-    disableAdminControlsTemporarily();
-    adminMessage.textContent = 'Añadiendo sello...'; // Mensaje de estado
+    disableAdminControlsTemporarily(); // <-- Usar la función
+    adminMessage.textContent = 'Añadiendo sello...'; // Mensaje específico
     adminMessage.style.color = '#5bc0de';
 
     try {
@@ -860,7 +865,8 @@ addStampBtn.addEventListener('click', async () => {
                 transaction.set(clientDocRef, {
                     stamps: newStamps,
                     lastUpdate: new Date(),
-                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail // Usar el email del input si es email, sino el UID
+                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail, // Usar el email del input si es email, sino el UID
+                    userName: adminEmailInput.value.includes('@') ? adminEmailInput.value.split('@')[0] : '' // <-- NUEVO: Intenta usar parte del email como nombre
                 });
                 showToast(`Cliente creado y sello añadido. Total: ${newStamps}.`, 'success'); // Usar toast
 
@@ -916,9 +922,8 @@ addStampBtn.addEventListener('click', async () => {
         console.error("Error al añadir sello:", error);
         showToast(`Error al añadir sello: ${error.message}`, 'error'); // Usar toast
     } finally {
-        enableAdminControlsAfterOperation();
-        loadAdminDashboardSummary(); // Actualiza el dashboard general
-        adminMessage.textContent = ''; // Limpiar el mensaje de estado
+        enableAdminControlsAfterOperation(); // <-- Usar la función
+        loadAdminDashboardSummary();
     }
 });
 
@@ -932,8 +937,8 @@ removeStampBtn.addEventListener('click', async () => {
     const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
     const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
-    disableAdminControlsTemporarily();
-    adminMessage.textContent = 'Quitando sello...'; // Mensaje de estado
+    disableAdminControlsTemporarily(); // <-- Usar la función
+    adminMessage.textContent = 'Quitando sello...'; // Mensaje específico
     adminMessage.style.color = '#5bc0de';
 
     try {
@@ -972,9 +977,8 @@ removeStampBtn.addEventListener('click', async () => {
         console.error("Error al quitar sello:", error);
         showToast(`Error al quitar sello: ${error.message}`, 'error'); // Usar toast
     } finally {
-        enableAdminControlsAfterOperation();
+        enableAdminControlsAfterOperation(); // <-- Usar la función
         loadAdminDashboardSummary();
-        adminMessage.textContent = ''; // Limpiar el mensaje de estado
     }
 });
 
@@ -989,8 +993,8 @@ redeemCoffeeBtn.addEventListener('click', async () => {
     const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
     const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
-    disableAdminControlsTemporarily();
-    adminMessage.textContent = 'Canjeando café...'; // Mensaje de estado
+    disableAdminControlsTemporarily(); // <-- Usar la función
+    adminMessage.textContent = 'Canjeando café...'; // Mensaje específico
     adminMessage.style.color = '#5bc0de';
 
     try {
@@ -1029,9 +1033,8 @@ redeemCoffeeBtn.addEventListener('click', async () => {
         console.error("Error al canjear café:", error);
         showToast(`Error al canjear café: ${error.message}`, 'error'); // Usar toast
     } finally {
-        enableAdminControlsAfterOperation();
+        enableAdminControlsAfterOperation(); // <-- Usar la función
         loadAdminDashboardSummary();
-        adminMessage.textContent = ''; // Limpiar el mensaje de estado
     }
 });
 
@@ -1046,8 +1049,8 @@ resetStampsBtn.addEventListener('click', async () => {
     const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
     const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
-    disableAdminControlsTemporarily();
-    adminMessage.textContent = 'Reiniciando tarjeta...'; // Mensaje de estado
+    disableAdminControlsTemporarily(); // <-- Usar la función
+    adminMessage.textContent = 'Reiniciando tarjeta...'; // Mensaje específico
     adminMessage.style.color = '#5bc0de';
 
     try {
@@ -1062,7 +1065,8 @@ resetStampsBtn.addEventListener('click', async () => {
                 transaction.set(clientDocRef, {
                     stamps: newStamps,
                     lastUpdate: new Date(),
-                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail // Usar el email del input si es email, sino el UID
+                    userEmail: adminEmailInput.value.includes('@') ? adminEmailInput.value : targetClientEmail, // Usar el email del input si es email, sino el UID
+                    userName: adminEmailInput.value.includes('@') ? adminEmailInput.value.split('@')[0] : '' // <-- NUEVO: Intenta usar parte del email como nombre
                 });
                 showToast(`Cliente creado y tarjeta reiniciada (0 sellos).`, 'info'); // Usar toast
 
@@ -1097,8 +1101,7 @@ resetStampsBtn.addEventListener('click', async () => {
         console.error("Error al reiniciar tarjeta:", error);
         showToast(`Error al reiniciar tarjeta: ${error.message}`, 'error'); // Usar toast
     } finally {
-        enableAdminControlsAfterOperation();
+        enableAdminControlsAfterOperation(); // <-- Usar la función
         loadAdminDashboardSummary();
-        adminMessage.textContent = ''; // Limpiar el mensaje de estado
     }
 });
