@@ -73,30 +73,52 @@ function renderStamps(stampsCount) {
     } else {
         messageDisplay.textContent = `¡Casi lo tienes! Te faltan ${maxStamps - stampsCount} sellos para tu café gratis.`;
         messageDisplay.style.color = '#555';
-        hideConfetti();
+        //hideConfetti(); // showConfetti ya limpia al final de su duración
     }
 }
 
+// *** FUNCIÓN showConfetti MEJORADA ***
 function showConfetti() {
+    // Eliminar confetis anteriores para evitar acumulación y para que la animación se reinicie
+    confettiContainer.innerHTML = '';
+
+    const numConfetti = 50; // Aumentamos la cantidad de confetis
+    const colors = ['#f06292', '#ba68c8', '#64b5f6', '#81c784', '#ffd54f', '#ff8a65']; // Colores más vibrantes
+
+    for (let i = 0; i < numConfetti; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; // Color aleatorio
+        confetti.style.left = `${Math.random() * 100}%`; // Posición horizontal aleatoria
+        
+        // Asignar una animación de caída aleatoria de las 5 definidas en CSS
+        const randomAnimationIndex = Math.floor(Math.random() * 5) + 1;
+        const randomAnimationName = `confetti-fall-${randomAnimationIndex}`;
+        
+        const randomDelay = Math.random() * 1.5; // Retraso de animación aleatorio (hasta 1.5s)
+        const randomDuration = 2 + Math.random() * 2; // Duración de animación aleatoria (2 a 4 segundos)
+
+        confetti.style.animation = `${randomAnimationName} ${randomDuration}s ${randomDelay}s ease-out forwards`;
+        
+        confettiContainer.appendChild(confetti);
+    }
+
     confettiContainer.classList.add('active');
-    document.querySelectorAll('.confetti').forEach(confetti => {
-        confetti.style.animation = 'none';
-        confetti.offsetHeight;
-        setTimeout(() => {
-            const randomAnimation = `confetti-fall-${Math.floor(Math.random() * 5) + 1}`;
-            const style = window.getComputedStyle(confetti);
-            const initialDelay = parseFloat(style.animationDelay) || 0;
-            confetti.style.animation = `${randomAnimation} 2s ${initialDelay}s ease-out forwards`;
-        }, 0);
-    });
+    
+    // Duración total de la visualización del confeti
     setTimeout(() => {
         confettiContainer.classList.remove('active');
-    }, 3000);
+        confettiContainer.innerHTML = ''; // Limpia el confeti después de que la animación termine
+    }, 4000); // Muestra el confeti por 4 segundos
 }
 
 function hideConfetti() {
+    // Esta función se puede mantener si se usa en otros lugares,
+    // pero showConfetti ahora limpia y oculta por sí misma después de un tiempo.
     confettiContainer.classList.remove('active');
+    confettiContainer.innerHTML = ''; // Asegura que el confeti se limpie al ocultar
 }
+
 
 // Controla la habilitación/deshabilitación y estilos de los botones de acción del admin
 function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
@@ -251,7 +273,7 @@ onAuthStateChanged(auth, async user => {
         renderStamps(0);
         messageDisplay.textContent = 'Inicia sesión para ver tu tarjeta de lealtad.';
         messageDisplay.style.color = '#555';
-        hideConfetti();
+        hideConfetti(); // Asegura que el confeti se oculte si el usuario cierra sesión
 
         if (clientListener) {
             clientListener();
@@ -363,7 +385,7 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
     }
 }
 
-// *** NUEVA FUNCIÓN: Para generar el Código QR ***
+// *** FUNCIÓN generateQRCode (sin cambios, ya debería estar bien) ***
 function generateQRCode(uid) {
     if (!qrcodeCanvas) {
         console.error("Canvas para QR no encontrado.");
