@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cafetería Lealtad</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/qrious@4.0.2/dist/qrious.min.js"></script>
     </head>
 <body>
     <header>
@@ -29,8 +30,7 @@
             <p id="progress-message"></p>
             <div id="user-qr-container" class="qr-container">
                 <p>Muestra este código para acumular sellos:</p>
-                <div id="user-qr-code">
-                    </div>
+                <canvas id="user-qr-code"></canvas>
             </div>
         </section>
 
