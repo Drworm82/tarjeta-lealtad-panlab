@@ -3,67 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarjeta de Lealtad Panlab</title>
+    <title>Mi Cafetería Favorita - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
-    
-    </head>
+</head>
 <body>
     <div class="container">
-        <h1>
-            <span class="coffee-icon">☕</span> Tarjeta de Lealtad Panlab <span class="coffee-icon">☕</span>
-        </h1>
-        <p>¡Acumula sellos por cada compra y obtén tu café gratis!</p>
+        <header>
+            <h1><span class="coffee-icon">☕</span> Mi Cafetería Favorita <span class="coffee-icon">☕</span></h1>
+            <p>¡Colecciona sellos y obtén un café gratis!</p>
+        </header>
 
-        <div id="user-display"></div>
-        <button id="auth-btn">Iniciar Sesión con Google</button>
+        <section id="auth-section">
+            <p id="user-display">Por favor, inicia sesión.</p>
+            <button id="auth-btn">Iniciar Sesión con Google</button>
+        </section>
 
-        <div id="stamps-display">
+        <section id="loyalty-card">
+            <div id="stamps-display" class="stamps-grid">
+                </div>
+            <p id="message">Inicia sesión para ver tu tarjeta de lealtad.</p>
+            <div class="confetti-container">
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
             </div>
+        </section>
 
-        <div class="confetti-container">
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            <div class="confetti"></div>
-            </div>
-
-        <div id="message">
-            </div>
-
-        <div id="admin-section" class="client-control hidden">
+        <section id="admin-section" class="hidden">
             <h2>Panel de Administración</h2>
-            <p>Busca un cliente por su correo electrónico para gestionar sus sellos.</p>
-            <div class="input-group">
-                <input type="email" id="admin-email-input" placeholder="Correo del cliente" autocomplete="off">
-                <button id="search-client-btn">Buscar Cliente</button>
-            </div>
-            <div id="admin-client-info">
+            <p>Solo para personal autorizado.</p>
+            <div class="admin-controls">
+                <input type="email" id="admin-email-input" placeholder="Email del cliente">
+                <button id="search-client-btn" class="btn-primary">Buscar Cliente</button>
+                <div id="admin-client-info">
+                    <p>No hay cliente cargado.</p>
                 </div>
-            <div id="admin-client-controls">
-                <button id="add-stamp-btn">Añadir Sello</button>
-                <button id="remove-stamp-btn">Quitar Sello</button>
-                <button id="redeem-coffee-btn">Canjear Café</button>
-                <button id="reset-stamps-btn">Resetear Sellos</button>
+                <p id="admin-message" class="message"></p>
+                <button id="add-stamp-btn" class="btn-success" disabled>Añadir Sello a Cliente</button>
+                <button id="remove-stamp-btn" class="btn-danger" disabled>Quitar Sello de Cliente</button>
+                <button id="redeem-coffee-btn" class="btn-info" disabled>Canjear Café de Cliente</button>
+                <button id="reset-stamps-btn" class="btn-secondary" disabled>Reiniciar Tarjeta de Cliente</button>
             </div>
-            <div id="admin-message">
-                </div>
-        </div>
+        </section>
     </div>
 
     <script type="module" src="script.js"></script>
