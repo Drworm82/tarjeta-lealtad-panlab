@@ -6,7 +6,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapsho
 // --- Configuración de Firebase (TUS CREDENCIALES) ---
 // ASEGÚRATE DE QUE ESTAS CREDENCIALES SON LAS CORRECTAS DE TU PROYECTO FIREBASE
 const firebaseConfig = {
-    apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo", 
+    apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo",
     authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
     projectId: "mi-cafeteria-lealtad",
     storageBucket: "mi-cafeteria-lealtad.firebaseapp.com",
@@ -31,7 +31,7 @@ let clientListener = null; // Para el usuario normal
 let adminClientListener = null; // Para el cliente cargado en el panel de admin
 
 // Almacena el UID del cliente actualmente seleccionado en el panel de administración
-let targetClientEmail = null; 
+let targetClientEmail = null;
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -114,20 +114,20 @@ function showConfetti() {
         confetti.classList.add('confetti');
         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.left = `${Math.random() * 100}%`;
-        
+
         const randomAnimationIndex = Math.floor(Math.random() * 5) + 1;
         const randomAnimationName = `confetti-fall-${randomAnimationIndex}`;
-        
+
         const randomDelay = Math.random() * 1.5;
         const randomDuration = 2 + Math.random() * 2;
 
         confetti.style.animation = `${randomAnimationName} ${randomDuration}s ${randomDelay}s ease-out forwards`;
-        
+
         confettiContainer.appendChild(confetti);
     }
 
     confettiContainer.classList.add('active');
-    
+
     setTimeout(() => {
         confettiContainer.classList.remove('active');
         confettiContainer.innerHTML = '';
@@ -403,11 +403,11 @@ onAuthStateChanged(auth, async user => {
             }
             // Limpiar historial del cliente si el admin está logueado
             stampsHistoryList.innerHTML = '<li>No aplicable para administradores.</li>';
-            
+
             // EL ADMINISTRADOR NO TIENE UNA TARJETA DE LEALTAD "PROPIA"
             // Por lo tanto, no llamamos a loadAndListenForStamps(currentUser.uid) aquí
             // para el administrador.
-            
+
         } else { // Este es un usuario normal (no admin)
             adminSection.classList.add('hidden');
             stopQrScanner(); // Asegurarse de que el escáner se detenga si se cambia a usuario normal
@@ -465,7 +465,7 @@ onAuthStateChanged(auth, async user => {
 // Función auxiliar para actualizar la visualización y controles del admin
 async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
     if (docSnapshot.exists()) {
-        const data = docSnapshot.data();
+        const data = docSnap.data();
         const stamps = data.stamps || 0;
         const clientEmailDisplay = data.userEmail || clientId;
         targetClientEmail = clientId; // targetClientEmail ahora almacena el UID
@@ -616,10 +616,10 @@ async function startQrScanner() {
     scannerMessage.textContent = 'Cargando cámara...';
     scannerMessage.style.color = '#7a4a2b';
     qrScannerOverlay.classList.remove('hidden'); // Muestra el overlay del escáner
-    
+
     // Deshabilitar interacciones en el panel de administración principal y darle feedback visual
-    adminSection.style.pointerEvents = 'none'; 
-    adminSection.style.opacity = '0.5'; 
+    adminSection.style.pointerEvents = 'none';
+    adminSection.style.opacity = '0.5';
 
     // Inicializa Html5QrcodeScanner si no está ya inicializado
     if (!html5QrCodeScanner) {
@@ -640,7 +640,7 @@ async function startQrScanner() {
         // Esto permite que el DOM se actualice con el valor del input antes de buscar
         setTimeout(() => {
             searchClientBtn.click();
-        }, 100); 
+        }, 100);
     };
 
     // Callback para cuando hay un error en el escaneo (ej. no se encuentra QR, poca luz)
@@ -732,250 +732,315 @@ searchClientBtn.addEventListener('click', async () => {
     let clientIdToSearch = emailOrUidInput;
 
     // Intenta buscar por Email si el input parece un email
-    if (emailOrUidInput.includes('@') && emailOrUidInput.includes('.')) {
-        console.log(`searchClientBtn: Input parece un email, intentando buscar UID por email: ${emailOrUidInput}`);
-        const uidFromEmail = await getUidByEmail(emailOrUidInput);
-        if (uidFromEmail) {
-            clientIdToSearch = uidFromEmail;
+    if (emailOrUidInput.includes('@')) {
+        const uid = await getUidByEmail(emailOrUidInput);
+        if (uid) {
+            clientIdToSearch = uid;
+            console.log(`Email '${emailOrUidInput}' resuelto a UID: ${uid}`);
         } else {
-            adminMessage.textContent = `Cliente con email "${emailOrUidInput}" no encontrado.`;
-            adminMessage.style.color = '#f0ad4e';
+            adminMessage.textContent = `No se encontró un cliente con el email: ${emailOrUidInput}. Intenta con un UID.`;
+            adminMessage.style.color = '#d9534f';
             clearAdminClientInfo();
             enableAdminControlsAfterOperation();
             return;
         }
-    } else {
-        console.log(`searchClientBtn: Input parece un UID, buscando directamente: ${emailOrUidInput}`);
     }
 
+    const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
     try {
-        const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
-        const clientDoc = await getDoc(clientDocRef);
+        const docSnap = await getDoc(clientDocRef);
+        await updateAdminClientDisplayAndControls(clientIdToSearch, docSnap);
 
-        await updateAdminClientDisplayAndControls(clientIdToSearch, clientDoc);
+        // Cargar y mostrar el historial de transacciones para el cliente seleccionado en el panel de administrador
+        if (docSnap.exists()) {
+             // Solo si el documento existe, cargamos el historial
+            loadAndDisplayHistory(clientIdToSearch);
+        } else {
+            // Si el documento no existe (cliente nuevo), se mostrará un mensaje de "No hay transacciones"
+            stampsHistoryList.innerHTML = '<li>No hay transacciones registradas aún para este cliente.</li>';
+        }
 
     } catch (error) {
-        console.error("searchClientBtn ERROR: Error al buscar cliente:", error);
-        adminMessage.textContent = `Error al buscar el cliente. Por favor, verifica el email/UID e intenta de nuevo.`;
+        console.error("Error al cargar cliente en admin:", error);
+        adminMessage.textContent = `Error al cargar cliente: ${error.message}`;
         adminMessage.style.color = '#d9534f';
+        clearAdminClientInfo();
     } finally {
         enableAdminControlsAfterOperation();
     }
 });
 
-// Event listener para añadir sello
+// --- Manejador para Añadir Sello ---
 addStampBtn.addEventListener('click', async () => {
-    if (!targetClientEmail) return;
+    if (!targetClientEmail || !currentUser) { // targetClientEmail es el UID del cliente cargado
+        adminMessage.textContent = 'Por favor, busca y carga un cliente primero.';
+        adminMessage.style.color = '#d9534f';
+        return;
+    }
+
+    // Obtener los sellos actuales mostrados en el panel del admin para usarlos como 'stampsBefore'
+    const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
+    const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
     disableAdminControlsTemporarily();
     adminMessage.textContent = 'Añadiendo sello...';
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        let updatedStamps = 0;
-        let currentStampsBeforeTransaction = 0;
+        const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail);
 
         await runTransaction(db, async (transaction) => {
-            const docSnapshot = await transaction.get(docRef);
-            let userEmail = '';
+            const docSnap = await transaction.get(clientDocRef);
 
-            if (docSnapshot.exists()) {
-                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
-                userEmail = docSnapshot.data().userEmail || '';
-            } else {
-                console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
-                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || targetClientEmail }); // Usar targetClientEmail si userEmail no está disponible
-            }
+            if (!docSnap.exists()) {
+                // Si la tarjeta no existe, la creamos con 1 sello
+                const newStamps = 1;
+                transaction.set(clientDocRef, {
+                    stamps: newStamps,
+                    lastUpdate: new Date(),
+                    userEmail: adminEmailInput.value // Usar el email del input si no hay uno guardado
+                });
+                adminMessage.textContent = `Cliente creado y sello añadido. Total: ${newStamps}`;
+                adminMessage.style.color = '#28a745';
 
-            if (currentStampsBeforeTransaction < MAX_STAMPS) {
-                updatedStamps = currentStampsBeforeTransaction + 1;
-                transaction.update(docRef, { stamps: updatedStamps, lastUpdate: new Date() });
-                adminMessage.textContent = `¡Sello añadido con éxito a ${userEmail || targetClientEmail}! Sellos actuales: ${updatedStamps}`;
-                adminMessage.style.color = '#5cb85c';
+                // Registrar la transacción de creación/primer sello
+                await logTransaction(
+                    targetClientEmail,
+                    'add_stamp', // Type: 'add_stamp'
+                    0,           // Stamps before: 0 (porque no existía)
+                    newStamps,   // Stamps after: 1
+                    'Primer sello añadido (tarjeta creada)',
+                    currentUser.uid
+                );
+
             } else {
-                updatedStamps = currentStampsBeforeTransaction; // No se modifican los sellos
-                adminMessage.textContent = `El cliente ${userEmail || targetClientEmail} ya tiene ${MAX_STAMPS} sellos o más. Debe canjear su café primero.`;
-                adminMessage.style.color = '#f0ad4e';
+                const currentStamps = docSnap.data().stamps || 0;
+                if (currentStamps < MAX_STAMPS) {
+                    const newStamps = currentStamps + 1;
+                    transaction.update(clientDocRef, { stamps: newStamps, lastUpdate: new Date() });
+                    adminMessage.textContent = `Sello añadido. Nuevo total: ${newStamps}`;
+                    adminMessage.style.color = '#28a745';
+
+                    // ***************************************************************
+                    // --> ¡¡¡AQUÍ ES DONDE AÑADIRÍAS LA LLAMADA A logTransaction!!! <--
+                    // ***************************************************************
+                    await logTransaction(
+                        targetClientEmail,
+                        'add_stamp', // <-- Este type debe coincidir con el 'case' en loadAndDisplayHistory
+                        currentStamps,
+                        newStamps,
+                        'Sello añadido por administrador',
+                        currentUser.uid
+                    );
+
+                } else {
+                    adminMessage.textContent = 'El cliente ya tiene el máximo de sellos. No se puede añadir más.';
+                    adminMessage.style.color = '#f0ad4e';
+                }
             }
         });
-
-        const finalDocSnap = await getDoc(docRef);
-        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
-
-        if (finalStamps > currentStampsBeforeTransaction && currentStampsBeforeTransaction < MAX_STAMPS) {
-            await logTransaction(targetClientEmail, 'add_stamp', currentStampsBeforeTransaction, finalStamps, 'Compra de café', currentUser.uid);
-        }
-
-        const updatedDocSnap = await getDoc(docRef);
-        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+        // Después de una operación exitosa, recargar el historial del cliente para que el admin vea el cambio
+        loadAndDisplayHistory(targetClientEmail); // Asegúrate de que este cliente tiene un historial visible para el admin si lo deseas.
+                                                // Aunque el historial principal es para el usuario final, el admin podría querer verlo en su propio UI.
 
     } catch (error) {
-        console.error("addStampBtn ERROR: Error al añadir sello:", error);
-        adminMessage.textContent = `Error al añadir el sello. Por favor, revisa y vuelve a intentarlo.`;
+        console.error("Error al añadir sello:", error);
+        adminMessage.textContent = `Error al añadir sello: ${error.message}`;
         adminMessage.style.color = '#d9534f';
     } finally {
         enableAdminControlsAfterOperation();
+        loadAdminDashboardSummary(); // Actualiza el dashboard general
     }
 });
 
-// Event listener para quitar sello
+// --- Manejador para Quitar Sello ---
 removeStampBtn.addEventListener('click', async () => {
-    if (!targetClientEmail) return;
+    if (!targetClientEmail || !currentUser) {
+        adminMessage.textContent = 'Por favor, busca y carga un cliente primero.';
+        adminMessage.style.color = '#d9534f';
+        return;
+    }
+
+    const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
+    const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
     disableAdminControlsTemporarily();
     adminMessage.textContent = 'Quitando sello...';
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        let newStampsAfterRemove = 0;
-        let currentStampsBeforeTransaction = 0;
+        const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail);
 
         await runTransaction(db, async (transaction) => {
-            const docSnapshot = await transaction.get(docRef);
-            if (docSnapshot.exists()) {
-                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
-                const userEmail = docSnapshot.data().userEmail || targetClientEmail;
-                if (currentStampsBeforeTransaction > 0) {
-                    newStampsAfterRemove = currentStampsBeforeTransaction - 1;
-                    transaction.update(docRef, { stamps: newStampsAfterRemove, lastUpdate: new Date() });
-                    adminMessage.textContent = `Sello quitado con éxito de ${userEmail}. Sellos actuales: ${newStampsAfterRemove}`;
-                    adminMessage.style.color = '#5cb85c';
-                } else {
-                    newStampsAfterRemove = currentStampsBeforeTransaction;
-                    adminMessage.textContent = `El cliente ${userEmail} no tiene sellos para quitar.`;
-                    adminMessage.style.color = '#f0ad4e';
-                }
+            const docSnap = await transaction.get(clientDocRef);
+
+            if (!docSnap.exists()) {
+                adminMessage.textContent = `Error: Tarjeta del cliente ${targetClientEmail} no encontrada.`;
+                adminMessage.style.color = '#d9534f';
+                return;
+            }
+
+            const currentStamps = docSnap.data().stamps || 0;
+            if (currentStamps > 0) {
+                const newStamps = currentStamps - 1;
+                transaction.update(clientDocRef, { stamps: newStamps, lastUpdate: new Date() });
+                adminMessage.textContent = `Sello quitado. Nuevo total: ${newStamps}`;
+                adminMessage.style.color = '#dc3545'; // Rojo para quitar
+
+                await logTransaction(
+                    targetClientEmail,
+                    'remove_stamp', // Type: 'remove_stamp'
+                    currentStamps,
+                    newStamps,
+                    'Sello quitado por administrador',
+                    currentUser.uid
+                );
+
             } else {
-                newStampsAfterRemove = 0;
-                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
+                adminMessage.textContent = 'El cliente ya tiene 0 sellos. No se puede quitar más.';
                 adminMessage.style.color = '#f0ad4e';
             }
         });
-
-        const finalDocSnap = await getDoc(docRef);
-        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
-
-        if (finalStamps < currentStampsBeforeTransaction && currentStampsBeforeTransaction > 0) {
-            await logTransaction(targetClientEmail, 'remove_stamp', currentStampsBeforeTransaction, finalStamps, 'Sello quitado por error/ajuste', currentUser.uid);
-        }
-
-        const updatedDocSnap = await getDoc(docRef);
-        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+        loadAndDisplayHistory(targetClientEmail);
 
     } catch (error) {
-        console.error("removeStampBtn ERROR: Error al quitar sello:", error);
-        adminMessage.textContent = `Error al quitar el sello. Por favor, revisa y vuelve a intentarlo.`;
+        console.error("Error al quitar sello:", error);
+        adminMessage.textContent = `Error al quitar sello: ${error.message}`;
         adminMessage.style.color = '#d9534f';
     } finally {
         enableAdminControlsAfterOperation();
+        loadAdminDashboardSummary();
     }
 });
 
-// Event listener para canjear café
+
+// --- Manejador para Canjear Café ---
 redeemCoffeeBtn.addEventListener('click', async () => {
-    if (!targetClientEmail) return;
+    if (!targetClientEmail || !currentUser) {
+        adminMessage.textContent = 'Por favor, busca y carga un cliente primero.';
+        adminMessage.style.color = '#d9534f';
+        return;
+    }
+
+    const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
+    const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
     disableAdminControlsTemporarily();
     adminMessage.textContent = 'Canjeando café...';
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        let newStampsAfterRedeem = 0;
-        let currentStampsBeforeTransaction = 0;
+        const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail);
 
         await runTransaction(db, async (transaction) => {
-            const docSnapshot = await transaction.get(docRef);
-            if (docSnapshot.exists()) {
-                currentStampsBeforeTransaction = docSnapshot.data().stamps || 0;
-                const userEmail = docSnapshot.data().userEmail || targetClientEmail;
-                if (currentStampsBeforeTransaction >= MAX_STAMPS) {
-                    newStampsAfterRedeem = currentStampsBeforeTransaction - MAX_STAMPS;
-                    transaction.update(docRef, { stamps: newStampsAfterRedeem, lastUpdate: new Date() });
-                    adminMessage.textContent = `¡Café canjeado para ${userEmail}! Sellos restantes: ${newStampsAfterRedeem}`;
-                    adminMessage.style.color = '#5cb85c';
-                } else {
-                    newStampsAfterRedeem = currentStampsBeforeTransaction;
-                    adminMessage.textContent = `El cliente ${userEmail} no tiene suficientes sellos (${currentStampsBeforeTransaction}/${MAX_STAMPS}) para canjear un café.`;
-                    adminMessage.style.color = '#f0ad4e';
-                }
+            const docSnap = await transaction.get(clientDocRef);
+
+            if (!docSnap.exists()) {
+                adminMessage.textContent = `Error: Tarjeta del cliente ${targetClientEmail} no encontrada.`;
+                adminMessage.style.color = '#d9534f';
+                return;
+            }
+
+            const currentStamps = docSnap.data().stamps || 0;
+            if (currentStamps >= MAX_STAMPS) {
+                const newStamps = 0; // Reiniciar sellos después de canjear
+                transaction.update(clientDocRef, { stamps: newStamps, lastUpdate: new Date() });
+                adminMessage.textContent = `Café canjeado. Sellos reiniciados a ${newStamps}.`;
+                adminMessage.style.color = '#17a2b8'; // Color para canje
+
+                await logTransaction(
+                    targetClientEmail,
+                    'redeem_coffee', // Type: 'redeem_coffee'
+                    currentStamps,
+                    newStamps,
+                    'Café gratis canjeado por administrador',
+                    currentUser.uid
+                );
+
             } else {
-                newStampsAfterRedeem = 0;
-                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
+                adminMessage.textContent = `El cliente necesita ${MAX_STAMPS - currentStamps} sellos más para canjear un café.`;
                 adminMessage.style.color = '#f0ad4e';
             }
         });
-
-        const finalDocSnap = await getDoc(docRef);
-        const finalStamps = finalDocSnap.exists() ? (finalDocSnap.data().stamps || 0) : 0;
-
-        // Loguear solo si los sellos se redujeron por un canjeo exitoso
-        if (currentStampsBeforeTransaction >= MAX_STAMPS && finalStamps < currentStampsBeforeTransaction) {
-            await logTransaction(targetClientEmail, 'redeem_coffee', currentStampsBeforeTransaction, finalStamps, 'Café gratis canjeado', currentUser.uid);
-        }
-
-        const updatedDocSnap = await getDoc(docRef);
-        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+        loadAndDisplayHistory(targetClientEmail);
 
     } catch (error) {
-        console.error("redeemCoffeeBtn ERROR: Error al canjear café:", error);
-        adminMessage.textContent = `Error al canjear el café. Por favor, revisa y vuelve a intentarlo.`;
+        console.error("Error al canjear café:", error);
+        adminMessage.textContent = `Error al canjear café: ${error.message}`;
         adminMessage.style.color = '#d9534f';
     } finally {
         enableAdminControlsAfterOperation();
+        loadAdminDashboardSummary();
     }
 });
 
-// Event listener para reiniciar tarjeta
+
+// --- Manejador para Reiniciar Tarjeta (Resetear Sellos) ---
 resetStampsBtn.addEventListener('click', async () => {
-    if (!targetClientEmail) return;
-
-    const clientInfoElement = adminClientInfo.querySelector('strong');
-    const userEmailForConfirm = clientInfoElement ? clientInfoElement.textContent.split(' ')[0] : targetClientEmail;
-
-    if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${userEmailForConfirm}? Esto pondrá sus sellos a 0.`)) {
+    if (!targetClientEmail || !currentUser) {
+        adminMessage.textContent = 'Por favor, busca y carga un cliente primero.';
+        adminMessage.style.color = '#d9534f';
         return;
     }
+
+    const adminCurrentStampsElement = document.getElementById('admin-current-stamps');
+    const stampsBefore = parseInt(adminCurrentStampsElement.textContent || '0');
 
     disableAdminControlsTemporarily();
     adminMessage.textContent = 'Reiniciando tarjeta...';
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        const docSnapshotBefore = await getDoc(docRef); // Obtener antes para el historial
-        const prevStamps = docSnapshotBefore.exists() ? (docSnapshotBefore.data().stamps || 0) : 0;
+        const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail);
 
-        await setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmailForConfirm }, { merge: true })
-            .then(() => {
-                adminMessage.textContent = `¡Tarjeta de ${userEmailForConfirm} reiniciada a 0 sellos con éxito!`;
-                adminMessage.style.color = '#5cb85c';
-            })
-            .catch((error) => {
-                console.error("resetStampsBtn ERROR: Error al reiniciar tarjeta:", error);
-                adminMessage.textContent = `Error al reiniciar la tarjeta. Por favor, revisa y vuelve a intentarlo.`;
-                adminMessage.style.color = '#d9534f';
-            });
-        
-        // Loguear siempre el reinicio
-        await logTransaction(targetClientEmail, 'reset_stamps', prevStamps, 0, 'Tarjeta reiniciada por admin', currentUser.uid);
+        await runTransaction(db, async (transaction) => {
+            const docSnap = await transaction.get(clientDocRef);
 
-        const updatedDocSnap = await getDoc(docRef);
-        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+            if (!docSnap.exists()) {
+                // Si la tarjeta no existe, la creamos con 0 sellos al reiniciar
+                const newStamps = 0;
+                transaction.set(clientDocRef, {
+                    stamps: newStamps,
+                    lastUpdate: new Date(),
+                    userEmail: adminEmailInput.value // Usar el email del input si no hay uno guardado
+                });
+                adminMessage.textContent = `Cliente creado y tarjeta reiniciada (0 sellos).`;
+                adminMessage.style.color = '#6c757d';
+
+                await logTransaction(
+                    targetClientEmail,
+                    'reset_stamps', // Type: 'reset_stamps'
+                    0,           // Stamps before: 0 (porque no existía)
+                    newStamps,   // Stamps after: 0
+                    'Tarjeta creada/reiniciada a 0 sellos',
+                    currentUser.uid
+                );
+
+            } else {
+                const currentStamps = docSnap.data().stamps || 0;
+                const newStamps = 0;
+                transaction.update(clientDocRef, { stamps: newStamps, lastUpdate: new Date() });
+                adminMessage.textContent = `Tarjeta reiniciada a ${newStamps} sellos.`;
+                adminMessage.style.color = '#6c757d'; // Gris para reiniciar
+
+                await logTransaction(
+                    targetClientEmail,
+                    'reset_stamps', // <-- Este type debe coincidir con el 'case' en loadAndDisplayHistory
+                    currentStamps,
+                    newStamps,
+                    'Tarjeta reiniciada por administrador',
+                    currentUser.uid
+                );
+            }
+        });
+        loadAndDisplayHistory(targetClientEmail);
 
     } catch (error) {
-        console.error("resetStampsBtn ERROR (fuera de setDoc): Error al reiniciar tarjeta:", error);
-        adminMessage.textContent = `Error al reiniciar la tarjeta. Por favor, revisa y vuelve a intentarlo.`;
+        console.error("Error al reiniciar tarjeta:", error);
+        adminMessage.textContent = `Error al reiniciar tarjeta: ${error.message}`;
         adminMessage.style.color = '#d9534f';
     } finally {
         enableAdminControlsAfterOperation();
+        loadAdminDashboardSummary();
     }
-});
-
-
-// Inicializar el display al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    renderStamps(0);
 });
