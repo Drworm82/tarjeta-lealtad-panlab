@@ -168,7 +168,8 @@ input[type="email"], select {
     color: #555;
 }
 
-.qr-container img {
+/* CAMBIADO: Estilo para el canvas del QR */
+.qr-container canvas {
     border: 1px solid #ccc;
     padding: 5px;
     background-color: white;
@@ -239,7 +240,8 @@ input[type="email"], select {
     background-color: #f9f9f9;
 }
 
-#client-qr-display img {
+/* Estilo para el canvas del QR del admin */
+#client-qr-display canvas {
     margin-bottom: 15px;
     border: 1px solid #ccc;
     padding: 5px;
