@@ -1,350 +1,353 @@
-/* style.css */
+/* Fuente de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Playfair+Display:wght@700&display=swap');
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f3ed; /* Color de fondo suave */
-    color: #333;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    overflow-x: hidden; /* Evita el scroll horizontal no deseado */
+    background-color: #f4f2ed; /* Color crema suave */
+    color: #333;
+    line-height: 1.6;
 }
 
 header {
-    background-color: #7a4a2b; /* Marrón oscuro para la cabecera */
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background-color: #7a4a2b; /* Marrón café oscuro */
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+.header-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
 header h1 {
+    font-family: 'Playfair Display', serif;
     margin: 0;
-    font-size: 1.8em;
+    font-size: 2.5em;
+    letter-spacing: 1px;
 }
 
-.auth-controls {
-    display: flex;
-    align-items: center;
-}
-
-#user-display {
-    margin-right: 15px;
-    font-weight: bold;
+header p {
+    margin: 5px 0 15px;
+    font-size: 1.1em;
 }
 
 button {
-    background-color: #a06e4a; /* Marrón más claro para botones */
+    background-color: #a06e4a; /* Marrón medio */
     color: white;
+    padding: 10px 20px;
     border: none;
-    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 5px;
 }
 
 button:hover {
-    background-color: #8a5e3a;
+    background-color: #8b5f3d; /* Marrón más oscuro al pasar el ratón */
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 button:disabled {
-    background-color: #cccccc;
+    background-color: #ccc;
     cursor: not-allowed;
+    transform: none;
 }
 
 main {
-    flex-grow: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%; /* Asegura que el main ocupe todo el ancho disponible */
-    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
 }
 
 .card {
     background-color: #fff;
+    padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
+    margin-bottom: 30px;
+    border-top: 5px solid #a06e4a; /* Borde superior con color distintivo */
 }
 
 .card h2 {
     color: #7a4a2b;
+    text-align: center;
     margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.6em;
+    margin-bottom: 25px;
+    font-family: 'Playfair Display', serif;
 }
 
-/* Estilos de la Tarjeta de Lealtad */
 .stamps-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* 5 columnas */
     gap: 15px;
     margin-bottom: 20px;
-    justify-items: center;
+    justify-items: center; /* Centra los items en la celda */
     align-items: center;
 }
 
 .stamp {
     width: 60px;
     height: 60px;
-    background-color: #e0d8cc; /* Color para sello vacío */
+    background-color: #e0e0e0; /* Gris claro para sellos vacíos */
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2em;
+    font-size: 1.5em;
     font-weight: bold;
-    color: #7a4a2b;
-    border: 2px solid #a06e4a;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease;
+    color: #7a4a2b; /* Color del número del sello */
+    border: 2px dashed #b0b0b0; /* Borde punteado para sellos vacíos */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .stamp.obtained {
-    background-color: #a06e4a; /* Color para sello lleno */
-    color: white; /* Color del icono */
-    font-size: 2em; /* Tamaño más grande para el icono */
-    border-color: #7a4a2b;
+    background-color: #a06e4a; /* Marrón café para sellos llenos */
+    color: #fff; /* Texto blanco para sellos llenos */
+    border: 2px solid #7a4a2b; /* Borde sólido para sellos llenos */
+    font-size: 2.5em; /* Icono más grande */
 }
 
-/* Mensajes */
-#message, #admin-message {
-    margin-top: 15px;
-    font-size: 1.1em;
+p#message {
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 20px;
     font-weight: bold;
 }
 
-/* Contenedor de Confeti */
+.hidden {
+    display: none !important;
+}
+
+/* Sección de Administración */
+.admin-controls, .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.admin-controls label {
+    flex-basis: 100%;
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #7a4a2b;
+}
+
+.admin-controls input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    min-width: 180px; /* Para asegurar que no sea demasiado pequeño en móvil */
+}
+
+#admin-client-info {
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#admin-client-info p {
+    margin: 5px 0;
+}
+
+#admin-client-info strong {
+    color: #7a4a2b;
+}
+
+.message {
+    text-align: center;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* Confetti */
 .confetti-container {
-    position: fixed; /* Cambiado de 'relative' a 'fixed' para cubrir toda la ventana */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none; /* Permite hacer clic a través de los confetis */
     overflow: hidden;
-    pointer-events: none; /* Permite hacer clic a través del confeti */
-    z-index: 9999; /* Asegura que el confeti esté por encima de todo */
-    display: none; /* Oculto por defecto, activado por JS */
+    z-index: 9999;
+    opacity: 0; /* Oculto por defecto */
+    transition: opacity 0.5s ease-out;
 }
 
 .confetti-container.active {
-    display: block; /* Muestra el contenedor cuando está activo */
+    opacity: 1;
 }
 
 .confetti {
     position: absolute;
     width: 10px;
     height: 10px;
-    background-color: #ccc; /* Color por defecto, sobrescrito por JS */
+    background-color: #f00; /* Color de fallback */
     border-radius: 50%; /* Para confeti redondo */
-    opacity: 0; /* Empieza invisible */
-    animation-fill-mode: forwards; /* Mantiene el estado final de la animación */
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
-/* Animaciones de Confeti (ejemplo de 5 variaciones) */
+/* Animaciones de caída de confeti */
 @keyframes confetti-fall-1 {
-    0% { transform: translate(0, -100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(50px, 100vh) rotate(360deg); opacity: 0; }
+    0% { transform: translate(0, -100px) rotate(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 1px), calc(100vh + var(--rand-y) * 1px)) rotate(720deg); opacity: 0; }
 }
 @keyframes confetti-fall-2 {
-    0% { transform: translate(100px, -100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-50px, 100vh) rotate(-360deg); opacity: 0; }
+    0% { transform: translate(0, -100px) rotate(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * -1px), calc(100vh + var(--rand-y) * 1px)) rotate(-720deg); opacity: 0; }
 }
 @keyframes confetti-fall-3 {
-    0% { transform: translate(-50px, -100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(100px, 100vh) rotate(720deg); opacity: 0; }
+    0% { transform: translate(0, -100px) scale(0.5); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 2px), calc(100vh + var(--rand-y) * 1px)) scale(1.5) rotate(360deg); opacity: 0; }
 }
 @keyframes confetti-fall-4 {
-    0% { transform: translate(150px, -100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-100px, 100vh) rotate(-720deg); opacity: 0; }
+    0% { transform: translate(0, -100px) skewX(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * -2px), calc(100vh + var(--rand-y) * 1px)) skewX(90deg); opacity: 0; }
 }
 @keyframes confetti-fall-5 {
-    0% { transform: translate(-100px, -100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(50px, 100vh) rotate(360deg); opacity: 0; }
+    0% { transform: translate(0, -100px) scale(1); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 0.5px), calc(100vh + var(--rand-y) * 1px)) scale(0.8) rotate(1080deg); opacity: 0; }
 }
 
-
-/* Sección de Administración */
-#admin-section {
-    background-color: #f0ead8; /* Fondo más claro para admin */
-    border: 1px dashed #a06e4a;
+/* Sección del QR del Cliente */
+.qr-code-section {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #e0e0e0;
 }
 
-.admin-controls, .admin-actions {
-    display: flex;
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en líneas si no hay espacio */
-    gap: 10px; /* Espacio entre los elementos */
+.qr-code-section h3 {
+    color: #7a4a2b;
     margin-bottom: 15px;
-    justify-content: center; /* Centra los botones */
-    align-items: center;
 }
 
-.admin-controls label {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.admin-controls input[type="text"],
-.admin-controls input[type="email"] {
-    flex-grow: 1; /* Permite que el input crezca */
-    padding: 10px;
+.qr-canvas {
+    display: block !important; /* Asegura que el canvas siempre se muestre cuando sea visible */
+    margin: 20px auto;
+    max-width: 200px; /* Tamaño fijo para el QR del cliente */
+    height: auto;
     border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border-radius: 5px;
-    max-width: 250px; /* Limita el ancho del input */
-}
-
-.client-info {
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 15px;
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.client-info p {
-    margin: 5px 0;
-}
-
-.admin-actions button {
-    flex: 1 1 auto; /* Permite que los botones crezcan y se encojan */
-    min-width: 120px; /* Ancho mínimo para los botones */
-    max-width: 180px; /* Ancho máximo para los botones */
-}
-
-/* Colores específicos para botones de administración */
-#add-stamp-btn { background-color: #28a745; } /* Verde */
-#add-stamp-btn:hover:not(:disabled) { background-color: #218838; }
-#remove-stamp-btn { background-color: #dc3545; } /* Rojo */
-#remove-stamp-btn:hover:not(:disabled) { background-color: #c82333; }
-#redeem-coffee-btn { background-color: #17a2b8; } /* Azul-cian */
-#redeem-coffee-btn:hover:not(:disabled) { background-color: #138496; }
-#reset-stamps-btn { background-color: #6c757d; } /* Gris */
-#reset-stamps-btn:hover:not(:disabled) { background-color: #5a6268; }
-
-/* Estilos para el Código QR y sus instrucciones */
-#qrcode-canvas {
-    display: block !important; /* Asegura que siempre se muestre cuando sea visible */
-    margin: 20px auto; /* Centra el QR */
-    max-width: 90%; /* Limita el ancho máximo para que no se desborde */
-    height: auto; /* Mantiene la proporción */
-    border: 1px solid #ccc; /* Un borde sutil para que sea visible */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra para destacarlo */
 }
 
 #qr-instruction {
-    display: block !important; /* Asegura que la instrucción siempre se muestre cuando sea visible */
-    text-align: center;
-    margin-top: 10px;
-    font-size: 0.9em;
+    font-style: italic;
     color: #666;
+    font-size: 0.9em;
 }
 
-/* Para esconder elementos */
-.hidden {
-    display: none !important; /* Usamos !important para asegurar que se oculte */
-}
 
-/* Pie de página */
-footer {
-    background-color: #7a4a2b;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    margin-top: 20px;
+/* Estilos para el Escáner de QR (NUEVOS) */
+#qr-scanner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    box-sizing: border-box; /* Incluye padding en el ancho */
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Fondo semitransparente oscuro */
+    display: flex; /* Usamos flexbox para centrar contenido */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Asegura que esté por encima de todo lo demás */
 }
 
-/* Media query para pantallas pequeñas (móviles) */
-@media (max-width: 600px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-        padding: 10px;
-    }
+.qr-scanner-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    padding: 25px;
+    width: 90%;
+    max-width: 450px; /* Limita el ancho del card del escáner */
+    text-align: center;
+    color: #333; /* Asegura que el texto sea legible sobre fondo blanco */
+}
 
+.qr-scanner-card h2 {
+    color: #7a4a2b; /* Color de título consistente */
+    margin-bottom: 15px;
+}
+
+#reader {
+    width: 100%; /* El contenedor del lector toma el 100% del card */
+    min-height: 200px; /* Altura mínima para asegurar visibilidad */
+    border: 2px solid #a06e4a; /* Borde para el área de previsualización */
+    border-radius: 8px;
+    overflow: hidden; /* Asegura que el contenido de la cámara no se desborde */
+    margin-top: 15px;
+}
+
+#reader video { /* Estilo específico para el video de la cámara */
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover; /* Asegura que el video llene el contenedor sin distorsión */
+}
+
+
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+    background-color: #7a4a2b;
+    color: #fff;
+    font-size: 0.9em;
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 768px) {
     header h1 {
-        font-size: 1.5em;
-        margin-bottom: 10px;
+        font-size: 2em;
     }
-
-    .auth-controls {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    #user-display {
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-
-    button {
-        width: 90%; /* Botones más anchos en móvil */
-        margin-bottom: 10px;
-    }
-
-    main {
-        padding: 10px;
-    }
-
-    .card {
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-
     .stamps-grid {
-        grid-template-columns: repeat(4, 1fr); /* 4 columnas en pantallas pequeñas para mejor ajuste */
+        grid-template-columns: repeat(4, 1fr); /* 4 columnas en tablet */
         gap: 10px;
     }
-
     .stamp {
-        width: 50px; /* Sellos un poco más pequeños */
+        width: 50px;
         height: 50px;
-        font-size: 1.1em;
+        font-size: 1.2em;
     }
     .stamp.obtained {
-        font-size: 1.8em;
+        font-size: 2em;
     }
-
-    .admin-controls input[type="text"],
-    .admin-controls input[type="email"] {
-        max-width: 100%; /* El input de admin ocupa todo el ancho */
+    .card {
+        padding: 20px;
     }
-
+    .admin-controls button,
     .admin-actions button {
-        min-width: unset; /* Reinicia el min-width */
-        width: 100%; /* Botones de acción del admin al 100% en móvil */
-    }
-
-    #qrcode-canvas {
-        width: 180px; /* Tamaño del QR ligeramente más pequeño en móviles */
-        height: 180px;
+        flex-basis: 48%; /* Dos botones por fila */
     }
 }
 
-/* Media query para pantallas aún más pequeñas (ej. iPhone 5/SE, viejos Android) */
-@media (max-width: 350px) {
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.8em;
+    }
     .stamps-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 columnas para pantallas muy estrechas */
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas en móvil */
+        gap: 8px;
     }
     .stamp {
         width: 45px;
@@ -352,10 +355,26 @@ footer {
         font-size: 1em;
     }
     .stamp.obtained {
-        font-size: 1.6em;
+        font-size: 1.8em;
     }
-    #qrcode-canvas {
-        width: 150px;
-        height: 150px;
+    main {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    .admin-controls input[type="text"] {
+        flex-basis: 100%;
+        margin-bottom: 10px;
+    }
+    .admin-controls button,
+    .admin-actions button {
+        flex-basis: 100%; /* Un botón por fila en móvil */
+    }
+    .qr-scanner-card {
+        padding: 15px;
+        width: 95%;
+    }
+    #reader {
+        width: 100%;
+        min-height: 180px;
     }
 }
