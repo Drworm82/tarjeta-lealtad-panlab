@@ -20,8 +20,8 @@ const db = getFirestore(app);
 
 // Variables para referencias a elementos del DOM (se inicializan en DOMContentLoaded)
 let loginBtn, logoutBtn, userIdDisplay, userEmailDisplay, userPointsDisplay, messageDisplay, adminSection, userSection;
-let stampsDisplay, progressMessage, userFreeCoffeesDisplay; // AÑADIDO: userFreeCoffeesDisplay
-let showUserQrBtn, userQRDisplay, closeUserQrDisplay; // AÑADIDO: elementos QR del usuario
+let stampsDisplay, progressMessage, userFreeCoffeesDisplay;
+let showUserQrBtn, userQRDisplay, closeUserQrDisplay;
 let adminEmailInput, searchClientBtn, clientInfoDiv, addStampBtn, removeStampBtn, redeemCoffeeBtn, resetCardBtn;
 let totalClientsDisplay, pendingFreeCoffeesDisplay, averageStampsDisplay;
 let generateReportBtn, reportPeriodSelect, reportResultsDiv;
@@ -45,11 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     stampsDisplay = document.getElementById('stamps-display');
     progressMessage = document.getElementById('progress-message');
-    userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay'); // AÑADIDO
+    userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay');
 
-    showUserQrBtn = document.getElementById('showUserQrBtn'); // AÑADIDO
-    userQRDisplay = document.getElementById('user-qr-display'); // AÑADIDO
-    closeUserQrDisplay = document.getElementById('closeUserQrDisplay'); // AÑADIDO
+    showUserQrBtn = document.getElementById('showUserQrBtn');
+    userQRDisplay = document.getElementById('user-qr-display');
+    closeUserQrDisplay = document.getElementById('closeUserQrDisplay');
 
 
     adminEmailInput = document.getElementById('admin-email-input');
@@ -164,10 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const currentStamps = userData.stamps || 0;
-                const freeCoffees = userData.freeCoffees || 0; // OBTENER CAFÉS GRATIS
+                const freeCoffees = userData.freeCoffees || 0;
 
                 if (userPointsDisplay) userPointsDisplay.textContent = `Sellos: ${currentStamps}`;
-                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees; // MOSTRAR CAFÉS GRATIS
+                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees;
 
                 updateStampsDisplay(currentStamps);
                 updateProgressMessage(currentStamps);
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("Documento de usuario no encontrado al cargar la tarjeta.");
                 updateStampsDisplay(0);
                 updateProgressMessage(0);
-                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0'; // Si no hay documento, 0 cafés gratis
+                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
             }
         } catch (error) {
             console.error("Error al cargar tarjeta de usuario:", error);
@@ -217,21 +217,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userIdDisplay) userIdDisplay.textContent = 'ID: N/A';
         if (userEmailDisplay) userEmailDisplay.textContent = 'Email: N/A';
         if (userPointsDisplay) userPointsDisplay.textContent = 'Sellos: 0';
-        if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0'; // AÑADIDO: Limpiar también cafés gratis
+        if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
         if (stampsDisplay) stampsDisplay.innerHTML = '';
         if (progressMessage) {
             progressMessage.textContent = '';
             progressMessage.style.backgroundColor = '';
             progressMessage.style.color = '';
         }
-        // AÑADIDO: Ocultar y limpiar el QR del usuario al cerrar sesión
         if (userQRDisplay) {
             userQRDisplay.style.display = 'none';
             userQRDisplay.innerHTML = '';
         }
     }
 
-    // AÑADIDO: Lógica para mostrar QR del usuario
     if (showUserQrBtn) {
         showUserQrBtn.addEventListener('click', () => {
             const user = auth.currentUser;
@@ -662,7 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clientInfoDiv) clientInfoDiv.innerHTML = '<p>No hay cliente cargado.</p>';
         if (adminEmailInput) adminEmailInput.value = '';
         if (reportResultsDiv) reportResultsDiv.innerHTML = '';
-        // AÑADIDO: Ocultar y limpiar el QR del admin
         if (clientQRDisplay) {
             clientQRDisplay.style.display = 'none';
             clientQRDisplay.innerHTML = '';
