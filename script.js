@@ -21,8 +21,7 @@ const db = getFirestore(app);
 // Variables para referencias a elementos del DOM (se inicializan en DOMContentLoaded)
 let loginBtn, logoutBtn, userIdDisplay, userEmailDisplay, userPointsDisplay, messageDisplay, adminSection, userSection;
 let stampsDisplay, progressMessage, userFreeCoffeesDisplay;
-// ELIMINADAS: showUserQrBtn, userQRDisplay, closeUserQrDisplay;
-let userQrCodeContainer, userQrCodeDisplay; // AÑADIDO: contenedor y div para el QR del usuario
+let userQrCodeContainer, userQrCodeDisplay; // Contenedor y div para el QR del usuario
 
 let adminEmailInput, searchClientBtn, clientInfoDiv, addStampBtn, removeStampBtn, redeemCoffeeBtn, resetCardBtn;
 let totalClientsDisplay, pendingFreeCoffeesDisplay, averageStampsDisplay;
@@ -49,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     progressMessage = document.getElementById('progress-message');
     userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay');
 
-    // MODIFICADO: Nuevas referencias para el QR del usuario
+    // Referencias para el QR del usuario
     userQrCodeContainer = document.getElementById('user-qr-container');
     userQrCodeDisplay = document.getElementById('user-qr-code');
 
@@ -175,9 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateProgressMessage(currentStamps);
 
                 // AÑADIDO/MODIFICADO: Mostrar el QR del usuario
-                if (userQrCodeDisplay) {
+                if (userQrCodeDisplay && user.uid) { // Asegura que user.uid exista
                     userQrCodeDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${user.uid}" alt="QR de Mi Tarjeta">`;
                     if (userQrCodeContainer) userQrCodeContainer.style.display = 'flex'; // Asegura que el contenedor esté visible
+                } else {
+                    console.error("UID del usuario no disponible para generar QR o userQrCodeDisplay no encontrado.");
+                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'none'; // Ocultar si no se puede generar
                 }
 
             } else {
@@ -239,14 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
             progressMessage.style.backgroundColor = '';
             progressMessage.style.color = '';
         }
-        // MODIFICADO: Limpiar y ocultar el contenedor del QR del usuario
+        // Limpiar y ocultar el contenedor del QR del usuario
         if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
         if (userQrCodeDisplay) userQrCodeDisplay.innerHTML = '';
     }
-
-    // ELIMINADOS: Event listeners para showUserQrBtn y closeUserQrDisplay
-    // if (showUserQrBtn) { ... }
-    // if (closeUserQrDisplay) { ... }
 
 
     // --- Funciones del Panel de Administración ---
