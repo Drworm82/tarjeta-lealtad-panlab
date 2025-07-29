@@ -21,7 +21,9 @@ const db = getFirestore(app);
 // Variables para referencias a elementos del DOM (se inicializan en DOMContentLoaded)
 let loginBtn, logoutBtn, userIdDisplay, userEmailDisplay, userPointsDisplay, messageDisplay, adminSection, userSection;
 let stampsDisplay, progressMessage, userFreeCoffeesDisplay;
-let showUserQrBtn, userQRDisplay, closeUserQrDisplay;
+// ELIMINADAS: showUserQrBtn, userQRDisplay, closeUserQrDisplay;
+let userQrCodeContainer, userQrCodeDisplay; // AÑADIDO: contenedor y div para el QR del usuario
+
 let adminEmailInput, searchClientBtn, clientInfoDiv, addStampBtn, removeStampBtn, redeemCoffeeBtn, resetCardBtn;
 let totalClientsDisplay, pendingFreeCoffeesDisplay, averageStampsDisplay;
 let generateReportBtn, reportPeriodSelect, reportResultsDiv;
@@ -47,9 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
     progressMessage = document.getElementById('progress-message');
     userFreeCoffeesDisplay = document.getElementById('userFreeCoffeesDisplay');
 
-    showUserQrBtn = document.getElementById('showUserQrBtn');
-    userQRDisplay = document.getElementById('user-qr-display');
-    closeUserQrDisplay = document.getElementById('closeUserQrDisplay');
+    // MODIFICADO: Nuevas referencias para el QR del usuario
+    userQrCodeContainer = document.getElementById('user-qr-container');
+    userQrCodeDisplay = document.getElementById('user-qr-code');
 
 
     adminEmailInput = document.getElementById('admin-email-input');
@@ -171,15 +173,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 updateStampsDisplay(currentStamps);
                 updateProgressMessage(currentStamps);
+
+                // AÑADIDO/MODIFICADO: Mostrar el QR del usuario
+                if (userQrCodeDisplay) {
+                    userQrCodeDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${user.uid}" alt="QR de Mi Tarjeta">`;
+                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'flex'; // Asegura que el contenedor esté visible
+                }
+
             } else {
                 console.warn("Documento de usuario no encontrado al cargar la tarjeta.");
                 updateStampsDisplay(0);
                 updateProgressMessage(0);
                 if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
+                // Ocultar QR si no hay documento de usuario
+                if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
             }
         } catch (error) {
             console.error("Error al cargar tarjeta de usuario:", error);
             showMessage("Error al cargar tu tarjeta.", 'error');
+            if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
         }
     }
 
@@ -191,10 +203,13 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 1; i <= totalStamps; i++) {
             const stampDiv = document.createElement('div');
             stampDiv.classList.add('stamp');
+            // Cambiado para usar imagen de café para sellos obtenidos
             if (i <= stamps) {
                 stampDiv.classList.add('obtained');
+                stampDiv.innerHTML = '<img src="https://img.icons8.com/emoji/48/hot-beverage.png" alt="Café">'; // Icono de café
+            } else {
+                stampDiv.textContent = i; // Mostrar número si no está obtenido
             }
-            stampDiv.textContent = i;
             stampsDisplay.appendChild(stampDiv);
         }
     }
@@ -224,32 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
             progressMessage.style.backgroundColor = '';
             progressMessage.style.color = '';
         }
-        if (userQRDisplay) {
-            userQRDisplay.style.display = 'none';
-            userQRDisplay.innerHTML = '';
-        }
+        // MODIFICADO: Limpiar y ocultar el contenedor del QR del usuario
+        if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+        if (userQrCodeDisplay) userQrCodeDisplay.innerHTML = '';
     }
 
-    if (showUserQrBtn) {
-        showUserQrBtn.addEventListener('click', () => {
-            const user = auth.currentUser;
-            if (user && userQRDisplay) {
-                userQRDisplay.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${user.uid}" alt="QR de Mi Tarjeta">`;
-                userQRDisplay.style.display = 'flex';
-            } else {
-                showMessage("No se pudo generar el QR. Por favor, inicia sesión.", 'error');
-            }
-        });
-    }
-
-    if (closeUserQrDisplay) {
-        closeUserQrDisplay.addEventListener('click', () => {
-            if (userQRDisplay) {
-                userQRDisplay.style.display = 'none';
-                userQRDisplay.innerHTML = '';
-            }
-        });
-    }
+    // ELIMINADOS: Event listeners para showUserQrBtn y closeUserQrDisplay
+    // if (showUserQrBtn) { ... }
+    // if (closeUserQrDisplay) { ... }
 
 
     // --- Funciones del Panel de Administración ---
@@ -373,8 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
             stampDiv.classList.add('admin-stamp');
             if (i <= stamps) {
                 stampDiv.classList.add('obtained');
+                stampDiv.innerHTML = '<img src="https://img.icons8.com/emoji/48/hot-beverage.png" alt="Café">';
+            } else {
+                stampDiv.textContent = i;
             }
-            stampDiv.textContent = i;
             displayElement.appendChild(stampDiv);
         }
     }
