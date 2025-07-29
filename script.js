@@ -1,7 +1,7 @@
 // Este console.log es para verificar que el script se está cargando.
 console.log("************ SCRIPT.JS ESTÁ CARGANDO ************");
 
-const MAX_STAMPS = 10; // <<-- ¡ASEGÚRATE DE QUE ESTA CONSTANTE ESTÁ CORRECTAMENTE DEFINIDA!
+const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Variable para guardar el usuario actual
 let adminSelectedClientUid = null; // UID del cliente seleccionado por el administrador
@@ -68,19 +68,32 @@ function loadStamps() {
     }
     const userRef = db.collection('loyaltyCards').doc(currentUser.uid);
 
-    userRef.get().then((doc) => {
+    // Añade un listener en tiempo real para la tarjeta del cliente
+    // Esto asegura que los sellos se actualicen automáticamente cuando el admin los cambie.
+    userRef.onSnapshot((doc) => {
         if (doc.exists) {
+            const oldStamps = currentStamps; // Guarda el valor anterior para la animación
             currentStamps = doc.data().stamps || 0;
-            console.log("Sellos cargados para el cliente:", currentStamps);
+            console.log("Sellos cargados/actualizados para el cliente:", currentStamps);
+
+            updateDisplay();
+
+            // Lógica para animar si los sellos aumentaron
+            if (currentStamps > oldStamps) {
+                animateLastStamp();
+            } else if (currentStamps < oldStamps) {
+                // Si los sellos disminuyeron (canjeo/reinicio)
+                animateRedeemReset();
+            }
         } else {
-            console.log("No hay tarjeta para este usuario, creando una nueva.");
+            console.log("No hay tarjeta para este usuario, creando una nueva o está vacía.");
             currentStamps = 0; // Si no existe, empieza con 0
             // Guardar el email del usuario al crear la tarjeta (importante para el admin)
             userRef.set({ stamps: 0, email: currentUser.email || 'anonymo.us' });
+            updateDisplay();
         }
-        updateDisplay();
-    }).catch((error) => {
-        console.error("Error al cargar los sellos del cliente:", error); // Esto se estaba activando por el error de tipeo
+    }, (error) => {
+        console.error("Error al cargar/escuchar sellos del cliente:", error);
         messageDisplay.textContent = "Error al cargar la tarjeta. Intenta de nuevo.";
     });
 }
@@ -96,6 +109,7 @@ function saveStamps() {
     userRef.set({ stamps: currentStamps, email: currentUser.email || 'anonymo.us' })
         .then(() => {
             console.log("Sellos guardados con éxito para el cliente.");
+            // No llamamos a updateDisplay() aquí, ya que el onSnapshot de loadStamps lo hará.
         })
         .catch((error) => {
             console.error("Error al guardar los sellos del cliente:", error);
@@ -225,7 +239,8 @@ auth.onAuthStateChanged((user) => {
             redeemBtn.classList.add('hidden');
             resetBtn.classList.add('hidden');
             
-            loadStamps(); // Cargar sellos del cliente
+            // Cargar sellos del cliente usando onSnapshot para actualizaciones en tiempo real
+            loadStamps(); 
         }
     } else {
         // No hay usuario logueado (ni siquiera anónimo, lo cual es raro a menos que sea un sign out explícito)
@@ -241,7 +256,7 @@ auth.onAuthStateChanged((user) => {
 
         // Solo iniciamos sesión anónimamente si no hay ningún usuario (ni siquiera el anónimo)
         // Esto previene bucles si el usuario ya está anónimo.
-        if (!auth.currentUser) { // Comprobamos explícitamente si NO hay un usuario actual
+        if (!auth.currentUser) { // Comprobamos explícitamente si NO hay un user actual
             signInAnonymously(); // Mantener el flujo anónimo para invitados
         }
     }
@@ -281,7 +296,7 @@ function signOutUser() {
 // --- Lógica de la Interfaz (cliente) ---
 function updateDisplay() {
     stampsDisplay.innerHTML = '';
-    for (let i = 0; i < MAX_STAMPS; i++) { // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
+    for (let i = 0; i < MAX_STAMPS; i++) {
         const stamp = document.createElement('div');
         stamp.classList.add('stamp');
         if (i < currentStamps) {
@@ -293,20 +308,44 @@ function updateDisplay() {
         stampsDisplay.appendChild(stamp);
     }
 
-    if (currentStamps >= MAX_STAMPS) { // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
+    if (currentStamps >= MAX_STAMPS) {
         messageDisplay.textContent = '¡Felicidades! Has ganado un café gratis. 🎉';
     } else {
-        const remaining = MAX_STAMPS - currentStamps; // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
+        const remaining = MAX_STAMPS - currentStamps;
         messageDisplay.textContent = `Te faltan ${remaining} sello${remaining !== 1 ? 's' : ''} para tu café gratis.`;
     }
-    // NOTA: Los botones de control de sellos (Añadir, Canjear, Reiniciar)
-    // ahora son controlados por el onAuthStateChanged para ser visibles solo para el admin.
+}
+
+// --- Funciones de Animación (NUEVAS) ---
+
+function animateLastStamp() {
+    // Si hay sellos obtenidos y no es el primero
+    if (currentStamps > 0) {
+        const lastStampIndex = currentStamps - 1; // El índice del último sello obtenido
+        const lastStampElement = stampsDisplay.children[lastStampIndex];
+
+        if (lastStampElement) {
+            lastStampElement.classList.add('animate-new-stamp'); // Añade una clase para la animación
+            // Quita la clase después de un tiempo para permitir futuras animaciones
+            setTimeout(() => {
+                lastStampElement.classList.remove('animate-new-stamp');
+            }, 700); // Duración de la animación en CSS
+        }
+    }
+}
+
+function animateRedeemReset() {
+    const stamps = stampsDisplay.children;
+    for (let i = 0; i < stamps.length; i++) {
+        stamps[i].classList.add('animate-reset-stamp'); // Añade una clase para la animación de reinicio
+        // Quita la clase después de un tiempo
+        setTimeout(() => {
+            stamps[i].classList.remove('animate-reset-stamp');
+        }, 700); // Duración de la animación en CSS
+    }
 }
 
 // --- Event Listeners ---
-
-// Se han eliminado/comentado los event listeners para addStampBtn, redeemBtn, resetBtn
-// en la sección de cliente ya que ahora son controlados exclusivamente por el admin.
 
 authBtn.addEventListener('click', () => {
     if (currentUser && !currentUser.isAnonymous) { // Si hay un usuario logueado Y NO es anónimo
@@ -333,6 +372,7 @@ searchClientBtn.addEventListener('click', () => {
 adminAddStampBtn.addEventListener('click', () => {
     if (adminSelectedClientUid && adminSelectedClientStamps < MAX_STAMPS) {
         updateClientStamps(adminSelectedClientUid, adminSelectedClientStamps + 1);
+        // La animación para el cliente se maneja en loadStamps por el onSnapshot
     } else if (adminSelectedClientStamps >= MAX_STAMPS) {
         adminMessage.textContent = 'El cliente ya tiene el máximo de sellos.';
     }
@@ -343,6 +383,7 @@ adminRedeemBtn.addEventListener('click', () => {
         if (confirm('¿Estás seguro de que quieres canjear la recompensa de este cliente?')) {
             updateClientStamps(adminSelectedClientUid, 0); // Reinicia a 0
             adminMessage.textContent = 'Recompensa canjeada y tarjeta reiniciada.';
+            // La animación para el cliente se maneja en loadStamps por el onSnapshot
         }
     } else if (adminSelectedClientUid) {
         adminMessage.textContent = 'El cliente no tiene suficientes sellos para canjear.';
@@ -354,6 +395,7 @@ adminResetBtn.addEventListener('click', () => {
         if (confirm('¿Estás seguro de que quieres reiniciar la tarjeta de este cliente a 0 sellos?')) {
             updateClientStamps(adminSelectedClientUid, 0);
             adminMessage.textContent = 'Tarjeta de cliente reiniciada a 0 sellos.';
+            // La animación para el cliente se maneja en loadStamps por el onSnapshot
         }
     }
 });
@@ -361,7 +403,3 @@ adminResetBtn.addEventListener('click', () => {
 
 // --- Inicio de la Aplicación ---
 // onAuthStateChanged ya maneja el flujo inicial de signInAnonymously().
-// Para evitar que signInAnonymously se ejecute múltiples veces al cargar la página
-// (si un usuario ya está logueado de alguna forma), lo movemos aquí y lo controlamos.
-// La función onAuthStateChanged se encarga de cargar los sellos y mostrar la interfaz correcta.
-// Si no hay un usuario autenticado al inicio, Firebase Auth intentará loguear anónimamente.
