@@ -5,135 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafetería "El Grano de Oro" - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-</head>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <header>
-        <div class="header-content">
-            <h1>Cafetería "El Grano de Oro"</h1>
-            <p id="user-display">Por favor, inicia sesión.</p>
-            <button id="auth-btn">Iniciar Sesión con Google</button>
+        <h1>Cafetería "El Grano de Oro"</h1>
+        <div class="user-info">
+            <p>Bienvenido, <span id="user-name">Invitado</span></p>
+            <button id="auth-btn">Iniciar Sesión</button>
         </div>
     </header>
 
     <main>
-        <section id="loyalty-card" class="card hidden">
+        <section id="loyalty-card" class="hidden">
             <h2>Tu Tarjeta de Lealtad</h2>
-            <div id="stamps-display" class="stamps-grid">
-                <!-- Los sellos se renderizarán aquí por JavaScript -->
-            </div>
-            <p id="message"></p>
-            <div class="confetti-container"></div>
-            
-            <div class="qr-code-section">
+            <div id="stamps-display">
+                </div>
+            <p id="message">¡Bienvenido! Acumula sellos por cada café.</p>
+            <div class="confetti-container" id="confetti-container"></div>
+            <div id="qr-section">
                 <h3>Escanea este código para acumular sellos:</h3>
-                <canvas id="qrcode-canvas" class="qr-canvas"></canvas>
+                <canvas id="qrcode-canvas"></canvas>
                 <p id="qr-instruction">Muestra este código al barista para registrar tu compra.</p>
             </div>
+        </section>
 
-            <!-- NUEVA SECCIÓN: Historial de Sellos del Cliente -->
-            <div class="history-section">
-                <h3>Tu Historial de Sellos</h3>
-                <ul id="stamps-history-list">
-                    <!-- Las transacciones se cargarán aquí por JavaScript -->
-                    <li>Cargando historial...</li>
+        <section id="history-section" class="hidden">
+            <h3>Tu Historial de Sellos</h3>
+            <ul id="stamps-history-list">
                 </ul>
-            </div>
         </section>
 
         <section id="admin-section" class="hidden">
-            <div class="card admin-dashboard-summary">
-                <h2>Resumen del Programa de Lealtad</h2>
-                <div class="stats-grid">
-                    <div>
-                        <h4>Total Clientes</h4>
-                        <p id="total-clients">0</p>
-                    </div>
-                    <div>
-                        <h4>Cafés Gratis Pendientes</h4>
-                        <p id="free-coffees-pending">0</p>
-                    </div>
-                    <div>
-                        <h4>Promedio de Sellos</h4>
-                        <p id="avg-stamps">0</p>
-                    </div>
-                </div>
+            <h2>Panel de Administración</h2>
+
+            <div class="admin-input-group">
+                <input type="text" id="client-uid-input" placeholder="Email o UID del Cliente">
+                <button id="search-client-btn">Buscar Cliente</button>
+                <button id="scan-qr-btn">Escanear QR</button>
             </div>
 
-            <div class="card">
-                <h2>Panel de Administración</h2>
-                <div class="admin-controls">
-                    <label for="admin-email-input">Email o UID del Cliente:</label>
-                    <input type="text" id="admin-email-input" placeholder="ejemplo@email.com o UID del cliente">
-                    <button id="search-client-btn">Buscar Cliente</button>
-                    <!-- NUEVO BOTÓN PARA ESCANEAR QR -->
-                    <button id="scan-qr-btn">Escanear QR</button>
-                </div>
-
-                <div id="admin-message" class="message"></div>
-
-                <div id="admin-client-info">
-                    <p>No hay cliente cargado.</p>
-                </div>
-
-                <div class="admin-actions">
-                    <button id="add-stamp-btn">Añadir Sello</button>
-                    <button id="remove-stamp-btn">Quitar Sello</button>
-                    <button id="redeem-coffee-btn">Canjear Café Gratis</button>
-                    <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
-                </div>
+            <div id="admin-client-info">
+                <p><strong>Cliente Cargado:</strong> <span id="loaded-client-name">No hay cliente cargado.</span></p>
+                <p><strong>Email/UID:</strong> <span id="loaded-client-uid">N/A</span></p>
+                <p><strong>Sellos Actuales:</strong> <span id="admin-current-stamps">N/A</span></p>
             </div>
 
-            <!-- NUEVA SECCIÓN: Reportes y Analíticas Básicas -->
-            <div class="card admin-reports-section">
-                <h2>Reportes y Analíticas Básicas</h2>
-                <div>
-                    <label for="report-period">Ver datos de los últimos:</label>
-                    <select id="report-period">
-                        <option value="7">7 días</option>
-                        <option value="30">30 días</option>
-                        <option value="90">90 días</option>
-                        <option value="365">1 año</option>
-                    </select>
-                    <button id="generate-report-btn">Generar Reporte</button>
-                </div>
-                <div id="report-results" style="margin-top: 20px;">
-                    <p>Selecciona un período y haz clic en "Generar Reporte".</p>
-                </div>
+            <div class="admin-actions">
+                <button id="add-stamp-btn">Añadir Sello</button>
+                <button id="remove-stamp-btn">Quitar Sello</button>
+                <button id="redeem-coffee-btn">Canjear Café Gratis</button>
+                <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
             </div>
+            <p id="admin-message"></p>
+        </section>
 
-            <!-- Contenedor para el escáner de QR como overlay -->
-            <div id="qr-scanner-overlay" class="hidden">
-                <div class="qr-scanner-card card">
-                    <h2>Escanea el Código QR</h2>
-                    <p>Asegúrate de que el código QR esté bien iluminado y centrado en el recuadro.</p>
-                    <!-- El div 'reader' donde html5-qrcode montará la vista de la cámara -->
-                    <div id="reader" style="width: 100%; min-height: 250px;"></div> 
-                    <div id="scanner-message" style="margin-top: 10px; font-weight: bold; color: #7a4a2b;"></div>
-                    <button id="close-scanner-btn" style="margin-top: 20px;">Cerrar Escáner</button>
+        <section id="admin-dashboard" class="hidden">
+            <h3>Resumen del Programa de Lealtad</h3>
+            <div class="dashboard-stats">
+                <div class="stat-box">
+                    <h4>Total Clientes</h4>
+                    <p id="total-customers-stat">...</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Cafés Gratis Pendientes</h4>
+                    <p id="pending-rewards-stat">...</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Promedio de Sellos</h4>
+                    <p id="average-stamps-stat">...</p>
                 </div>
             </div>
         </section>
+
+        <section id="report-section" class="hidden">
+            <h3>Reportes y Analíticas Básicas</h3>
+            <div class="report-controls">
+                <label for="report-period-select">Ver datos de los últimos:</label>
+                <select id="report-period-select">
+                    <option value="7">7 días</option>
+                    <option value="30">30 días</option>
+                    <option value="90">90 días</option>
+                    <option value="365">1 año</option>
+                    <option value="all">Todo el tiempo</option>
+                </select>
+                <button id="generate-report-btn">Generar Reporte</button>
+            </div>
+            <div id="report-results">
+                <h4>Reporte de los últimos <span id="report-period-display">7 días</span>:</h4>
+                <p>Sellos Añadidos: <strong id="stamps-added-stat">0</strong></p>
+                <p>Cafés Gratuitos Canjeados: <strong id="rewards-redeemed-stat">0</strong></p>
+                <p>Tarjetas Reiniciadas: <strong id="cards-reset-stat">0</strong></p>
+                <p>Sellos Quitados: <strong id="stamps-removed-stat">0</strong></p>
+                </div>
+        </section>
     </main>
 
-    <footer>
-        <p>&copy; 2024 Cafetería "El Grano de Oro". Todos los derechos reservados.</p>
-    </footer>
+    <div id="qr-scanner-overlay" class="hidden">
+        <div id="qr-scanner-container">
+            <div id="reader"></div> <button id="close-scanner-btn">X</button>
+        </div>
+        <p id="scanner-message">Escaneando...</p>
+    </div>
 
-    <!-- Importa Firebase SDK -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-
-    <!-- Importa la librería QRious (para generar el QR del cliente) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-
-    <!-- Importa la librería html5-qrcode (para escanear el QR en el admin) -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
-    <!-- Tu script principal (DEBE IR DESPUÉS DE TODAS LAS LIBRERÍAS EXTERNAS) -->
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
