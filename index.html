@@ -11,14 +11,14 @@
         <h1>Mi Cafetería Lealtad</h1>
         <nav>
             <button id="loginBtn">Iniciar Sesión con Google</button>
-            <button id="logoutBtn" style="display:none;">Cerrar Sesión</button>
+            <button id="logoutBtn">Cerrar Sesión</button>
         </nav>
     </header>
 
     <main>
-        <div id="messageDisplay" class="message" style="display:none;"></div>
+        <div id="messageDisplay" class="message"></div>
 
-        <section id="user-section" style="display:none;">
+        <section id="user-section">
             <h2>Tu Tarjeta de Lealtad</h2>
             <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
             <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
@@ -28,7 +28,7 @@
             <p id="progress-message"></p>
         </section>
 
-        <section id="admin-section" style="display:none;">
+        <section id="admin-section">
             <h2>Panel de Administración</h2>
 
             <h3>Estadísticas Rápidas</h3>
@@ -49,7 +49,7 @@
                 <button id="reset-card-btn">Reiniciar Tarjeta</button>
             </div>
             <button id="admin-scan-qr-btn">Escanear QR (Admin)</button>
-            <div id="client-qr-display" style="display:none;">
+            <div id="client-qr-display">
                 <button id="close-qr-display">Cerrar QR</button>
             </div>
 
