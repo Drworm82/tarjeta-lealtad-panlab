@@ -23,7 +23,7 @@ const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Guardará el objeto de usuario de Firebase
-let adminUserEmail = 'worm.jim@gmail.com'; // **¡CORREO DEL ADMINISTRADOR ACTUALIZADO!**
+let adminUserEmail = 'worm.jim@gmail.com'; // **CORREO DEL ADMINISTRADOR ACTUALIZADO**
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
 let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
 let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin
@@ -126,6 +126,7 @@ function clearAdminClientInfo() {
 // --- Funciones de Firebase y Lógica de la Aplicación ---
 
 onAuthStateChanged(auth, async user => {
+    console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user ? user.email : "null"); // DEBUG
     if (user) {
         currentUser = user;
         userDisplay.textContent = `Bienvenido, ${currentUser.displayName || currentUser.email}`;
@@ -178,12 +179,14 @@ onAuthStateChanged(auth, async user => {
 
 
 async function loadAndListenForStamps(email) {
+    console.log(`loadAndListenForStamps: Intentando cargar sellos para el email: ${email}`); // DEBUG
     if (!email) {
-        console.error("No se proporcionó un email para loadAndListenForStamps.");
+        console.error("loadAndListenForStamps: No se proporcionó un email.");
         return;
     }
 
     const docRef = doc(db, 'loyaltyCards', email);
+    console.log(`loadAndListenForStamps: Referencia del documento: loyaltyCards/${email}`); // DEBUG
 
     if (clientListener) {
         clientListener();
@@ -191,21 +194,25 @@ async function loadAndListenForStamps(email) {
     }
 
     clientListener = onSnapshot(docRef, docSnapshot => {
+        console.log("onSnapshot callback: Recibiendo datos del documento."); // DEBUG
         if (docSnapshot.exists()) {
             const data = docSnapshot.data();
             const stamps = data.stamps || 0;
+            console.log(`onSnapshot: Documento existe. Sellos: ${stamps}`); // DEBUG
             renderStamps(stamps);
         } else {
+            console.log(`onSnapshot: Documento NO existe para ${email}. Intentando crear.`); // DEBUG
             renderStamps(0);
             messageDisplay.textContent = 'Tu tarjeta de lealtad ha sido creada.';
             messageDisplay.style.color = '#555'; // Color normal al crear
             if (currentUser && currentUser.email === email) {
                  setDoc(docRef, { stamps: 0, lastUpdate: new Date() })
-                    .catch(e => console.error("Error al crear la tarjeta inicial:", e));
+                    .then(() => console.log(`setDoc: Tarjeta inicial creada para ${email}`)) // DEBUG
+                    .catch(e => console.error("setDoc: Error al crear la tarjeta inicial:", e)); // DEBUG
             }
         }
     }, error => {
-        console.error("Error al cargar o escuchar la tarjeta de lealtad:", error);
+        console.error("onSnapshot ERROR: Error al cargar o escuchar la tarjeta de lealtad:", error); // DEBUG
         messageDisplay.textContent = 'Error al cargar la tarjeta de lealtad: ' + error.message;
         messageDisplay.style.color = '#d9534f';
     });
@@ -254,6 +261,7 @@ searchClientBtn.addEventListener('click', async () => {
 
     try {
         const clientDocRef = doc(db, 'loyaltyCards', email);
+        console.log(`Admin search: Buscando documento para ${email}`); // DEBUG
 
         if (adminClientListener) {
             adminClientListener();
@@ -265,6 +273,7 @@ searchClientBtn.addEventListener('click', async () => {
         }
 
         const clientDoc = await getDoc(clientDocRef);
+        console.log(`Admin search: Resultado de getDoc para ${email}. Existe: ${clientDoc.exists()}`); // DEBUG
 
         if (clientDoc.exists()) {
             const data = clientDoc.data();
@@ -279,6 +288,7 @@ searchClientBtn.addEventListener('click', async () => {
             adminMessage.style.color = '#5cb85c';
 
             adminClientListener = onSnapshot(clientDocRef, docSnapshot => {
+                console.log(`Admin onSnapshot: Recibiendo datos para ${email}. Existe: ${docSnapshot.exists()}`); // DEBUG
                 if (docSnapshot.exists()) {
                     const latestStamps = docSnapshot.data().stamps || 0;
                     document.getElementById('admin-current-stamps').textContent = latestStamps;
@@ -295,7 +305,7 @@ searchClientBtn.addEventListener('click', async () => {
                     adminMessage.style.color = '#d9534f';
                 }
             }, error => {
-                console.error("Error al escuchar sellos del cliente en admin:", error);
+                console.error("Admin onSnapshot ERROR: Error al escuchar sellos del cliente en admin:", error); // DEBUG
                 adminMessage.textContent = 'Error al escuchar sellos del cliente: ' + error.message;
                 adminMessage.style.color = '#d9534f';
             });
@@ -308,7 +318,7 @@ searchClientBtn.addEventListener('click', async () => {
             setAdminControlsEnabled(true, true); // Habilitar solo "Añadir Sello" y "Resetear"
         }
     } catch (error) {
-        console.error("Error al buscar cliente:", error);
+        console.error("searchClientBtn ERROR: Error al buscar cliente:", error); // DEBUG
         adminMessage.textContent = 'Error al buscar cliente: ' + error.message;
         adminMessage.style.color = '#d9534f';
         clearAdminClientInfo();
@@ -329,21 +339,22 @@ addStampBtn.addEventListener('click', async () => {
             if (docSnapshot.exists()) {
                 currentStamps = docSnapshot.data().stamps || 0;
             } else {
+                console.log(`addStampBtn: Documento no existe para ${targetClientEmail}. Creando con 0 sellos.`); // DEBUG
                 transaction.set(docRef, { stamps: 0, lastUpdate: new Date() }); // Crear con 0 si no existe
             }
 
-            if (currentStamps < MAX_STAMPS) { // Solo añadir si no ha alcanzado el máximo para el conteo visible
+            if (currentStamps < MAX_STAMPS) {
                 transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
                 adminMessage.textContent = `Sello añadido a ${targetClientEmail}. Sellos actuales: ${currentStamps + 1}`;
                 adminMessage.style.color = '#5cb85c';
-            } else { // Si ya tiene 10, añadir un sello "extra" para el conteo total, pero el display solo mostrará 10
+            } else {
                 transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
                 adminMessage.textContent = `Sello añadido (extra) a ${targetClientEmail}. Sellos totales: ${currentStamps + 1}`;
                 adminMessage.style.color = '#5cb85c';
             }
         });
     } catch (error) {
-        console.error("Error al añadir sello:", error);
+        console.error("addStampBtn ERROR: Error al añadir sello:", error); // DEBUG
         adminMessage.textContent = 'Error al añadir sello: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -375,7 +386,7 @@ removeStampBtn.addEventListener('click', async () => {
             }
         });
     } catch (error) {
-        console.error("Error al quitar sello:", error);
+        console.error("removeStampBtn ERROR: Error al quitar sello:", error); // DEBUG
         adminMessage.textContent = 'Error al quitar sello: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -407,7 +418,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
             }
         });
     } catch (error) {
-        console.error("Error al canjear café:", error);
+        console.error("redeemCoffeeBtn ERROR: Error al canjear café:", error); // DEBUG
         adminMessage.textContent = 'Error al canjear café: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -416,7 +427,6 @@ redeemCoffeeBtn.addEventListener('click', async () => {
 resetStampsBtn.addEventListener('click', async () => {
     if (!targetClientEmail) return;
 
-    // Usamos un alert simple ya que no tenemos un modal personalizado
     if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${targetClientEmail}? Esto pondrá sus sellos a 0.`)) {
         return;
     }
@@ -426,19 +436,19 @@ resetStampsBtn.addEventListener('click', async () => {
 
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        await setDoc(docRef, { stamps: 0, lastUpdate: new Date() }, { merge: true }) // Usa merge:true para actualizar o crear si no existe
+        await setDoc(docRef, { stamps: 0, lastUpdate: new Date() }, { merge: true })
             .then(() => {
                 adminMessage.textContent = `Tarjeta de ${targetClientEmail} reiniciada a 0 sellos.`;
                 adminMessage.style.color = '#5cb85c';
             })
             .catch((error) => {
-                console.error("Error al reiniciar tarjeta:", error);
+                console.error("resetStampsBtn ERROR: Error al reiniciar tarjeta:", error); // DEBUG
                 adminMessage.textContent = 'Error al reiniciar tarjeta: ' + error.message;
                 adminMessage.style.color = '#d9534f';
             });
 
     } catch (error) {
-        console.error("Error al reiniciar tarjeta (fuera de setDoc):", error);
+        console.error("resetStampsBtn ERROR (fuera de setDoc): Error al reiniciar tarjeta:", error); // DEBUG
         adminMessage.textContent = 'Error al reiniciar tarjeta: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -446,8 +456,6 @@ resetStampsBtn.addEventListener('click', async () => {
 
 
 // Inicializar el display al cargar la página (para mostrar 0 sellos si no hay sesión)
-// Esto se llama al final del script para asegurar que el DOM esté cargado
 document.addEventListener('DOMContentLoaded', () => {
-    renderStamps(0); // Muestra 0 sellos al inicio
-    // La lógica de onAuthStateChanged se encargará de cargar los sellos reales si hay un usuario logueado
+    renderStamps(0);
 });
