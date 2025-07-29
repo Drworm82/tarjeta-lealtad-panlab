@@ -1,5 +1,6 @@
 /* style.css */
 
+/* --- Base Styles --- */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -71,7 +72,7 @@ section {
     display: none !important;
 }
 
-/* --- Estilos de la Tarjeta de Lealtad (Usuario) --- */
+/* --- Loyalty Card (User) Styles --- */
 #loyalty-card h2 {
     color: #7a4a2b;
     text-align: center;
@@ -99,26 +100,38 @@ section {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5em;
+    font-size: 1.5em; /* Tamaño de los números 1-10 */
     font-weight: bold;
     color: #7a4a2b;
     border: 3px solid #ccc;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    position: relative; /* Necesario para posicionar ::before */
+    overflow: hidden; /* Asegura que el contenido no se desborde */
 }
 
 .stamp.obtained {
     background-color: #7a4a2b; /* Color de café para sellos obtenidos */
-    color: #fff;
+    color: transparent; /* Oculta el número si lo hubiera, ya que usaremos ::before */
     border-color: #5c3b22;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-/* MODIFICADO: Mantiene el icono de café en CSS, la animación se controlará con una clase JS */
+/* ESTILO DEFINITIVO PARA EL ICONO DEL CAFÉ EN SELLOS OBTENIDOS */
 .stamp.obtained::before {
-    content: '☕'; /* Icono de café para sellos obtenidos */
-    font-size: 1.8em; /* Ajusta el tamaño del emoji */
-    /* La animación se ha movido a .animate-stamp */
+    content: '☕'; /* Icono de café Unicode */
+    position: absolute; /* Para centrarlo y controlarlo mejor */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centrar el icono */
+    font-size: 1.8em; /* Tamaño del emoji de café */
+    line-height: 1; /* Eliminar espacio extra si el emoji lo tiene */
+    color: #fff; /* Color del emoji (si el sistema lo permite) */
+    display: flex; /* Para centrarlo correctamente */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Asegura que ocupe todo el ancho disponible para centrado */
+    height: 100%; /* Asegura que ocupe toda la altura disponible para centrado */
 }
 
 /* NUEVA CLASE: Animación para el sello que se añade */
@@ -127,9 +140,9 @@ section {
 }
 
 @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); }
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 #message {
@@ -201,7 +214,7 @@ section {
 }
 
 
-/* --- Estilos del QR Code --- */
+/* --- QR Code Styles --- */
 #qr-section {
     text-align: center;
     background-color: #fff;
@@ -216,7 +229,7 @@ section {
     margin: 20px auto 10px auto;
     border: 5px solid #7a4a2b;
     border-radius: 8px;
-    max-width: 200px; /* Asegura que no sea demasiado grande en móvil */
+    max-width: 200px; /* Ensures it's not too large on mobile */
     height: auto;
 }
 
@@ -226,7 +239,7 @@ section {
 }
 
 
-/* --- Estilos del Historial de Transacciones --- */
+/* --- Transaction History Styles --- */
 #history-section h3 {
     color: #7a4a2b;
     margin-bottom: 15px;
@@ -235,8 +248,8 @@ section {
 #stamps-history-list {
     list-style: none;
     padding: 0;
-    max-height: 250px; /* Altura máxima para el scroll */
-    overflow-y: auto; /* Habilita el scroll vertical */
+    max-height: 250px; /* Max height for scrolling */
+    overflow-y: auto; /* Enable vertical scroll */
     border: 1px solid #eee;
     border-radius: 5px;
     background-color: #fdfdfd;
@@ -267,11 +280,11 @@ section {
 #stamps-history-list li .timestamp {
     color: #777;
     font-size: 0.8em;
-    white-space: nowrap; /* Evita que la fecha se rompa en varias líneas */
+    white-space: nowrap; /* Prevent date from breaking lines */
     margin-left: 10px;
 }
 
-/* --- Estilos del Panel de Administración --- */
+/* --- Admin Panel Styles --- */
 #admin-section h2 {
     color: #7a4a2b;
     text-align: center;
@@ -283,6 +296,7 @@ section {
     gap: 10px;
     margin-bottom: 15px;
     align-items: center;
+    flex-wrap: wrap; /* Added for responsiveness */
 }
 
 .admin-input-group input[type="text"] {
@@ -291,8 +305,10 @@ section {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 1em;
+    min-width: 150px; /* Ensure input doesn't get too small */
 }
 
+/* REFORZADO: Estilo para los botones en el grupo de input del admin */
 .admin-input-group button {
     background-color: #007bff; /* Azul */
     color: white;
@@ -302,6 +318,7 @@ section {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Prevent buttons from shrinking too much */
 }
 
 .admin-input-group button:hover {
@@ -327,15 +344,16 @@ section {
 
 .admin-actions {
     display: flex;
-    flex-wrap: wrap; /* Permite que los botones se envuelvan en pantallas pequeñas */
+    flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
     gap: 10px;
     justify-content: center;
     margin-bottom: 15px;
 }
 
+/* REFORZADO: Estilo para los botones de acción del admin */
 .admin-actions button {
-    flex: 1 1 auto; /* Permite que los botones crezcan y se encojan */
-    min-width: 120px; /* Ancho mínimo para cada botón */
+    flex: 1 1 auto; /* Allows buttons to grow and shrink */
+    min-width: 120px; /* Minimum width for each button */
     padding: 12px 20px;
     font-size: 1em;
     font-weight: bold;
@@ -344,18 +362,20 @@ section {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added subtle shadow */
 }
 
-#add-stamp-btn { background-color: #28a745; } /* Verde */
+/* Colores específicos para los botones de acción */
+#add-stamp-btn { background-color: #28a745; } /* Green */
 #add-stamp-btn:hover { background-color: #218838; }
 
-#remove-stamp-btn { background-color: #dc3545; } /* Rojo */
+#remove-stamp-btn { background-color: #dc3545; } /* Red */
 #remove-stamp-btn:hover { background-color: #c82333; }
 
-#redeem-coffee-btn { background-color: #17a2b8; } /* Azul cian */
+#redeem-coffee-btn { background-color: #17a2b8; } /* Cyan Blue */
 #redeem-coffee-btn:hover { background-color: #138496; }
 
-#reset-stamps-btn { background-color: #6c757d; } /* Gris */
+#reset-stamps-btn { background-color: #6c757d; } /* Gray */
 #reset-stamps-btn:hover { background-color: #5a6268; }
 
 #admin-message {
@@ -365,7 +385,7 @@ section {
     font-weight: bold;
 }
 
-/* --- Estilos para el Dashboard de Administración --- */
+/* --- Admin Dashboard Styles --- */
 #admin-dashboard h3 {
     color: #7a4a2b;
     margin-bottom: 15px;
@@ -387,7 +407,7 @@ section {
     padding: 15px 20px;
     text-align: center;
     flex: 1;
-    min-width: 150px; /* Ancho mínimo para cada caja de estadística */
+    min-width: 150px; /* Minimum width for each stat box */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -405,7 +425,7 @@ section {
     color: #7a4a2b;
 }
 
-/* --- Estilos para Reportes --- */
+/* --- Reports Styles --- */
 #report-section h3 {
     color: #7a4a2b;
     margin-bottom: 15px;
@@ -418,6 +438,7 @@ section {
     margin-bottom: 20px;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap; /* Added for responsiveness */
 }
 
 .report-controls select {
@@ -428,7 +449,7 @@ section {
 }
 
 .report-controls button {
-    background-color: #2196F3; /* Azul para el botón de reporte */
+    background-color: #2196F3; /* Blue for report button */
     color: white;
     border: none;
     padding: 8px 15px;
@@ -460,7 +481,7 @@ section {
 }
 
 
-/* --- Estilos para el Escáner QR --- */
+/* --- QR Scanner Styles --- */
 #qr-scanner-overlay {
     position: fixed;
     top: 0;
@@ -478,13 +499,13 @@ section {
 #qr-scanner-container {
     width: 90%;
     max-width: 400px;
-    height: 400px; /* Ajusta la altura para el área de escaneo */
+    height: 400px; /* Adjust height for scan area */
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    overflow: hidden; /* Asegura que la cámara se contenga */
+    overflow: hidden; /* Ensures camera view is contained */
     position: relative;
-    padding: 20px; /* Añade un poco de padding alrededor del lector */
+    padding: 20px; /* Add some padding around the reader */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -494,16 +515,16 @@ section {
 #reader {
     width: 100%;
     height: 100%;
-    /* Estilos específicos de html5-qrcode para el video */
+    /* html5-qrcode specific styles for video */
 }
-#reader > div:first-child { /* El div que contiene el video */
+#reader > div:first-child { /* The div containing the video */
     width: 100% !important;
     height: auto !important;
 }
 #reader video {
     width: 100% !important;
     height: auto !important;
-    object-fit: contain; /* Para que el video se ajuste bien */
+    object-fit: contain; /* To make the video fit well */
 }
 
 
@@ -524,7 +545,7 @@ section {
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: background-color 0.3s ease;
-    z-index: 1001; /* Asegura que esté por encima del lector */
+    z-index: 1001; /* Ensure it's above the reader */
 }
 
 #close-scanner-btn:hover {
@@ -539,29 +560,29 @@ section {
 }
 
 
-/* --- Estilos para Loading States (Añadidos) --- */
+/* --- Loading States Styles --- */
 .admin-section.loading {
     cursor: wait;
-    opacity: 0.7; /* Opcional: para indicar que está menos interactivo */
-    pointer-events: none; /* Deshabilita clics en toda la sección */
+    opacity: 0.7; /* Optional: to indicate it's less interactive */
+    pointer-events: none; /* Disable clicks on the entire section */
 }
 
-/* Estilo para botones deshabilitados */
+/* Style for disabled buttons */
 button:disabled {
     cursor: not-allowed !important;
     opacity: 0.6 !important;
 }
 
-/* Estilo para inputs deshabilitados */
+/* Style for disabled inputs */
 input:disabled {
     cursor: not-allowed !important;
     background-color: #e9ecef !important;
 }
 
-/* Opcional: un spinner simple si quieres añadirlo */
+/* Optional: a simple spinner if you want to add it */
 .spinner {
     border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: #7a4a2b; /* Color de tu marca */
+    border-left-color: #7a4a2b; /* Your brand color */
     border-radius: 50%;
     width: 20px;
     height: 20px;
@@ -590,19 +611,18 @@ input:disabled {
     }
 
     #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* 4 o 5 columnas más pequeñas */
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* 4 or 5 smaller columns */
         gap: 10px;
     }
 
     .stamp {
         width: 50px;
         height: 50px;
-        font-size: 1.2em;
+        font-size: 1.2em; /* Adjusted for smaller screens */
     }
 
-    /* Modificado para que el tamaño del emoji sea consistente en móvil también */
     .stamp.obtained::before {
-        font-size: 1.5em; /* Ajusta el tamaño del emoji para pantallas más pequeñas */
+        font-size: 1.5em; /* Adjusted emoji size for smaller screens */
     }
 
     .admin-input-group {
@@ -610,13 +630,22 @@ input:disabled {
         gap: 10px;
     }
 
+    .admin-input-group input[type="text"] {
+        width: 100%; /* Full width for input in small screens */
+        min-width: unset;
+    }
+
+    .admin-input-group button {
+        width: 100%; /* Full width for buttons in small screens */
+    }
+
     .admin-actions button {
-        flex: 1 1 48%; /* Dos botones por fila */
+        flex: 1 1 48%; /* Two buttons per row */
     }
 
     .dashboard-stats .stat-box {
         min-width: 120px;
-        flex: 1 1 45%; /* Dos cajas por fila */
+        flex: 1 1 45%; /* Two boxes per row */
     }
 
     .report-controls {
@@ -648,28 +677,27 @@ input:disabled {
     }
 
     #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Más pequeñas en móviles muy pequeños */
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Even smaller on very small mobiles */
         gap: 8px;
     }
 
     .stamp {
         width: 45px;
         height: 45px;
-        font-size: 1.1em;
+        font-size: 1.1em; /* Adjusted for very small screens */
     }
 
-    /* Modificado para que el tamaño del emoji sea consistente en móvil también */
     .stamp.obtained::before {
-        font-size: 1.3em; /* Ajusta el tamaño del emoji para móviles más pequeños */
+        font-size: 1.3em; /* Adjusted emoji size for very small mobiles */
     }
 
     .admin-actions button {
-        flex: 1 1 100%; /* Un botón por fila en pantallas muy pequeñas */
+        flex: 1 1 100%; /* One button per row on very small screens */
         min-width: unset;
     }
 
     .dashboard-stats .stat-box {
-        flex: 1 1 100%; /* Una caja por fila en pantallas muy pequeñas */
+        flex: 1 1 100%; /* One box per row on very small screens */
     }
 
     #qr-scanner-container {
