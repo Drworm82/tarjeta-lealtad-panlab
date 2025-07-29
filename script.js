@@ -1,3 +1,6 @@
+// Este console.log es para verificar que el script se está cargando.
+console.log("************ SCRIPT.JS ESTÁ CARGANDO ************");
+
 const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Variable para guardar el usuario actual
@@ -11,15 +14,15 @@ const ADMIN_EMAILS = ['tu_email_admin@example.com']; // <-- ¡CAMBIA ESTO!
 // Puedes añadir más emails: ['email1@dominio.com', 'email2@dominio.com'];
 
 // =======================================================
-// TU FIREBASE CONFIG REAL
+// TU FIREBASE CONFIG REAL (¡Ya insertado con tus claves!)
 // =======================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo",
-  authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
-  projectId: "mi-cafeteria-lealtad",
-  storageBucket: "mi-cafeteria-lealtad.firebasestorage.app",
-  messagingSenderId: "1098066759983",
-  appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
+  apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo", //
+  authDomain: "mi-cafeteria-lealtad.firebaseapp.com", //
+  projectId: "mi-cafeteria-lealtad", //
+  storageBucket: "mi-cafeteria-lealtad.firebasestorage.app", //
+  messagingSenderId: "1098066759983", //
+  appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da" //
 };
 
 
@@ -36,7 +39,7 @@ const messageDisplay = document.getElementById('message');
 const addStampBtn = document.getElementById('add-stamp-btn');
 const redeemBtn = document.getElementById('redeem-btn');
 const resetBtn = document.getElementById('reset-btn');
-const clientSection = document.getElementById('client-section'); // Nueva
+const clientSection = document.getElementById('client-section');
 
 // Nuevas referencias para el login
 const userDisplay = document.getElementById('user-display');
@@ -70,14 +73,15 @@ function loadStamps() {
             currentStamps = doc.data().stamps || 0;
             console.log("Sellos cargados para el cliente:", currentStamps);
         } else {
-            console.log("No hay tarjeta para este cliente, creando una nueva.");
-            currentStamps = 0;
-            userRef.set({ stamps: 0, email: currentUser.email || 'anonymo.us' }); // Guardar email también
+            console.log("No hay tarjeta para este usuario, creando una nueva.");
+            currentStamps = 0; // Si no existe, empieza con 0
+            // Guardar el email del usuario al crear la tarjeta (importante para el admin)
+            userRef.set({ stamps: 0, email: currentUser.email || 'anonymo.us' });
         }
         updateDisplay();
     }).catch((error) => {
         console.error("Error al cargar los sellos del cliente:", error);
-        messageDisplay.textContent = "Error al cargar la tarjeta del cliente. Intenta de nuevo.";
+        messageDisplay.textContent = "Error al cargar la tarjeta. Intenta de nuevo.";
     });
 }
 
@@ -88,13 +92,14 @@ function saveStamps() {
         return;
     }
     const userRef = db.collection('loyaltyCards').doc(currentUser.uid);
+    // Guardar el email del usuario al actualizar la tarjeta (importante para el admin)
     userRef.set({ stamps: currentStamps, email: currentUser.email || 'anonymo.us' })
         .then(() => {
             console.log("Sellos guardados con éxito para el cliente.");
         })
         .catch((error) => {
             console.error("Error al guardar los sellos del cliente:", error);
-            messageDisplay.textContent = "Error al guardar la tarjeta del cliente.";
+            messageDisplay.textContent = "Error al guardar la tarjeta.";
         });
 }
 
@@ -165,20 +170,37 @@ async function updateClientStamps(uid, newStamps) {
 
 // --- Manejo de la autenticación ---
 
+// Función para iniciar sesión anónimamente (para clientes no logueados)
+function signInAnonymously() {
+    auth.signInAnonymously()
+        .then(() => {
+            console.log("Inicio de sesión anónimo exitoso.");
+            // onAuthStateChanged se disparará después de esto.
+        })
+        .catch((error) => {
+            console.error("Error al iniciar sesión anónimamente:", error);
+            messageDisplay.textContent = "Error al conectar la tarjeta. Intenta de nuevo."; //
+        });
+}
+
+
 // Listener para el cambio de estado de autenticación (se activa al cargar, iniciar o cerrar sesión)
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
         const userEmail = currentUser.email || '';
-        const userName = currentUser.displayName || userEmail;
+        const userName = currentUser.displayName || userEmail || 'Invitado'; //
         userDisplay.textContent = `Hola, ${userName}!`;
         authBtn.textContent = 'Cerrar Sesión';
 
         // Determinar si es administrador
         if (ADMIN_EMAILS.includes(userEmail)) {
-            console.log("Administrador logueado:", userEmail);
+            console.log("Administrador logueado:", userEmail, "UID:", currentUser.uid); // <--- ¡AQUÍ ESTÁ TU UID!
             clientSection.classList.add('hidden'); // Ocultar sección de cliente
             adminSection.classList.remove('hidden'); // Mostrar sección de administración
+            // Ocultar botones de cliente si estás en modo admin
+            document.querySelectorAll('.client-control').forEach(btn => btn.classList.add('hidden'));
+
             adminMessage.textContent = ''; // Limpiar cualquier mensaje
             adminClientInfo.innerHTML = ''; // Limpiar info de cliente
             clientEmailInput.value = ''; // Limpiar input de email
@@ -186,9 +208,11 @@ auth.onAuthStateChanged((user) => {
             adminRedeemBtn.disabled = true;
             adminResetBtn.disabled = true;
         } else {
-            console.log("Usuario cliente logueado:", userEmail);
+            console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid); // <--- Opcionalmente, el UID del cliente
             clientSection.classList.remove('hidden'); // Mostrar sección de cliente
             adminSection.classList.add('hidden'); // Ocultar sección de administración
+            // Asegurar que los botones de cliente sean visibles
+            document.querySelectorAll('.client-control').forEach(btn => btn.classList.remove('hidden'));
             loadStamps(); // Cargar sellos del cliente
         }
     } else {
@@ -198,6 +222,8 @@ auth.onAuthStateChanged((user) => {
         authBtn.textContent = 'Iniciar Sesión / Registrarse';
         clientSection.classList.remove('hidden'); // Mostrar sección de cliente
         adminSection.classList.add('hidden'); // Ocultar sección de administración
+        // Asegurar que los botones de cliente sean visibles (para anónimo)
+        document.querySelectorAll('.client-control').forEach(btn => btn.classList.remove('hidden'));
         signInAnonymously(); // Mantener el flujo anónimo para invitados
     }
 });
@@ -208,7 +234,7 @@ function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
         .then((result) => {
-            console.log("Inicio de sesión con Google exitoso:", result.user.displayName);
+            console.log("Inicio de sesión con Google exitoso:", result.user.displayName); //
             // onAuthStateChanged se disparará y manejará el resto
         })
         .catch((error) => {
@@ -346,4 +372,4 @@ adminResetBtn.addEventListener('click', () => {
 
 
 // --- Inicio de la Aplicación ---
-// onAuthStateChanged ya maneja el flujo inicial.
+// onAuthStateChanged ya maneja el flujo inicial de signInAnonymously().
