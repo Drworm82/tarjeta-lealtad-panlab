@@ -3,85 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cafetería - Tarjeta de Lealtad</title>
+    <title>Tarjeta de Lealtad Panlab</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Estilos básicos para la sección de administración */
-        #admin-section {
-            border: 1px solid #ccc;
-            padding: 20px;
-            margin-top: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-        }
-        #admin-section.hidden {
-            display: none;
-        }
-        #admin-section input, #admin-section button {
-            margin-bottom: 10px;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        #admin-section button {
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-        }
-        #admin-section button:hover {
-            background-color: #45a049;
-        }
-        /* Ocultar botones de cliente cuando la sección de cliente está oculta */
-        .client-control.hidden {
-            display: none;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1>☕ Mi Cafetería Favorita ☕</h1>
-        <p>¡Colecciona sellos y obtén un café gratis!</p>
+        <h1>
+            <span class="coffee-icon">☕</span> Tarjeta de Lealtad Panlab <span class="coffee-icon">☕</span>
+        </h1>
+        <p>¡Acumula sellos por cada compra y obtén tu café gratis!</p>
 
-        <div id="user-info">
-            <p id="user-display">Invitado</p>
-            <button id="auth-btn">Iniciar Sesión / Registrarse</button>
-        </div>
+        <div id="user-display"></div>
+        <button id="auth-btn">Iniciar Sesión con Google</button>
 
-        <div id="client-section">
-            <div class="stamp-card">
-                <div id="stamps-display" class="stamps-grid">
-                    </div>
-                <p id="message"></p>
+        <div id="stamps-display">
             </div>
-            <button id="add-stamp-btn" class="client-control">Añadir Sello</button>
-            <button id="redeem-btn" class="hidden client-control">Canjear Recompensa</button>
-            <button id="reset-btn" class="hidden client-control">Reiniciar Tarjeta</button>
-        </div>
 
-        <div id="admin-section" class="hidden">
+        <div class="confetti-container">
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            </div>
+
+        <div id="message">
+            </div>
+
+        <div id="admin-section" class="client-control hidden">
             <h2>Panel de Administración</h2>
-            <p>Solo para personal autorizado.</p>
-            <div>
-                <input type="email" id="client-email-input" placeholder="Email del cliente" />
+            <p>Busca un cliente por su correo electrónico para gestionar sus sellos.</p>
+            <div class="input-group">
+                <input type="email" id="admin-email-input" placeholder="Correo del cliente" autocomplete="off">
                 <button id="search-client-btn">Buscar Cliente</button>
             </div>
             <div id="admin-client-info">
                 </div>
-            <div>
-                <button id="admin-add-stamp-btn" disabled>Añadir Sello a Cliente</button>
-                <button id="admin-redeem-btn" disabled>Canjear Sello de Cliente</button>
-                <button id="admin-reset-btn" disabled>Reiniciar Tarjeta de Cliente</button>
+            <div id="admin-client-controls">
+                <button id="add-stamp-btn">Añadir Sello</button>
+                <button id="remove-stamp-btn">Quitar Sello</button>
+                <button id="redeem-coffee-btn">Canjear Café</button>
+                <button id="reset-stamps-btn">Resetear Sellos</button>
             </div>
-            <p id="admin-message" style="color: red;"></p>
+            <div id="admin-message">
+                </div>
         </div>
-
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script src="script.js"></script>
 </body>
