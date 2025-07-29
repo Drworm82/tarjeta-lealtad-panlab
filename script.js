@@ -1,7 +1,7 @@
 // --- Importaciones de Firebase SDK (Versión 9 Modular) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // --- Configuración de Firebase (TUS CREDENCIALES) ---
 const firebaseConfig = {
@@ -23,10 +23,10 @@ const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Guardará el objeto de usuario de Firebase
-let adminUserEmail = 'worm.jim@gmail.com'; // Correo del administrador
+const adminUserEmail = 'worm.jim@gmail.com'; // Correo del administrador (constante)
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
 let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
-let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin (ahora se usará para UID en admin)
+let targetClientEmail = null; // Ahora almacenará el UID del cliente en el panel de admin
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -43,6 +43,7 @@ const adminMessage = document.getElementById('admin-message');
 const messageDisplay = document.getElementById('message');
 const confettiContainer = document.querySelector('.confetti-container');
 const loyaltyCardSection = document.getElementById('loyalty-card');
+const qrcodeCanvas = document.getElementById('qrcode-canvas'); // Para el QR
 
 
 // --- Funciones de UI ---
@@ -141,7 +142,7 @@ function enableAdminControlsAfterOperation() {
 function clearAdminClientInfo() {
     adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
     setAdminControlsEnabled(false);
-    targetClientEmail = null;
+    targetClientEmail = null; // targetClientEmail ahora almacena el UID
     if (adminClientListener) {
         adminClientListener();
         adminClientListener = null;
@@ -151,6 +152,29 @@ function clearAdminClientInfo() {
 
 // --- Funciones de Firebase y Lógica de la Aplicación ---
 
+// *** NUEVA FUNCIÓN: Para obtener el UID a partir de un email ***
+async function getUidByEmail(email) {
+    console.log(`Intentando obtener UID para email: ${email}`);
+    // Asegúrate de que tienes un índice en Firestore para el campo 'userEmail' en la colección 'loyaltyCards'.
+    // Si no lo tienes, Firestore te dará un enlace en el error de la consola para crearlo.
+    const q = query(collection(db, 'loyaltyCards'), where('userEmail', '==', email), limit(1));
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            console.log(`UID encontrado para ${email}: ${doc.id}`);
+            return doc.id; // La ID del documento es el UID
+        } else {
+            console.log(`No se encontró UID para el email: ${email}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error al buscar UID por email (${email}):`, error);
+        return null;
+    }
+}
+
+
 onAuthStateChanged(auth, async user => {
     console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user ? user.email : "null");
     if (user) {
@@ -158,6 +182,31 @@ onAuthStateChanged(auth, async user => {
         userDisplay.textContent = `Bienvenido, ${currentUser.displayName || currentUser.email}`;
         authBtn.textContent = 'Cerrar Sesión';
         loyaltyCardSection.classList.remove('hidden');
+
+        // IMPORTANTE: Asegúrate de que el email del usuario se guarde con el UID la primera vez que inicia sesión
+        // Esto es necesario para la búsqueda por email en el admin y para mantener el email actualizado.
+        if (currentUser && currentUser.uid) {
+            const userDocRef = doc(db, 'loyaltyCards', currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (!userDocSnap.exists()) {
+                // Si la tarjeta no existe, créala y asegura que el email esté allí
+                await setDoc(userDocRef, {
+                    stamps: 0,
+                    lastUpdate: new Date(),
+                    userEmail: currentUser.email // Asegura que el email se guarde aquí
+                }).then(() => {
+                    console.log(`Tarjeta inicial creada para UID: ${currentUser.uid} con email: ${currentUser.email}`);
+                }).catch(e => console.error("Error al crear la tarjeta inicial:", e));
+            } else {
+                // Si la tarjeta ya existe, asegúrate de que el email esté actualizado, por si el usuario cambia su email de Google
+                const currentEmailInDb = userDocSnap.data().userEmail;
+                if (currentEmailInDb !== currentUser.email) {
+                    await updateDoc(userDocRef, { userEmail: currentUser.email });
+                    console.log(`Email del usuario actualizado en DB para UID: ${currentUser.uid}`);
+                }
+            }
+        }
+
 
         if (currentUser.email === adminUserEmail) {
             adminSection.classList.remove('hidden');
@@ -169,6 +218,10 @@ onAuthStateChanged(auth, async user => {
                 clientListener();
                 clientListener = null;
             }
+            if (qrcodeCanvas) {
+                qrcodeCanvas.style.display = 'none'; // Esconder QR para el admin
+            }
+
 
         } else {
             adminSection.classList.add('hidden');
@@ -176,9 +229,13 @@ onAuthStateChanged(auth, async user => {
                 adminClientListener();
                 adminClientListener = null;
             }
+            // Mostrar QR para el usuario normal
+            if (qrcodeCanvas) {
+                // La lógica del QR se agregará aquí más adelante
+                qrcodeCanvas.style.display = 'none'; // Temporalmente oculto hasta la implementación del QR
+            }
         }
 
-        // Mostrar estado de carga para el usuario normal
         messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
         messageDisplay.style.color = '#5bc0de';
         loadAndListenForStamps(currentUser.uid);
@@ -203,6 +260,9 @@ onAuthStateChanged(auth, async user => {
             adminClientListener = null;
         }
         clearAdminClientInfo();
+        if (qrcodeCanvas) {
+            qrcodeCanvas.style.display = 'none';
+        }
     }
 });
 
@@ -218,7 +278,7 @@ async function loadAndListenForStamps(uid) {
     console.log(`loadAndListenForStamps: Referencia del documento: loyaltyCards/${uid}`);
 
     if (clientListener) {
-        clientListener();
+        clientListener(); // Desuscribir listener previo si existe
         clientListener = null;
     }
 
@@ -257,8 +317,8 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
     if (docSnapshot.exists()) {
         const data = docSnapshot.data();
         const stamps = data.stamps || 0;
-        const clientEmailDisplay = data.userEmail || clientId;
-        targetClientEmail = clientId;
+        const clientEmailDisplay = data.userEmail || clientId; // Mostrar el email si está disponible, sino el UID
+        targetClientEmail = clientId; // targetClientEmail ahora almacena el UID
         adminClientInfo.innerHTML = `
             <p>Cliente: <strong>${clientEmailDisplay}</strong> (UID: ${clientId})</p>
             <p>Sellos actuales: <strong id="admin-current-stamps">${stamps}</strong></p>
@@ -296,7 +356,7 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
 
     } else { // Document does NOT exist
         clearAdminClientInfo();
-        targetClientEmail = clientId; // Aún permite establecer el target para crear uno nuevo
+        targetClientEmail = clientId; // targetClientEmail ahora almacena el UID. Permite establecer el target para crear uno nuevo
         adminMessage.textContent = `Cliente con UID ${clientId} no encontrado. Puedes añadirle un sello para crear su tarjeta.`;
         adminMessage.style.color = '#f0ad4e';
         setAdminControlsEnabled(true, true); // Solo añadir y resetear (resetear significa crear con 0)
@@ -332,35 +392,58 @@ authBtn.addEventListener('click', () => {
     }
 });
 
+// *** MODIFICADO searchClientBtn para permitir búsqueda por email o UID ***
 searchClientBtn.addEventListener('click', async () => {
-    const clientId = adminEmailInput.value.trim();
-    if (!clientId) {
-        adminMessage.textContent = 'Por favor, introduce el UID de un cliente para buscar.';
+    const emailOrUidInput = adminEmailInput.value.trim(); // El input puede ser un email o un UID
+    if (!emailOrUidInput) {
+        adminMessage.textContent = 'Por favor, introduce el email o UID de un cliente para buscar.';
         adminMessage.style.color = '#d9534f';
         clearAdminClientInfo();
         return;
     }
 
-    disableAdminControlsTemporarily(); // Deshabilitar controles mientras se busca
+    disableAdminControlsTemporarily();
     adminMessage.textContent = 'Buscando cliente...';
     adminMessage.style.color = '#5bc0de';
 
+    let clientIdToSearch = emailOrUidInput; // Por defecto, asumimos que es un UID
+
+    // Paso 1: Intentar buscar por Email si el input parece un email
+    // Usamos una verificación simple para ver si contiene '@' y '.', que es común en emails
+    if (emailOrUidInput.includes('@') && emailOrUidInput.includes('.')) {
+        console.log(`searchClientBtn: Input parece un email, intentando buscar UID por email: ${emailOrUidInput}`);
+        const uidFromEmail = await getUidByEmail(emailOrUidInput);
+        if (uidFromEmail) {
+            clientIdToSearch = uidFromEmail;
+        } else {
+            adminMessage.textContent = `Cliente con email "${emailOrUidInput}" no encontrado.`;
+            adminMessage.style.color = '#f0ad4e';
+            clearAdminClientInfo();
+            enableAdminControlsAfterOperation();
+            return;
+        }
+    } else {
+        console.log(`searchClientBtn: Input parece un UID, buscando directamente: ${emailOrUidInput}`);
+    }
+
+
+    // Paso 2: Usar el UID (obtenido del email o directamente del input) para cargar el documento de la tarjeta
     try {
-        const clientDocRef = doc(db, 'loyaltyCards', clientId);
-        console.log(`Admin search: Buscando documento para UID: ${clientId}`);
+        const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
+        console.log(`Admin search: Buscando documento para UID: ${clientIdToSearch}`);
 
         const clientDoc = await getDoc(clientDocRef);
-        console.log(`Admin search: Resultado de getDoc para UID: ${clientId}. Existe: ${clientDoc.exists()}`);
+        console.log(`Admin search: Resultado de getDoc para UID: ${clientIdToSearch}. Existe: ${clientDoc.exists()}`);
 
-        await updateAdminClientDisplayAndControls(clientId, clientDoc); // Usar la nueva función
+        await updateAdminClientDisplayAndControls(clientIdToSearch, clientDoc);
 
     } catch (error) {
         console.error("searchClientBtn ERROR: Error al buscar cliente:", error);
-        adminMessage.textContent = `Error al buscar el cliente. Por favor, verifica el UID e intenta de nuevo.`;
+        adminMessage.textContent = `Error al buscar el cliente. Por favor, verifica el email/UID e intenta de nuevo.`;
         adminMessage.style.color = '#d9534f';
-        clearAdminClientInfo(); // Asegurarse de limpiar info y deshabilitar en caso de error
+        clearAdminClientInfo();
     } finally {
-        enableAdminControlsAfterOperation(); // Habilitar controles de nuevo
+        enableAdminControlsAfterOperation();
     }
 });
 
@@ -382,7 +465,13 @@ addStampBtn.addEventListener('click', async () => {
                 userEmail = docSnapshot.data().userEmail || '';
             } else {
                 console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
-                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail });
+                // Importante: Si se crea aquí, asegúrate de añadir el email si lo tienes.
+                // En este flujo, el email ya debería estar en el targetClientEmail.
+                // Si el documento no existe y el admin usa email para buscarlo, el userEmail en el setDoc
+                // se usaría como 'userEmail' en el documento, o se inferiría si es posible.
+                // Mejor, nos aseguramos que `updateAdminClientDisplayAndControls` siempre pase el UID correcto a `targetClientEmail`
+                // y que el email esté guardado en la autenticación del usuario al inicio de sesión.
+                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || 'desconocido' });
             }
 
             if (currentStamps < MAX_STAMPS) {
@@ -491,7 +580,10 @@ redeemCoffeeBtn.addEventListener('click', async () => {
 resetStampsBtn.addEventListener('click', async () => {
     if (!targetClientEmail) return;
 
-    const userEmailForConfirm = adminClientInfo.querySelector('strong').textContent.split(' ')[0] || targetClientEmail;
+    // Obtener el email del cliente mostrado en el panel admin para la confirmación
+    const clientInfoElement = adminClientInfo.querySelector('strong');
+    const userEmailForConfirm = clientInfoElement ? clientInfoElement.textContent.split(' ')[0] : targetClientEmail;
+
     if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${userEmailForConfirm}? Esto pondrá sus sellos a 0.`)) {
         return;
     }
