@@ -1,26 +1,42 @@
 // script.js
 
-// 1. Configuración de Firebase
+// --- Importaciones de Firebase SDK (Versión 9 Modular) ---
+// Importa solo las funciones que necesitas para reducir el tamaño del bundle
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, collectionGroup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// --- Configuración de Firebase (TUS CREDENCIALES) ---
+// ASEGÚRATE DE QUE ESTAS CREDENCIALES SON LAS CORRECTAS DE TU PROYECTO FIREBASE
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY", // Reemplaza con tu API Key
-    authDomain: "YOUR_AUTH_DOMAIN", // Reemplaza con tu Auth Domain
-    projectId: "YOUR_PROJECT_ID", // Reemplaza con tu Project ID
-    storageBucket: "YOUR_STORAGE_BUCKET", // Reemplaza con tu Storage Bucket
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Reemplaza con tu Messaging Sender ID
-    appId: "YOUR_APP_ID" // Reemplaza con tu App ID
+    apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo", // ¡ACTUALIZA CON TU API KEY REAL!
+    authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
+    projectId: "mi-cafeteria-lealtad",
+    storageBucket: "mi-cafeteria-lealtad.appspot.com", // Nota: .firebasestorage.app es un subdominio, .appspot.com es el bucket real
+    messagingSenderId: "1098066759983",
+    appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
 };
 
 // Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Obtener la instancia de Auth
+const db = getFirestore(app); // Obtener la instancia de Firestore
+const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 
-// Constantes
+// --- Constantes y Variables Globales ---
 const MAX_STAMPS = 10;
-const ADMIN_UIDS = ['YOUR_ADMIN_UID_1', 'YOUR_ADMIN_UID_2']; // Reemplaza con los UIDs de tus administradores
-// Ejemplo: const ADMIN_UIDS = ['abcdef1234567890abcdef1234567890', 'fedcba0987654321fedcba0987654321'];
+// IMPORTANTE: Reemplaza con los UIDs reales de tus administradores.
+// Puedes encontrar los UIDs en la sección "Authentication" de tu Firebase Console.
+const ADMIN_UIDS = ['TU_UID_ADMIN_1', 'TU_UID_ADMIN_2']; // Ejemplo: ['abcdef1234567890abcdef1234567890']
 
-// 2. Referencias a elementos del DOM
+// Listeners de Firestore
+let clientListener = null; // Para el usuario normal
+let adminClientListener = null; // Para el cliente cargado en el panel de admin
+
+// Almacena el UID del cliente actualmente seleccionado en el panel de administración
+let targetClientUid = null; // Cambiado de targetClientEmail a targetClientUid para mayor claridad
+
+// --- Elementos del DOM ---
 const userNameElement = document.getElementById('user-name');
 const authBtn = document.getElementById('auth-btn');
 
@@ -36,6 +52,7 @@ const reportSection = document.getElementById('report-section');
 const stampsDisplay = document.getElementById('stamps-display');
 const messageDisplay = document.getElementById('message');
 const qrcodeCanvas = document.getElementById('qrcode-canvas');
+const qrInstruction = document.getElementById('qr-instruction');
 const stampsHistoryList = document.getElementById('stamps-history-list');
 
 // Elementos del panel de administración
@@ -72,55 +89,32 @@ const closeScannerBtn = document.getElementById('close-scanner-btn');
 const scannerMessage = document.getElementById('scanner-message');
 let html5QrCode = null; // Instancia del lector QR
 
-// 3. Variables de estado
-let currentUser = null;
-let currentClientData = null; // Para almacenar datos del cliente cargado en admin
-let currentClientDocRef = null; // Referencia al documento del cliente en admin
+// 3. Variables de estado adicionales
+let currentClientData = null; // Para almacenar datos del cliente cargado en admin (objeto)
 
 // 4. Funciones de la UI
 
-// Muestra/oculta secciones basado en el rol del usuario
-function updateUI(user) {
-    currentUser = user;
-    if (user) {
-        userNameElement.textContent = user.displayName || user.email;
-        authBtn.textContent = 'Cerrar Sesión';
-        if (ADMIN_UIDS.includes(user.uid)) {
-            // Es un administrador
-            loyaltyCardSection.classList.add('hidden');
-            qrSection.classList.add('hidden');
-            historySection.classList.add('hidden');
-            adminSection.classList.remove('hidden');
-            adminDashboard.classList.remove('hidden');
-            reportSection.classList.remove('hidden');
-            loadAdminDashboard();
-            generateReport(); // Generar reporte inicial
-            // Asegúrate de que el cliente cargado se reinicie al iniciar sesión como admin
-            resetAdminClientInfo();
-        } else {
-            // Es un cliente normal
-            adminSection.classList.add('hidden');
-            adminDashboard.classList.add('hidden');
-            reportSection.classList.add('hidden');
-            loyaltyCardSection.classList.remove('hidden');
-            qrSection.classList.remove('hidden');
-            historySection.classList.remove('hidden');
-            loadLoyaltyCard(user.uid);
-            loadStampsHistory(user.uid);
-            generateQRCode(user.uid);
-        }
-    } else {
-        // No hay usuario logueado
-        userNameElement.textContent = 'Invitado';
-        authBtn.textContent = 'Iniciar Sesión';
-        loyaltyCardSection.classList.add('hidden');
-        qrSection.classList.add('hidden');
-        historySection.classList.add('hidden');
-        adminSection.classList.add('hidden');
-        adminDashboard.classList.add('hidden');
-        reportSection.classList.add('hidden');
-        // Mostrar un mensaje o una pantalla de inicio de sesión si no hay nadie logueado
+// Función para mostrar Toastify
+function showToast(message, type = 'info', duration = 3000) {
+    let backgroundColor;
+    switch (type) {
+        case 'success': backgroundColor = 'linear-gradient(to right, #5cb85c, #4CAF50)'; break;
+        case 'error': backgroundColor = 'linear-gradient(to right, #d9534f, #f44336)'; break;
+        case 'warning': backgroundColor = 'linear-gradient(to right, #f0ad4e, #FF9800)'; break;
+        case 'info': default: backgroundColor = 'linear-gradient(to right, #5bc0de, #2196F3)'; break;
     }
+
+    Toastify({
+        text: message,
+        duration: duration,
+        newWindow: true,
+        close: true,
+        gravity: "bottom",
+        position: "right",
+        stopOnFocus: true,
+        style: { background: backgroundColor, borderRadius: "5px", boxShadow: "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)" },
+        onClick: function(){}
+    }).showToast();
 }
 
 // Renderiza los sellos en la tarjeta de lealtad del cliente
@@ -167,7 +161,6 @@ function renderStamps(stampsCount, previousStamps = 0) {
 
 // Genera el QR code
 function generateQRCode(uid) {
-    // Verificar si qrcodeCanvas existe y si tiene un contexto 2D
     if (!qrcodeCanvas || !qrcodeCanvas.getContext) {
         console.error("qrcodeCanvas no encontrado o no es un elemento canvas válido.");
         return;
@@ -177,142 +170,211 @@ function generateQRCode(uid) {
     const context = canvas.getContext('2d');
     canvas.width = 200;
     canvas.height = 200;
-    context.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Intentar usar la librería qrcode.js si está disponible (requiere importación)
-    // Para que esto funcione, necesitarías <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-    // o una similar. Si la tienes, descomenta el siguiente bloque:
-    /*
-    if (typeof QRCode !== 'undefined') {
-        // Limpiar el canvas si hay un QR anterior
-        if (canvas._qrcode) { // qrcode.js a veces almacena la instancia
-            canvas._qrcode.clear();
-        }
-        canvas.innerHTML = ''; // Asegurarse de que no haya contenido previo
-        // Crear una nueva instancia de QRCode.js en el canvas
-        canvas._qrcode = new QRCode(canvas, { // Almacenar la instancia para poder limpiarla
-            text: uid,
-            width: 200,
-            height: 200,
-            colorDark : "#7a4a2b",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
-    } else {
-        // Fallback si la librería qrcode.js no está cargada
-        console.warn("Librería qrcode.js no encontrada. Mostrando texto placeholder.");
-        context.fillStyle = '#7a4a2b';
-        context.font = '16px Arial';
-        context.textAlign = 'center';
-        context.fillText('Código QR aquí', canvas.width / 2, canvas.height / 2);
-        context.fillText('(Librería no cargada)', canvas.width / 2, canvas.height / 2 + 20);
-    }
-    */
-    // Si no estás usando la librería 'qrcode.js' y solo quieres un placeholder:
+    // Placeholder simple si no se usa una librería QR externa
     context.fillStyle = '#7a4a2b';
     context.font = '16px Arial';
     context.textAlign = 'center';
     context.fillText('Código QR aquí', canvas.width / 2, canvas.height / 2);
     context.fillText('(Muestra este al barista)', canvas.width / 2, canvas.height / 2 + 20);
-    context.fillText(`UID: ${uid.substring(0, 8)}...`, canvas.width / 2, canvas.height / 2 + 40); // Mostrar parte del UID
+    context.fillText(`UID: ${uid.substring(0, 8)}...`, canvas.width / 2, canvas.height / 2 + 40);
+}
+
+// Deshabilita todos los controles del panel de administración
+function setAdminLoading(isLoading) {
+    const spinnerHtml = isLoading ? '<span class="spinner"></span>' : '';
+    searchClientBtn.innerHTML = isLoading ? `Buscando... ${spinnerHtml}` : 'Buscar Cliente';
+    searchClientBtn.disabled = isLoading;
+    scanQrBtn.disabled = isLoading;
+    clientUidInput.disabled = isLoading;
+    setAdminActionsEnabled(!isLoading && currentClientData); // Mantener habilitados si hay cliente
+    adminSection.classList.toggle('loading', isLoading); // Añadir clase de carga a la sección
+    adminMessage.textContent = isLoading ? 'Procesando...' : ''; // Mensaje genérico de procesamiento
+    adminMessage.style.color = '#5bc0de';
+}
+
+// Habilita/deshabilita botones de acción del admin
+function setAdminActionsEnabled(enabled) {
+    addStampBtn.disabled = !enabled;
+    removeStampBtn.disabled = !enabled;
+    redeemCoffeeBtn.disabled = !enabled;
+    resetStampsBtn.disabled = !enabled;
+}
+
+// Resetea la info del cliente en el panel de admin
+function resetAdminClientInfo() {
+    loadedClientName.textContent = 'No hay cliente cargado.';
+    loadedClientUid.textContent = 'N/A';
+    adminCurrentStamps.textContent = 'N/A';
+    adminMessage.textContent = '';
+    clientUidInput.value = '';
+    currentClientData = null;
+    targetClientUid = null; // Reiniciar también el targetClientUid
+    setAdminActionsEnabled(false); // Deshabilitar botones de acción
+}
+
+// Actualiza la información del cliente cargado en el panel de admin
+function updateAdminClientInfo(clientData) {
+    if (clientData) {
+        loadedClientName.textContent = clientData.displayName || clientData.email || 'N/A';
+        loadedClientUid.textContent = clientData.uid || 'N/A';
+        adminCurrentStamps.textContent = `${clientData.stamps || 0}/${MAX_STAMPS}`;
+        adminMessage.textContent = ''; // Limpiar mensajes anteriores
+        currentClientData = clientData; // Almacena los datos del cliente cargado
+        targetClientUid = clientData.uid; // Actualizar targetClientUid
+        setAdminActionsEnabled(true); // Habilitar botones de acción
+    } else {
+        resetAdminClientInfo();
+    }
 }
 
 
 // 5. Funciones de Datos (Firestore)
 
-// Cargar tarjeta de lealtad para un usuario
+// Cargar tarjeta de lealtad para un usuario (con listener en tiempo real)
 async function loadLoyaltyCard(uid) {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-        const userData = userDoc.data();
-        const stamps = userData.stamps || 0;
-        // previousStamps se usa para la animación, pasamos 0 en la carga inicial
-        renderStamps(stamps, 0);
-    } else {
-        // Si el usuario no tiene documento, crearlo y renderizar 0 sellos
-        await db.collection('users').doc(uid).set({ stamps: 0, rewardsRedeemed: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        renderStamps(0, 0);
+    // Desuscribir listener anterior si existe
+    if (clientListener) {
+        clientListener(); // onSnapshot devuelve una función de desuscripción
     }
+
+    const userDocRef = doc(db, 'users', uid);
+    clientListener = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            const previousStamps = currentClientData ? currentClientData.stamps : 0; // Para la animación
+            currentClientData = { ...userData, uid: docSnap.id }; // Actualizar datos locales
+            renderStamps(userData.stamps || 0, previousStamps);
+        } else {
+            // Si el documento no existe, crearlo con 0 sellos
+            setDoc(userDocRef, {
+                stamps: 0,
+                rewardsRedeemed: 0,
+                createdAt: serverTimestamp(),
+                lastUpdated: serverTimestamp(),
+                email: currentUser.email, // Guardar email del usuario logueado
+                displayName: currentUser.displayName || '' // Guardar nombre del usuario logueado
+            }).then(() => {
+                console.log("Documento de usuario creado con éxito.");
+                renderStamps(0, 0); // Renderizar 0 sellos para la nueva tarjeta
+                showToast("¡Bienvenido! Hemos creado tu tarjeta de lealtad.", 'success');
+            }).catch(error => {
+                console.error("Error al crear documento de usuario:", error);
+                showToast(`Error al crear tu tarjeta: ${error.message}`, 'error');
+            });
+        }
+    }, (error) => {
+        console.error("Error al escuchar cambios en la tarjeta de lealtad:", error);
+        showToast(`Error al cargar tu tarjeta: ${error.message}`, 'error');
+    });
 }
 
 // Cargar historial de sellos para un usuario
 async function loadStampsHistory(uid) {
-    stampsHistoryList.innerHTML = '';
-    const historySnapshot = await db.collection('users').doc(uid).collection('history')
-                                    .orderBy('timestamp', 'desc')
-                                    .limit(10) // Limitar a las últimas 10 transacciones
-                                    .get();
+    stampsHistoryList.innerHTML = '<li>Cargando historial...</li>';
+    const historyColRef = collection(db, 'users', uid, 'history');
+    const q = query(historyColRef, orderBy('timestamp', 'desc'), limit(10));
 
-    if (historySnapshot.empty) {
-        const li = document.createElement('li');
-        li.textContent = 'No hay historial de sellos todavía.';
-        stampsHistoryList.appendChild(li);
-        return;
+    try {
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            stampsHistoryList.innerHTML = '<li>No hay historial de sellos todavía.</li>';
+            return;
+        }
+
+        stampsHistoryList.innerHTML = '';
+        querySnapshot.forEach(doc => {
+            const entry = doc.data();
+            const li = document.createElement('li');
+            const date = entry.timestamp ? entry.timestamp.toDate().toLocaleString() : 'Fecha desconocida';
+            li.innerHTML = `<span class="description">${entry.type}: ${entry.description}</span><span class="timestamp">${date}</span>`;
+            stampsHistoryList.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Error cargando historial:", error);
+        stampsHistoryList.innerHTML = '<li>Error al cargar el historial.</li>';
+        showToast(`Error al cargar historial: ${error.message}`, 'error');
     }
-
-    historySnapshot.forEach(doc => {
-        const entry = doc.data();
-        const li = document.createElement('li');
-        const date = entry.timestamp ? entry.timestamp.toDate().toLocaleString() : 'Fecha desconocida';
-        li.innerHTML = `<span class="description">${entry.type}: ${entry.description}</span><span class="timestamp">${date}</span>`;
-        stampsHistoryList.appendChild(li);
-    });
 }
 
 // Añadir sello para un cliente específico (desde admin)
 async function addStamp(uid, previousStamps) {
     if (!uid) {
-        adminMessage.textContent = 'Error: UID de cliente no cargado.';
-        adminMessage.style.color = 'red';
+        showToast('Error: UID de cliente no cargado.', 'error');
         return;
     }
     setAdminLoading(true);
-    adminMessage.textContent = '';
 
-    const userRef = db.collection('users').doc(uid);
+    const userRef = doc(db, 'users', uid);
     try {
-        await db.runTransaction(async (transaction) => {
+        await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
+
             if (!userDoc.exists) {
-                adminMessage.textContent = 'Error: Cliente no encontrado.';
-                adminMessage.style.color = 'red';
-                return Promise.reject(new Error('Cliente no encontrado')); // Rechazar la transacción si el cliente no existe
-            }
-
-            let currentStamps = userDoc.data().stamps || 0;
-            let rewardsRedeemed = userDoc.data().rewardsRedeemed || 0;
-            const newStamps = Math.min(currentStamps + 1, MAX_STAMPS); // No exceder el máximo
-
-            transaction.update(userRef, {
-                stamps: newStamps,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Registrar en el historial del usuario
-            const historyEntry = {
-                type: 'Sello Añadido',
-                description: `Sello ${newStamps}/${MAX_STAMPS}`,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                adminUid: currentUser.uid // UID del administrador que hizo la acción
-            };
-            transaction.set(userRef.collection('history').doc(), historyEntry);
-
-            // Actualizar datos del cliente cargado localmente (para la UI del admin)
-            currentClientData = { ...userDoc.data(), stamps: newStamps, rewardsRedeemed: rewardsRedeemed };
-            updateAdminClientInfo(currentClientData);
-
-            adminMessage.textContent = `Sello añadido. ${newStamps}/${MAX_STAMPS} sellos.`;
-            adminMessage.style.color = 'green';
-            
-            // Trigger confetti if max stamps reached after adding
-            if (newStamps === MAX_STAMPS && currentStamps < MAX_STAMPS) {
-                triggerConfetti();
+                // Si el documento no existe, lo creamos con 1 sello
+                const newStamps = 1;
+                transaction.set(userRef, {
+                    stamps: newStamps,
+                    rewardsRedeemed: 0,
+                    createdAt: serverTimestamp(),
+                    lastUpdated: serverTimestamp(),
+                    email: clientUidInput.value.includes('@') ? clientUidInput.value : null, // Usar email si es un email
+                    displayName: clientUidInput.value.includes('@') ? clientUidInput.value.split('@')[0] : null // Nombre básico
+                });
+                // Registrar en el historial
+                const historyEntry = {
+                    type: 'Sello Añadido',
+                    description: `Sello ${newStamps}/${MAX_STAMPS} (Tarjeta creada)`,
+                    timestamp: serverTimestamp(),
+                    adminUid: currentUser.uid
+                };
+                transaction.set(collection(userRef, 'history').doc(), historyEntry);
+                showToast(`Cliente nuevo creado y sello añadido. Total: ${newStamps}.`, 'success');
+            } else {
+                const currentStamps = userDoc.data().stamps || 0;
+                if (currentStamps < MAX_STAMPS) {
+                    const newStamps = currentStamps + 1;
+                    transaction.update(userRef, {
+                        stamps: newStamps,
+                        lastUpdated: serverTimestamp()
+                    });
+                    // Registrar en el historial
+                    const historyEntry = {
+                        type: 'Sello Añadido',
+                        description: `Sello ${newStamps}/${MAX_STAMPS}`,
+                        timestamp: serverTimestamp(),
+                        adminUid: currentUser.uid
+                    };
+                    transaction.set(collection(userRef, 'history').doc(), historyEntry);
+                    showToast(`Sello añadido. Nuevo total: ${newStamps}.`, 'success');
+                } else {
+                    showToast('El cliente ya tiene el máximo de sellos. No se puede añadir más.', 'warning');
+                }
             }
         });
+        // Actualizar dashboard y historial después de la transacción
+        loadAdminDashboard();
+        loadStampsHistory(uid);
+
+        // Animación visual en el panel de admin si el sello se añadió correctamente
+        if (adminCurrentStamps && previousStamps < MAX_STAMPS) {
+            const stampsSpan = document.createElement('span');
+            stampsSpan.textContent = ' ☕';
+            stampsSpan.style.display = 'inline-block';
+            stampsSpan.style.fontSize = '1.2em';
+            stampsSpan.style.color = '#5bc0de';
+            stampsSpan.classList.add('animate');
+            adminCurrentStamps.appendChild(stampsSpan);
+            stampsSpan.addEventListener('animationend', () => {
+                stampsSpan.remove();
+            }, { once: true });
+        }
+
     } catch (error) {
         console.error("Error añadiendo sello:", error);
-        adminMessage.textContent = `Error al añadir sello: ${error.message}`;
-        adminMessage.style.color = 'red';
+        showToast(`Error al añadir sello: ${error.message}`, 'error');
     } finally {
         setAdminLoading(false);
     }
@@ -321,51 +383,44 @@ async function addStamp(uid, previousStamps) {
 // Quitar sello para un cliente específico (desde admin)
 async function removeStamp(uid) {
     if (!uid) {
-        adminMessage.textContent = 'Error: UID de cliente no cargado.';
-        adminMessage.style.color = 'red';
+        showToast('Error: UID de cliente no cargado.', 'error');
         return;
     }
     setAdminLoading(true);
-    adminMessage.textContent = '';
 
-    const userRef = db.collection('users').doc(uid);
+    const userRef = doc(db, 'users', uid);
     try {
-        await db.runTransaction(async (transaction) => {
+        await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                adminMessage.textContent = 'Error: Cliente no encontrado.';
-                adminMessage.style.color = 'red';
+                showToast('Error: Cliente no encontrado.', 'error');
                 return Promise.reject(new Error('Cliente no encontrado'));
             }
 
-            let currentStamps = userDoc.data().stamps || 0;
-            const newStamps = Math.max(0, currentStamps - 1); // No ir por debajo de 0
-
-            transaction.update(userRef, {
-                stamps: newStamps,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Registrar en el historial del usuario
-            const historyEntry = {
-                type: 'Sello Quitado',
-                description: `Sello ${newStamps}/${MAX_STAMPS}`,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                adminUid: currentUser.uid
-            };
-            transaction.set(userRef.collection('history').doc(), historyEntry);
-
-            // Actualizar datos del cliente cargado localmente
-            currentClientData = { ...userDoc.data(), stamps: newStamps };
-            updateAdminClientInfo(currentClientData);
-
-            adminMessage.textContent = `Sello quitado. ${newStamps}/${MAX_STAMPS} sellos.`;
-            adminMessage.style.color = 'green';
+            const currentStamps = userDoc.data().stamps || 0;
+            if (currentStamps > 0) {
+                const newStamps = currentStamps - 1;
+                transaction.update(userRef, {
+                    stamps: newStamps,
+                    lastUpdated: serverTimestamp()
+                });
+                const historyEntry = {
+                    type: 'Sello Quitado',
+                    description: `Sello ${newStamps}/${MAX_STAMPS}`,
+                    timestamp: serverTimestamp(),
+                    adminUid: currentUser.uid
+                };
+                transaction.set(collection(userRef, 'history').doc(), historyEntry);
+                showToast(`Sello quitado. Nuevo total: ${newStamps}.`, 'success');
+            } else {
+                showToast('El cliente ya tiene 0 sellos. No se puede quitar más.', 'warning');
+            }
         });
+        loadAdminDashboard();
+        loadStampsHistory(uid);
     } catch (error) {
         console.error("Error quitando sello:", error);
-        adminMessage.textContent = `Error al quitar sello: ${error.message}`;
-        adminMessage.style.color = 'red';
+        showToast(`Error al quitar sello: ${error.message}`, 'error');
     } finally {
         setAdminLoading(false);
     }
@@ -374,58 +429,47 @@ async function removeStamp(uid) {
 // Canjear café gratis para un cliente (desde admin)
 async function redeemCoffee(uid) {
     if (!uid) {
-        adminMessage.textContent = 'Error: UID de cliente no cargado.';
-        adminMessage.style.color = 'red';
+        showToast('Error: UID de cliente no cargado.', 'error');
         return;
     }
     setAdminLoading(true);
-    adminMessage.textContent = '';
 
-    const userRef = db.collection('users').doc(uid);
+    const userRef = doc(db, 'users', uid);
     try {
-        await db.runTransaction(async (transaction) => {
+        await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                adminMessage.textContent = 'Error: Cliente no encontrado.';
-                adminMessage.style.color = 'red';
+                showToast('Error: Cliente no encontrado.', 'error');
                 return Promise.reject(new Error('Cliente no encontrado'));
             }
 
-            let currentStamps = userDoc.data().stamps || 0;
+            const currentStamps = userDoc.data().stamps || 0;
             let rewardsRedeemed = userDoc.data().rewardsRedeemed || 0;
 
             if (currentStamps < MAX_STAMPS) {
-                adminMessage.textContent = 'Error: El cliente no tiene suficientes sellos para canjear un café gratis.';
-                adminMessage.style.color = 'red';
+                showToast('Error: El cliente no tiene suficientes sellos para canjear un café gratis.', 'error');
                 return Promise.reject(new Error('No suficientes sellos'));
             }
 
             transaction.update(userRef, {
-                stamps: 0, // Reiniciar sellos
+                stamps: 0,
                 rewardsRedeemed: rewardsRedeemed + 1,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                lastUpdated: serverTimestamp()
             });
-
-            // Registrar en el historial del usuario
             const historyEntry = {
                 type: 'Café Canjeado',
                 description: 'Canjeó un café gratis. Sellos reiniciados.',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: serverTimestamp(),
                 adminUid: currentUser.uid
             };
-            transaction.set(userRef.collection('history').doc(), historyEntry);
-
-            // Actualizar datos del cliente cargado localmente
-            currentClientData = { ...userDoc.data(), stamps: 0, rewardsRedeemed: rewardsRedeemed + 1 };
-            updateAdminClientInfo(currentClientData);
-
-            adminMessage.textContent = `Café gratis canjeado. Sellos reiniciados. El cliente ha canjeado ${rewardsRedeemed + 1} cafés.`;
-            adminMessage.style.color = 'green';
+            transaction.set(collection(userRef, 'history').doc(), historyEntry);
+            showToast(`Café gratis canjeado. Sellos reiniciados. El cliente ha canjeado ${rewardsRedeemed + 1} cafés.`, 'success');
         });
+        loadAdminDashboard();
+        loadStampsHistory(uid);
     } catch (error) {
         console.error("Error canjeando café:", error);
-        adminMessage.textContent = `Error al canjear café: ${error.message}`;
-        adminMessage.style.color = 'red';
+        showToast(`Error al canjear café: ${error.message}`, 'error');
     } finally {
         setAdminLoading(false);
     }
@@ -434,48 +478,54 @@ async function redeemCoffee(uid) {
 // Reiniciar tarjeta para un cliente (desde admin)
 async function resetStamps(uid) {
     if (!uid) {
-        adminMessage.textContent = 'Error: UID de cliente no cargado.';
-        adminMessage.style.color = 'red';
+        showToast('Error: UID de cliente no cargado.', 'error');
         return;
     }
     setAdminLoading(true);
-    adminMessage.textContent = '';
 
-    const userRef = db.collection('users').doc(uid);
+    const userRef = doc(db, 'users', uid);
     try {
-        await db.runTransaction(async (transaction) => {
+        await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                adminMessage.textContent = 'Error: Cliente no encontrado.';
-                adminMessage.style.color = 'red';
-                return Promise.reject(new Error('Cliente no encontrado'));
+                // Si el documento no existe, lo creamos con 0 sellos
+                transaction.set(userRef, {
+                    stamps: 0,
+                    rewardsRedeemed: 0,
+                    createdAt: serverTimestamp(),
+                    lastUpdated: serverTimestamp(),
+                    email: clientUidInput.value.includes('@') ? clientUidInput.value : null,
+                    displayName: clientUidInput.value.includes('@') ? clientUidInput.value.split('@')[0] : null
+                });
+                const historyEntry = {
+                    type: 'Tarjeta Reiniciada',
+                    description: 'Tarjeta creada/reiniciada a 0 sellos.',
+                    timestamp: serverTimestamp(),
+                    adminUid: currentUser.uid
+                };
+                transaction.set(collection(userRef, 'history').doc(), historyEntry);
+                showToast(`Cliente nuevo creado y tarjeta reiniciada a 0 sellos.`, 'info');
+            } else {
+                const currentStamps = userDoc.data().stamps || 0;
+                transaction.update(userRef, {
+                    stamps: 0,
+                    lastUpdated: serverTimestamp()
+                });
+                const historyEntry = {
+                    type: 'Tarjeta Reiniciada',
+                    description: `Tarjeta reiniciada desde ${currentStamps} sellos a 0.`,
+                    timestamp: serverTimestamp(),
+                    adminUid: currentUser.uid
+                };
+                transaction.set(collection(userRef, 'history').doc(), historyEntry);
+                showToast(`Tarjeta reiniciada a 0 sellos.`, 'info');
             }
-
-            transaction.update(userRef, {
-                stamps: 0,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Registrar en el historial del usuario
-            const historyEntry = {
-                type: 'Tarjeta Reiniciada',
-                description: 'Todos los sellos de la tarjeta han sido reiniciados.',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                adminUid: currentUser.uid
-            };
-            transaction.set(userRef.collection('history').doc(), historyEntry);
-
-            // Actualizar datos del cliente cargado localmente
-            currentClientData = { ...userDoc.data(), stamps: 0 };
-            updateAdminClientInfo(currentClientData);
-
-            adminMessage.textContent = `Tarjeta de sellos reiniciada a 0.`;
-            adminMessage.style.color = 'green';
         });
+        loadAdminDashboard();
+        loadStampsHistory(uid);
     } catch (error) {
         console.error("Error reiniciando tarjeta:", error);
-        adminMessage.textContent = `Error al reiniciar tarjeta: ${error.message}`;
-        adminMessage.style.color = 'red';
+        showToast(`Error al reiniciar tarjeta: ${error.message}`, 'error');
     } finally {
         setAdminLoading(false);
     }
@@ -484,12 +534,14 @@ async function resetStamps(uid) {
 // Cargar datos para el dashboard de administración
 async function loadAdminDashboard() {
     try {
-        const usersSnapshot = await db.collection('users').get();
-        let totalCustomers = usersSnapshot.size;
+        const usersColRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersColRef);
+        let totalCustomers = 0;
         let pendingRewards = 0;
         let totalStamps = 0;
 
         usersSnapshot.forEach(doc => {
+            totalCustomers++;
             const userData = doc.data();
             totalStamps += (userData.stamps || 0);
             if (userData.stamps && userData.stamps >= MAX_STAMPS) {
@@ -505,6 +557,7 @@ async function loadAdminDashboard() {
 
     } catch (error) {
         console.error("Error cargando dashboard:", error);
+        showToast(`Error al cargar dashboard: ${error.message}`, 'error');
     }
 }
 
@@ -526,173 +579,160 @@ async function generateReport() {
     let cardsReset = 0;
     let stampsRemoved = 0;
 
-    const usersSnapshot = await db.collection('users').get();
-
-    for (const userDoc of usersSnapshot.docs) {
-        let historyQuery = userDoc.ref.collection('history');
+    try {
+        // Consulta de colección grupal para 'history'
+        const historyCollectionGroupRef = collectionGroup(db, 'history');
+        let q = query(historyCollectionGroupRef);
 
         if (startDate) {
-            historyQuery = historyQuery.where('timestamp', '>=', startDate);
+            q = query(historyCollectionGroupRef, where('timestamp', '>=', startDate));
         }
 
-        const historySnapshot = await historyQuery.get();
+        const querySnapshot = await getDocs(q);
 
-        historySnapshot.forEach(historyDoc => {
-            const entry = historyDoc.data();
-            if (entry.type === 'Sello Añadido') {
-                stampsAdded++;
-            } else if (entry.type === 'Café Canjeado') {
-                rewardsRedeemed++;
-            } else if (entry.type === 'Tarjeta Reiniciada') {
-                cardsReset++;
-            } else if (entry.type === 'Sello Quitado') {
-                stampsRemoved++;
+        querySnapshot.forEach(doc => {
+            const entry = doc.data();
+            switch (entry.type) {
+                case 'Sello Añadido':
+                    stampsAdded++;
+                    break;
+                case 'Café Canjeado':
+                    rewardsRedeemed++;
+                    break;
+                case 'Tarjeta Reiniciada':
+                    cardsReset++;
+                    break;
+                case 'Sello Quitado':
+                    stampsRemoved++;
+                    break;
             }
         });
-    }
 
-    stampsAddedStat.textContent = stampsAdded;
-    rewardsRedeemedStat.textContent = rewardsRedeemed;
-    cardsResetStat.textContent = cardsReset;
-    stampsRemovedStat.textContent = stampsRemoved;
+        stampsAddedStat.textContent = stampsAdded;
+        rewardsRedeemedStat.textContent = rewardsRedeemed;
+        cardsResetStat.textContent = cardsReset;
+        stampsRemovedStat.textContent = stampsRemoved;
+
+    } catch (error) {
+        console.error("Error generando reporte:", error);
+        showToast(`Error al generar reporte: ${error.message}`, 'error');
+    }
 }
 
 
 // 6. Funciones de Autenticación
-function handleAuth() {
+async function handleAuth() {
     if (currentUser) {
         // Cerrar sesión
-        auth.signOut().then(() => {
-            console.log('Usuario cerró sesión');
-        }).catch((error) => {
+        try {
+            await signOut(auth);
+            showToast('Sesión cerrada correctamente.', 'info');
+        } catch (error) {
             console.error('Error al cerrar sesión:', error);
-        });
+            showToast(`Error al cerrar sesión: ${error.message}`, 'error');
+        }
     } else {
-        // Iniciar sesión con Google (puedes usar un popup o redirect)
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider)
-            .then((result) => {
-                const user = result.user;
-                console.log('Usuario inició sesión:', user.displayName);
-                // Si es un nuevo usuario, crear documento en Firestore
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    if (!doc.exists) {
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            displayName: user.displayName,
-                            stamps: 0,
-                            rewardsRedeemed: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
+        // Iniciar sesión con Google
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            console.log('Usuario inició sesión:', user.displayName || user.email);
+
+            // Verificar si el usuario ya tiene un documento en Firestore
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (!userDocSnap.exists()) {
+                // Si es un nuevo usuario, crear documento
+                await setDoc(userDocRef, {
+                    email: user.email,
+                    displayName: user.displayName || '',
+                    stamps: 0,
+                    rewardsRedeemed: 0,
+                    createdAt: serverTimestamp(),
+                    lastUpdated: serverTimestamp()
                 });
-            })
-            .catch((error) => {
-                console.error('Error al iniciar sesión:', error);
-                alert(`Error al iniciar sesión: ${error.message}`);
-            });
+                showToast(`Bienvenido, ${user.displayName || user.email}! Tu tarjeta de lealtad ha sido creada.`, 'success');
+            } else {
+                // Si el usuario ya existe, actualizar displayName/email si han cambiado
+                const existingData = userDocSnap.data();
+                if (existingData.email !== user.email || existingData.displayName !== (user.displayName || '')) {
+                    await updateDoc(userDocRef, {
+                        email: user.email,
+                        displayName: user.displayName || '',
+                        lastUpdated: serverTimestamp()
+                    });
+                    showToast(`Bienvenido de nuevo, ${user.displayName || user.email}!`, 'info');
+                } else {
+                    showToast(`Bienvenido de nuevo, ${user.displayName || user.email}!`, 'info');
+                }
+            }
+        } catch (error) {
+            console.error('Error al iniciar sesión:', error);
+            let errorMessage = "Ocurrió un error al iniciar sesión.";
+            if (error.code === 'auth/popup-blocked') {
+                errorMessage = "El navegador bloqueó la ventana de inicio de sesión. Por favor, permite las ventanas emergentes para este sitio.";
+            } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+                errorMessage = "Has cerrado la ventana de inicio de sesión.";
+            } else if (error.code === 'auth/operation-not-allowed') {
+                errorMessage = "El método de inicio de sesión con Google no está habilitado en Firebase. Contacta al administrador.";
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = "Error de red. Verifica tu conexión a internet.";
+            }
+            showToast(`${errorMessage} (Código: ${error.code})`, 'error', 7000);
+        }
     }
 }
 
 // Escuchador de cambios de estado de autenticación
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, user => {
     updateUI(user);
 });
 
-// 7. Funciones del Panel de Administración
-
-// Actualiza la información del cliente cargado
-function updateAdminClientInfo(clientData) {
-    if (clientData) {
-        loadedClientName.textContent = clientData.displayName || clientData.email || 'N/A';
-        loadedClientUid.textContent = clientData.uid || 'N/A';
-        adminCurrentStamps.textContent = `${clientData.stamps || 0}/${MAX_STAMPS}`;
-        adminMessage.textContent = ''; // Limpiar mensajes anteriores
-        currentClientData = clientData; // Almacena los datos del cliente cargado
-    } else {
-        resetAdminClientInfo();
-    }
-}
-
-// Resetea la info del cliente en el panel de admin
-function resetAdminClientInfo() {
-    loadedClientName.textContent = 'No hay cliente cargado.';
-    loadedClientUid.textContent = 'N/A';
-    adminCurrentStamps.textContent = 'N/A';
-    adminMessage.textContent = '';
-    clientUidInput.value = '';
-    currentClientData = null;
-    currentClientDocRef = null;
-    // Deshabilitar botones de acción hasta que se cargue un cliente
-    setAdminActionsEnabled(false);
-}
-
-// Habilita/deshabilita botones de acción del admin
-function setAdminActionsEnabled(enabled) {
-    addStampBtn.disabled = !enabled;
-    removeStampBtn.disabled = !enabled;
-    redeemCoffeeBtn.disabled = !enabled;
-    resetStampsBtn.disabled = !enabled;
-}
-
-// Habilita/deshabilita el estado de carga del admin
-function setAdminLoading(isLoading) {
-    const spinnerHtml = isLoading ? '<span class="spinner"></span>' : '';
-    searchClientBtn.innerHTML = isLoading ? `Buscando... ${spinnerHtml}` : 'Buscar Cliente';
-    searchClientBtn.disabled = isLoading;
-    scanQrBtn.disabled = isLoading;
-    clientUidInput.disabled = isLoading;
-    setAdminActionsEnabled(!isLoading && currentClientData); // Mantener habilitados si hay cliente
-    adminSection.classList.toggle('loading', isLoading); // Añadir clase de carga a la sección
-}
+// 7. Event Listeners del Panel de Administración
 
 // Búsqueda de cliente por UID o Email
 searchClientBtn.addEventListener('click', async () => {
     const input = clientUidInput.value.trim();
     if (!input) {
-        adminMessage.textContent = 'Por favor, ingrese un Email o UID de cliente.';
-        adminMessage.style.color = 'orange';
+        showToast('Por favor, ingrese un Email o UID de cliente.', 'warning');
         resetAdminClientInfo();
         return;
     }
 
     setAdminLoading(true);
-    adminMessage.textContent = ''; // Limpiar mensajes anteriores
 
     try {
-        let userFound = null;
-        let querySnapshot;
+        let userFoundData = null;
+        let userFoundUid = null;
 
         // Intentar buscar por UID directamente
-        const userDoc = await db.collection('users').doc(input).get();
-        if (userDoc.exists) {
-            userFound = { ...userDoc.data(), uid: userDoc.id };
-            currentClientDocRef = userDoc.ref;
+        const userDoc = await getDoc(doc(db, 'users', input));
+        if (userDoc.exists()) {
+            userFoundData = userDoc.data();
+            userFoundUid = userDoc.id;
         } else {
             // Si no se encuentra por UID, intentar buscar por email
-            querySnapshot = await db.collection('users').where('email', '==', input).limit(1).get();
+            const q = query(collection(db, 'users'), where('email', '==', input), limit(1));
+            const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
-                const doc = querySnapshot.docs[0];
-                userFound = { ...doc.data(), uid: doc.id };
-                currentClientDocRef = doc.ref;
+                const docSnap = querySnapshot.docs[0];
+                userFoundData = docSnap.data();
+                userFoundUid = docSnap.id;
             }
         }
 
-        if (userFound) {
-            updateAdminClientInfo(userFound);
-            setAdminActionsEnabled(true);
-            adminMessage.textContent = 'Cliente cargado con éxito.';
-            adminMessage.style.color = 'green';
+        if (userFoundData) {
+            updateAdminClientInfo({ ...userFoundData, uid: userFoundUid });
+            loadStampsHistory(userFoundUid); // Cargar historial del cliente cargado
+            showToast('Cliente cargado con éxito.', 'success');
         } else {
-            adminMessage.textContent = 'Cliente no encontrado. Verifique el Email/UID.';
-            adminMessage.style.color = 'red';
+            showToast('Cliente no encontrado. Verifique el Email/UID.', 'error');
             resetAdminClientInfo();
         }
     } catch (error) {
         console.error('Error al buscar cliente:', error);
-        adminMessage.textContent = `Error al buscar cliente: ${error.message}`;
-        adminMessage.style.color = 'red';
+        showToast(`Error al buscar cliente: ${error.message}`, 'error');
         resetAdminClientInfo();
     } finally {
         setAdminLoading(false);
@@ -701,57 +741,34 @@ searchClientBtn.addEventListener('click', async () => {
 
 // Event listeners para los botones de acción del admin
 addStampBtn.addEventListener('click', () => {
-    if (currentClientData && currentClientData.uid) {
-        const stampsBefore = currentClientData.stamps || 0;
-        addStamp(currentClientData.uid, stampsBefore);
-
-        // NUEVO: Animación visual en el panel de admin si el sello se añadió correctamente
-        if (adminCurrentStamps && stampsBefore < MAX_STAMPS) { // Solo animar si no estaba al máximo
-            const stampsSpan = document.createElement('span');
-            stampsSpan.textContent = ' ☕'; // Un pequeño ícono de café
-            stampsSpan.style.display = 'inline-block'; // Para que la animación funcione mejor
-            stampsSpan.style.fontSize = '1.2em'; // Controla el tamaño del emoji en la animación del admin
-            stampsSpan.style.color = '#5bc0de'; // Color para que se vea en el mensaje
-            stampsSpan.classList.add('animate'); // Aplica la clase de animación (usa la keyframe 'bounceIn' global)
-
-            // Añadir temporalmente el ícono animado junto al número de sellos
-            adminCurrentStamps.appendChild(stampsSpan);
-
-            stampsSpan.addEventListener('animationend', () => {
-                stampsSpan.remove(); // Eliminar el ícono animado después de la animación
-            }, { once: true });
-        }
-
+    if (targetClientUid) {
+        addStamp(targetClientUid, currentClientData ? currentClientData.stamps : 0);
     } else {
-        adminMessage.textContent = 'Por favor, cargue un cliente primero.';
-        adminMessage.style.color = 'orange';
+        showToast('Por favor, cargue un cliente primero.', 'warning');
     }
 });
 
 removeStampBtn.addEventListener('click', () => {
-    if (currentClientData && currentClientData.uid) {
-        removeStamp(currentClientData.uid);
+    if (targetClientUid) {
+        removeStamp(targetClientUid);
     } else {
-        adminMessage.textContent = 'Por favor, cargue un cliente primero.';
-        adminMessage.style.color = 'orange';
+        showToast('Por favor, cargue un cliente primero.', 'warning');
     }
 });
 
 redeemCoffeeBtn.addEventListener('click', () => {
-    if (currentClientData && currentClientData.uid) {
-        redeemCoffee(currentClientData.uid);
+    if (targetClientUid) {
+        redeemCoffee(targetClientUid);
     } else {
-        adminMessage.textContent = 'Por favor, cargue un cliente primero.';
-        adminMessage.style.color = 'orange';
+        showToast('Por favor, cargue un cliente primero.', 'warning');
     }
 });
 
 resetStampsBtn.addEventListener('click', () => {
-    if (currentClientData && currentClientData.uid) {
-        resetStamps(currentClientData.uid);
+    if (targetClientUid) {
+        resetStamps(targetClientUid);
     } else {
-        adminMessage.textContent = 'Por favor, cargue un cliente primero.';
-        adminMessage.style.color = 'orange';
+        showToast('Por favor, cargue un cliente primero.', 'warning');
     }
 });
 
