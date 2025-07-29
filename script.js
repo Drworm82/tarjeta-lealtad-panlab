@@ -767,6 +767,15 @@ searchClientBtn.addEventListener('click', async () => {
     }
 });
 
+// NUEVO: Event listener para la tecla 'Enter' en el campo de email/UID del admin
+adminEmailInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Previene el comportamiento por defecto del formulario
+        searchClientBtn.click(); // Activa la búsqueda
+    }
+});
+
+
 // --- Manejador para Añadir Sello ---
 addStampBtn.addEventListener('click', async () => {
     if (!targetClientEmail || !currentUser) { // targetClientEmail es el UID del cliente cargado
