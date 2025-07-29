@@ -1,358 +1,644 @@
-/* style.css */
+// --- Importaciones de Firebase SDK (Versión 9 Modular) ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f3ed; /* Color de fondo suave */
-    color: #333;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    overflow-x: hidden; /* Evita el scroll horizontal no deseado */
-}
+// --- Configuración de Firebase (TUS CREDENCIALES) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo",
+    authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
+    projectId: "mi-cafeteria-lealtad",
+    storageBucket: "mi-cafeteria-lealtad.firebasestorage.app",
+    messagingSenderId: "1098066759983",
+    appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
+};
 
-header {
-    background-color: #7a4a2b; /* Marrón oscuro para la cabecera */
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Obtener la instancia de Auth
+const db = getFirestore(app); // Obtener la instancia de Firestore
+const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 
-header h1 {
-    margin: 0;
-    font-size: 1.8em;
-}
+// --- Constantes y Variables Globales ---
+const MAX_STAMPS = 10;
+let currentStamps = 0;
+let currentUser = null; // Guardará el objeto de usuario de Firebase
+const adminUserEmail = 'worm.jim@gmail.com'; // Correo del administrador (constante)
+let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
+let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
+let targetClientEmail = null; // Ahora almacenará el UID del cliente en el panel de admin
 
-.auth-controls {
-    display: flex;
-    align-items: center;
-}
-
-#user-display {
-    margin-right: 15px;
-    font-weight: bold;
-}
-
-button {
-    background-color: #a06e4a; /* Marrón más claro para botones */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s ease;
-}
-
-button:hover {
-    background-color: #8a5e3a;
-}
-
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-main {
-    flex-grow: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%; /* Asegura que el main ocupe todo el ancho disponible */
-    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
-}
-
-.card {
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
-}
-
-.card h2 {
-    color: #7a4a2b;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.6em;
-}
-
-/* Estilos de la Tarjeta de Lealtad */
-.stamps-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columnas */
-    gap: 15px;
-    margin-bottom: 20px;
-    justify-items: center;
-    align-items: center;
-}
-
-.stamp {
-    width: 60px;
-    height: 60px;
-    background-color: #e0d8cc; /* Color para sello vacío */
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #7a4a2b;
-    border: 2px solid #a06e4a;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease;
-}
-
-.stamp.obtained {
-    background-color: #a06e4a; /* Color para sello lleno */
-    color: white; /* Color del icono */
-    font-size: 2em; /* Tamaño más grande para el icono */
-    border-color: #7a4a2b;
-}
-
-/* Mensajes */
-#message, #admin-message {
-    margin-top: 15px;
-    font-size: 1.1em;
-    font-weight: bold;
-}
-
-/* Contenedor de Confeti */
-.confetti-container {
-    position: relative; /* Para posicionar el confeti relativo a este contenedor */
-    width: 100%;
-    height: 100px; /* Altura para el efecto de confeti */
-    overflow: hidden;
-    margin-top: 20px;
-    display: none; /* Oculto por defecto, activado por JS */
-}
-
-.confetti-container.active {
-    display: block; /* Muestra el contenedor cuando está activo */
-}
-
-.confetti {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background-color: #ccc; /* Color por defecto, sobrescrito por JS */
-    border-radius: 50%;
-    opacity: 0;
-    animation-fill-mode: forwards;
-}
-
-/* Animaciones de Confeti (ejemplo de 5 variaciones) */
-@keyframes confetti-fall-1 {
-    0% { transform: translate(0, -100px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(50px, 300px) rotate(360deg); opacity: 0; }
-}
-@keyframes confetti-fall-2 {
-    0% { transform: translate(100px, -150px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-50px, 350px) rotate(-360deg); opacity: 0; }
-}
-@keyframes confetti-fall-3 {
-    0% { transform: translate(-50px, -200px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(100px, 400px) rotate(720deg); opacity: 0; }
-}
-@keyframes confetti-fall-4 {
-    0% { transform: translate(150px, -100px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-100px, 300px) rotate(-720deg); opacity: 0; }
-}
-@keyframes confetti-fall-5 {
-    0% { transform: translate(-100px, -150px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(50px, 350px) rotate(360deg); opacity: 0; }
-}
+// --- Elementos del DOM ---
+const userDisplay = document.getElementById('user-display');
+const authBtn = document.getElementById('auth-btn');
+const adminSection = document.getElementById('admin-section');
+const adminEmailInput = document.getElementById('admin-email-input');
+const searchClientBtn = document.getElementById('search-client-btn');
+const adminClientInfo = document.getElementById('admin-client-info');
+const addStampBtn = document.getElementById('add-stamp-btn');
+const removeStampBtn = document.getElementById('remove-stamp-btn');
+const redeemCoffeeBtn = document.getElementById('redeem-coffee-btn');
+const resetStampsBtn = document.getElementById('reset-stamps-btn');
+const adminMessage = document.getElementById('admin-message');
+const messageDisplay = document.getElementById('message');
+const confettiContainer = document.querySelector('.confetti-container');
+const loyaltyCardSection = document.getElementById('loyalty-card');
+const qrcodeCanvas = document.getElementById('qrcode-canvas'); // Para el QR
+const qrInstruction = document.getElementById('qr-instruction'); // Para la instrucción del QR
 
 
-/* Sección de Administración */
-#admin-section {
-    background-color: #f0ead8; /* Fondo más claro para admin */
-    border: 1px dashed #a06e4a;
-}
+// --- Funciones de UI ---
 
-.admin-controls, .admin-actions {
-    display: flex;
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en líneas si no hay espacio */
-    gap: 10px; /* Espacio entre los elementos */
-    margin-bottom: 15px;
-    justify-content: center; /* Centra los botones */
-    align-items: center;
-}
+function renderStamps(stampsCount) {
+    const stampsDisplay = document.getElementById('stamps-display');
+    stampsDisplay.innerHTML = ''; // Limpiar sellos existentes
+    const maxStamps = 10;
 
-.admin-controls label {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.admin-controls input[type="text"],
-.admin-controls input[type="email"] {
-    flex-grow: 1; /* Permite que el input crezca */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    max-width: 250px; /* Limita el ancho del input */
-}
-
-.client-info {
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 15px;
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.client-info p {
-    margin: 5px 0;
-}
-
-.admin-actions button {
-    flex: 1 1 auto; /* Permite que los botones crezcan y se encojan */
-    min-width: 120px; /* Ancho mínimo para los botones */
-    max-width: 180px; /* Ancho máximo para los botones */
-}
-
-/* Colores específicos para botones de administración */
-#add-stamp-btn { background-color: #28a745; } /* Verde */
-#add-stamp-btn:hover:not(:disabled) { background-color: #218838; }
-#remove-stamp-btn { background-color: #dc3545; } /* Rojo */
-#remove-stamp-btn:hover:not(:disabled) { background-color: #c82333; }
-#redeem-coffee-btn { background-color: #17a2b8; } /* Azul-cian */
-#redeem-coffee-btn:hover:not(:disabled) { background-color: #138496; }
-#reset-stamps-btn { background-color: #6c757d; } /* Gris */
-#reset-stamps-btn:hover:not(:disabled) { background-color: #5a6268; }
-
-/* Estilos para el Código QR y sus instrucciones */
-#qrcode-canvas {
-    display: block !important; /* Asegura que siempre se muestre cuando sea visible */
-    margin: 20px auto; /* Centra el QR */
-    max-width: 90%; /* Limita el ancho máximo para que no se desborde */
-    height: auto; /* Mantiene la proporción */
-    border: 1px solid #ccc; /* Un borde sutil para que sea visible */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra para destacarlo */
-}
-
-#qr-instruction {
-    display: block !important; /* Asegura que la instrucción siempre se muestre cuando sea visible */
-    text-align: center;
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: #666;
-}
-
-/* Para esconder elementos */
-.hidden {
-    display: none !important; /* Usamos !important para asegurar que se oculte */
-}
-
-/* Pie de página */
-footer {
-    background-color: #7a4a2b;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    margin-top: 20px;
-    width: 100%;
-    box-sizing: border-box; /* Incluye padding en el ancho */
-}
-
-/* Media query para pantallas pequeñas (móviles) */
-@media (max-width: 600px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-        padding: 10px;
+    for (let i = 0; i < maxStamps; i++) {
+        const stamp = document.createElement('div');
+        stamp.classList.add('stamp');
+        if (i < stampsCount) {
+            stamp.classList.add('obtained'); // Usamos 'obtained' como clase para sellos llenos
+            stamp.innerHTML = '☕'; // Icono de taza de café
+        } else {
+            stamp.textContent = (i + 1); // Número del sello
+        }
+        stampsDisplay.appendChild(stamp);
     }
 
-    header h1 {
-        font-size: 1.5em;
-        margin-bottom: 10px;
-    }
-
-    .auth-controls {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    #user-display {
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-
-    button {
-        width: 90%; /* Botones más anchos en móvil */
-        margin-bottom: 10px;
-    }
-
-    main {
-        padding: 10px;
-    }
-
-    .card {
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-
-    .stamps-grid {
-        grid-template-columns: repeat(4, 1fr); /* 4 columnas en pantallas pequeñas para mejor ajuste */
-        gap: 10px;
-    }
-
-    .stamp {
-        width: 50px; /* Sellos un poco más pequeños */
-        height: 50px;
-        font-size: 1.1em;
-    }
-    .stamp.obtained {
-        font-size: 1.8em;
-    }
-
-    .admin-controls input[type="text"],
-    .admin-controls input[type="email"] {
-        max-width: 100%; /* El input de admin ocupa todo el ancho */
-    }
-
-    .admin-actions button {
-        min-width: unset; /* Reinicia el min-width */
-        width: 100%; /* Botones de acción del admin al 100% en móvil */
-    }
-
-    #qrcode-canvas {
-        width: 180px; /* Tamaño del QR ligeramente más pequeño en móviles */
-        height: 180px;
+    if (stampsCount >= maxStamps) {
+        messageDisplay.innerHTML = '¡Felicidades! Has ganado un café gratis. 🎉';
+        messageDisplay.style.color = '#2e8b57';
+        showConfetti();
+    } else {
+        messageDisplay.textContent = `¡Casi lo tienes! Te faltan ${maxStamps - stampsCount} sellos para tu café gratis.`;
+        messageDisplay.style.color = '#555';
+        hideConfetti();
     }
 }
 
-/* Media query para pantallas aún más pequeñas (ej. iPhone 5/SE, viejos Android) */
-@media (max-width: 350px) {
-    .stamps-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 columnas para pantallas muy estrechas */
-    }
-    .stamp {
-        width: 45px;
-        height: 45px;
-        font-size: 1em;
-    }
-    .stamp.obtained {
-        font-size: 1.6em;
-    }
-    #qrcode-canvas {
-        width: 150px;
-        height: 150px;
+function showConfetti() {
+    confettiContainer.classList.add('active');
+    document.querySelectorAll('.confetti').forEach(confetti => {
+        confetti.style.animation = 'none';
+        confetti.offsetHeight;
+        setTimeout(() => {
+            const randomAnimation = `confetti-fall-${Math.floor(Math.random() * 5) + 1}`;
+            const style = window.getComputedStyle(confetti);
+            const initialDelay = parseFloat(style.animationDelay) || 0;
+            confetti.style.animation = `${randomAnimation} 2s ${initialDelay}s ease-out forwards`;
+        }, 0);
+    });
+    setTimeout(() => {
+        confettiContainer.classList.remove('active');
+    }, 3000);
+}
+
+function hideConfetti() {
+    confettiContainer.classList.remove('active');
+}
+
+// Controla la habilitación/deshabilitación y estilos de los botones de acción del admin
+function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
+    if (enabled) {
+        addStampBtn.style.backgroundColor = '#28a745';
+        removeStampBtn.style.backgroundColor = allowAddAndResetOnly ? '#ccc' : '#dc3545';
+        redeemCoffeeBtn.style.backgroundColor = allowAddAndResetOnly ? '#ccc' : '#17a2b8';
+        resetStampsBtn.style.backgroundColor = '#6c757d';
+
+        addStampBtn.disabled = false;
+        removeStampBtn.disabled = allowAddAndResetOnly;
+        redeemCoffeeBtn.disabled = allowAddAndResetOnly;
+        resetStampsBtn.disabled = false;
+
+    } else {
+        addStampBtn.style.backgroundColor = '#ccc';
+        removeStampBtn.style.backgroundColor = '#ccc';
+        redeemCoffeeBtn.style.backgroundColor = '#ccc';
+        resetStampsBtn.style.backgroundColor = '#ccc';
+
+        addStampBtn.disabled = true;
+        removeStampBtn.disabled = true;
+        redeemCoffeeBtn.disabled = true;
+        resetStampsBtn.disabled = true;
     }
 }
+
+// Deshabilita todos los controles del panel de administración
+function disableAdminControlsTemporarily() {
+    setAdminControlsEnabled(false); // Deshabilita los botones de acción
+    searchClientBtn.disabled = true;
+    adminEmailInput.disabled = true;
+    adminSection.style.cursor = 'wait'; // Cambia el cursor
+}
+
+// Habilita los controles del panel de administración (después de una operación)
+function enableAdminControlsAfterOperation() {
+    searchClientBtn.disabled = false;
+    adminEmailInput.disabled = false;
+    adminSection.style.cursor = 'default'; // Restaura el cursor
+}
+
+
+function clearAdminClientInfo() {
+    adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
+    setAdminControlsEnabled(false);
+    targetClientEmail = null; // targetClientEmail ahora almacena el UID
+    if (adminClientListener) {
+        adminClientListener();
+        adminClientListener = null;
+    }
+    adminMessage.textContent = '';
+}
+
+// --- Funciones de Firebase y Lógica de la Aplicación ---
+
+// *** FUNCIÓN: Para obtener el UID a partir de un email ***
+async function getUidByEmail(email) {
+    console.log(`Intentando obtener UID para email: ${email}`);
+    const q = query(collection(db, 'loyaltyCards'), where('userEmail', '==', email), limit(1));
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            console.log(`UID encontrado para ${email}: ${doc.id}`);
+            return doc.id; // La ID del documento es el UID
+        } else {
+            console.log(`No se encontró UID para el email: ${email}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error al buscar UID por email (${email}):`, error);
+        return null;
+    }
+}
+
+
+onAuthStateChanged(auth, async user => {
+    console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user ? user.email : "null");
+    if (user) {
+        currentUser = user;
+        userDisplay.textContent = `Bienvenido, ${currentUser.displayName || currentUser.email}`;
+        authBtn.textContent = 'Cerrar Sesión';
+        loyaltyCardSection.classList.remove('hidden');
+
+        // IMPORTANTE: Asegúrate de que el email del usuario se guarde con el UID la primera vez que inicia sesión
+        // Esto es necesario para la búsqueda por email en el admin y para mantener el email actualizado.
+        if (currentUser && currentUser.uid) {
+            const userDocRef = doc(db, 'loyaltyCards', currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (!userDocSnap.exists()) {
+                // Si la tarjeta no existe, créala y asegura que el email esté allí
+                await setDoc(userDocRef, {
+                    stamps: 0,
+                    lastUpdate: new Date(),
+                    userEmail: currentUser.email // Asegura que el email se guarde aquí
+                }).then(() => {
+                    console.log(`Tarjeta inicial creada para UID: ${currentUser.uid} con email: ${currentUser.email}`);
+                }).catch(e => console.error("Error al crear la tarjeta inicial:", e));
+            } else {
+                // Si la tarjeta ya existe, asegúrate de que el email esté actualizado, por si el usuario cambia su email de Google
+                const currentEmailInDb = userDocSnap.data().userEmail;
+                if (currentEmailInDb !== currentUser.email) {
+                    await updateDoc(userDocRef, { userEmail: currentUser.email });
+                    console.log(`Email del usuario actualizado en DB para UID: ${currentUser.uid}`);
+                }
+            }
+        }
+
+
+        if (currentUser.email === adminUserEmail) {
+            adminSection.classList.remove('hidden');
+            userDisplay.textContent += ' (Admin)';
+            setAdminControlsEnabled(false);
+            clearAdminClientInfo();
+
+            if (clientListener) {
+                clientListener();
+                clientListener = null;
+            }
+            // Asegúrate de ocultar el QR cuando el admin está logueado
+            if (qrcodeCanvas && qrInstruction) {
+                qrcodeCanvas.style.display = 'none';
+                qrInstruction.style.display = 'none';
+            }
+
+
+        } else { // Este es un usuario normal (no admin)
+            adminSection.classList.add('hidden');
+            if (adminClientListener) {
+                adminClientListener();
+                adminClientListener = null;
+            }
+            // *** NUEVO: Mostrar y generar QR para el usuario normal ***
+            if (qrcodeCanvas && qrInstruction) {
+                qrcodeCanvas.style.display = 'block'; // Muestra el canvas del QR
+                qrInstruction.style.display = 'block'; // Muestra la instrucción del QR
+                generateQRCode(currentUser.uid); // Llama a la función para generar el QR
+            }
+        }
+
+        messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
+        messageDisplay.style.color = '#5bc0de';
+        loadAndListenForStamps(currentUser.uid);
+
+    } else {
+        currentUser = null;
+        userDisplay.textContent = 'Por favor, inicia sesión.';
+        authBtn.textContent = 'Iniciar Sesión con Google';
+        loyaltyCardSection.classList.add('hidden');
+        adminSection.classList.add('hidden');
+        renderStamps(0);
+        messageDisplay.textContent = 'Inicia sesión para ver tu tarjeta de lealtad.';
+        messageDisplay.style.color = '#555';
+        hideConfetti();
+
+        if (clientListener) {
+            clientListener();
+            clientListener = null;
+        }
+        if (adminClientListener) {
+            adminClientListener();
+            adminClientListener = null;
+        }
+        clearAdminClientInfo();
+        // Asegúrate de ocultar el QR cuando no hay sesión
+        if (qrcodeCanvas && qrInstruction) {
+            qrcodeCanvas.style.display = 'none';
+            qrInstruction.style.display = 'none';
+        }
+    }
+});
+
+
+async function loadAndListenForStamps(uid) {
+    console.log(`loadAndListenForStamps: Intentando cargar sellos para el UID: ${uid}`);
+    if (!uid) {
+        console.error("loadAndListenForStamps: No se proporcionó un UID.");
+        return;
+    }
+
+    const docRef = doc(db, 'loyaltyCards', uid);
+    console.log(`loadAndListenForStamps: Referencia del documento: loyaltyCards/${uid}`);
+
+    if (clientListener) {
+        clientListener(); // Desuscribir listener previo si existe
+        clientListener = null;
+    }
+
+    clientListener = onSnapshot(docRef, docSnapshot => {
+        console.log("onSnapshot callback: Recibiendo datos del documento para el cliente.");
+        if (docSnapshot.exists()) {
+            const data = docSnapshot.data();
+            const stamps = data.stamps || 0;
+            console.log(`[CLIENTE] Sellos recibidos del documento para UID ${uid}: ${stamps}`);
+            renderStamps(stamps); // Esto actualizará messageDisplay
+        } else {
+            console.log(`onSnapshot (client): Documento NO existe para ${uid}.`);
+            console.log(`[CLIENTE] Se asume 0 sellos al no existir el documento para UID ${uid}.`);
+            renderStamps(0); // Esto actualizará messageDisplay
+            messageDisplay.textContent = '¡Bienvenido! Tu nueva tarjeta de lealtad ha sido creada.'; // Mensaje más amigable
+            messageDisplay.style.color = '#555';
+            if (currentUser && currentUser.uid === uid) {
+                 setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: currentUser.email })
+                    .then(() => console.log(`setDoc: Tarjeta inicial creada para UID: ${uid}`))
+                    .catch(e => console.error("setDoc: Error al crear la tarjeta inicial:", e));
+            }
+        }
+    }, error => {
+        console.error("onSnapshot ERROR (client): Error al cargar o escuchar la tarjeta de lealtad:", error);
+        messageDisplay.textContent = `Lo sentimos, no pudimos cargar tu tarjeta de lealtad. Por favor, intenta de nuevo.`;
+        messageDisplay.style.color = '#d9534f';
+    });
+}
+
+// Nueva función auxiliar para actualizar la visualización y controles del admin
+async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
+    console.log("Entering updateAdminClientDisplayAndControls para UID:", clientId); // <--- DEBUG
+    if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const stamps = data.stamps || 0;
+        console.log(`[DEBUG] updateAdminClientDisplayAndControls - Valor de 'stamps' usado para la renderización inicial: ${stamps}`); // <--- DEBUG
+        const clientEmailDisplay = data.userEmail || clientId; // Mostrar el email si está disponible, sino el UID
+        targetClientEmail = clientId; // targetClientEmail ahora almacena el UID
+        adminClientInfo.innerHTML = `
+            <p>Cliente: <strong>${clientEmailDisplay}</strong> (UID: ${clientId})</p>
+            <p>Sellos actuales: <strong id="admin-current-stamps">${stamps}</strong></p>
+        `;
+        setAdminControlsEnabled(true); // Habilita todos los controles si el cliente existe
+        adminMessage.textContent = `Cliente ${clientEmailDisplay} cargado correctamente.`;
+        adminMessage.style.color = '#5cb85c';
+
+        if (adminClientListener) adminClientListener(); // Desuscribir listener antiguo
+        const clientDocRef = doc(db, 'loyaltyCards', clientId);
+        adminClientListener = onSnapshot(clientDocRef, snap => {
+            if (snap.exists()) {
+                const latestStamps = snap.data().stamps || 0;
+                console.log(`[ADMIN LISTENER] Sellos recibidos del documento para UID ${clientId}: ${latestStamps}`);
+                document.getElementById('admin-current-stamps').textContent = latestStamps;
+                if (latestStamps >= 10) {
+                    adminMessage.textContent = `Cliente ${clientEmailDisplay} tiene ${latestStamps} sellos (¡café gratis!).`;
+                    adminMessage.style.color = '#5cb85c';
+                } else {
+                    adminMessage.textContent = `Cliente ${clientEmailDisplay} cargado correctamente.`;
+                    adminMessage.style.color = '#5cb85c';
+                }
+            } else {
+                clearAdminClientInfo();
+                adminMessage.textContent = `El cliente con UID ${clientId} ya no existe en la base de datos.`;
+                adminMessage.style.color = '#d9534f';
+            }
+        }, error => {
+            console.error("Admin onSnapshot ERROR (desde updateAdminClientDisplayAndControls):", error);
+            adminMessage.textContent = `Error al actualizar los sellos del cliente en tiempo real. Detalles: ${error.message}`; // Mensaje más específico
+            adminMessage.style.color = '#d9534f';
+        });
+
+    } else { // Document does NOT exist
+        clearAdminClientInfo();
+        targetClientEmail = clientId; // targetClientEmail ahora almacena el UID. Permite establecer el target para crear uno nuevo
+        adminMessage.textContent = `Cliente con UID ${clientId} no encontrado. Puedes añadirle un sello para crear su tarjeta.`;
+        adminMessage.style.color = '#f0ad4e';
+        setAdminControlsEnabled(true, true); // Solo añadir y resetear (resetear significa crear con 0)
+    }
+}
+
+// *** NUEVA FUNCIÓN: Para generar el Código QR ***
+function generateQRCode(uid) {
+    if (!qrcodeCanvas) {
+        console.error("Canvas para QR no encontrado.");
+        return;
+    }
+
+    // Limpiar el canvas antes de generar un nuevo QR
+    const context = qrcodeCanvas.getContext('2d');
+    context.clearRect(0, 0, qrcodeCanvas.width, qrcodeCanvas.height);
+
+    try {
+        new QRious({
+            element: qrcodeCanvas,
+            value: uid, // El valor que contendrá el QR es el UID del usuario
+            size: 200, // Tamaño del QR en píxeles
+            level: 'H' // Nivel de corrección de error (L, M, Q, H)
+        });
+        console.log("Código QR generado para UID:", uid);
+    } catch (error) {
+        console.error("Error al generar el Código QR:", error);
+        qrInstruction.textContent = "Error al generar el código QR. Por favor, recarga la página.";
+        qrInstruction.style.color = '#d9534f';
+    }
+}
+
+
+// --- Manejadores de Eventos ---
+
+authBtn.addEventListener('click', () => {
+    if (currentUser) {
+        signOut(auth)
+            .catch(error => {
+                console.error("Error al cerrar sesión:", error);
+                alert("Error al cerrar sesión: " + error.message);
+            });
+    } else {
+        signInWithPopup(auth, googleProvider)
+            .catch(error => {
+                console.error("Error al iniciar sesión:", error);
+                let errorMessage = "Ocurrió un error al iniciar sesión.";
+                if (error.code === 'auth/popup-blocked') {
+                    errorMessage = "El navegador bloqueó la ventana de inicio de sesión. Por favor, permite las ventanas emergentes para este sitio.";
+                } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+                    errorMessage = "Has cerrado la ventana de inicio de sesión.";
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = "El método de inicio de sesión con Google no está habilitado en Firebase. Contacta al administrador.";
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage = "Error de red. Verifica tu conexión a internet.";
+                }
+                alert(errorMessage + " (Código: " + error.code + ")");
+            });
+    }
+});
+
+// *** MODIFICADO searchClientBtn para permitir búsqueda por email o UID ***
+searchClientBtn.addEventListener('click', async () => {
+    const emailOrUidInput = adminEmailInput.value.trim(); // El input puede ser un email o un UID
+    if (!emailOrUidInput) {
+        adminMessage.textContent = 'Por favor, introduce el email o UID de un cliente para buscar.';
+        adminMessage.style.color = '#d9534f';
+        clearAdminClientInfo();
+        return;
+    }
+
+    disableAdminControlsTemporarily();
+    adminMessage.textContent = 'Buscando cliente...';
+    adminMessage.style.color = '#5bc0de';
+
+    let clientIdToSearch = emailOrUidInput; // Por defecto, asumimos que es un UID
+
+    // Paso 1: Intentar buscar por Email si el input parece un email
+    // Usamos una verificación simple para ver si contiene '@' y '.', que es común en emails
+    if (emailOrUidInput.includes('@') && emailOrUidInput.includes('.')) {
+        console.log(`searchClientBtn: Input parece un email, intentando buscar UID por email: ${emailOrUidInput}`);
+        const uidFromEmail = await getUidByEmail(emailOrUidInput);
+        if (uidFromEmail) {
+            clientIdToSearch = uidFromEmail;
+        } else {
+            adminMessage.textContent = `Cliente con email "${emailOrUidInput}" no encontrado.`;
+            adminMessage.style.color = '#f0ad4e';
+            clearAdminClientInfo();
+            enableAdminControlsAfterOperation();
+            return;
+        }
+    } else {
+        console.log(`searchClientBtn: Input parece un UID, buscando directamente: ${emailOrUidInput}`);
+    }
+
+
+    // Paso 2: Usar el UID (obtenido del email o directamente del input) para cargar el documento de la tarjeta
+    try {
+        const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
+        console.log(`Admin search: Buscando documento en ${clientDocRef.path}`); // <--- DEBUG
+        const clientDoc = await getDoc(clientDocRef);
+        console.log(`Admin search: getDoc result - ID: ${clientDoc.id}, Exists: ${clientDoc.exists()}, Data:`, clientDoc.data()); // <--- DEBUG
+
+        await updateAdminClientDisplayAndControls(clientIdToSearch, clientDoc);
+
+    } catch (error) {
+        console.error("searchClientBtn ERROR: Error al buscar cliente:", error);
+        adminMessage.textContent = `Error al buscar el cliente. Por favor, verifica el email/UID e intenta de nuevo.`;
+        adminMessage.style.color = '#d9534f';
+        clearAdminClientInfo();
+    } finally {
+        enableAdminControlsAfterOperation();
+    }
+});
+
+addStampBtn.addEventListener('click', async () => {
+    if (!targetClientEmail) return;
+
+    disableAdminControlsTemporarily(); // Deshabilitar controles mientras se procesa
+    adminMessage.textContent = 'Añadiendo sello...';
+    adminMessage.style.color = '#5bc0de';
+
+    try {
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            let currentStamps = 0;
+            let userEmail = '';
+            if (docSnapshot.exists()) {
+                currentStamps = docSnapshot.data().stamps || 0;
+                userEmail = docSnapshot.data().userEmail || '';
+            } else {
+                console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
+                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || 'desconocido' });
+            }
+
+            if (currentStamps < MAX_STAMPS) {
+                transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
+                adminMessage.textContent = `¡Sello añadido con éxito a ${userEmail || targetClientEmail}! Sellos actuales: ${currentStamps + 1}`;
+                adminMessage.style.color = '#5cb85c';
+            } else {
+                transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
+                adminMessage.textContent = `Sello extra añadido a ${userEmail || targetClientEmail}. Sellos totales: ${currentStamps + 1}`;
+                adminMessage.style.color = '#5cb85c';
+            }
+        });
+        // Reutilizar docRef ya declarado
+        const updatedDocSnap = await getDoc(docRef);
+        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+
+    } catch (error) {
+        console.error("addStampBtn ERROR: Error al añadir sello:", error);
+        adminMessage.textContent = `Error al añadir el sello. Por favor, revisa y vuelve a intentarlo.`;
+        adminMessage.style.color = '#d9534f';
+    } finally {
+        enableAdminControlsAfterOperation();
+    }
+});
+
+removeStampBtn.addEventListener('click', async () => {
+    if (!targetClientEmail) return;
+
+    disableAdminControlsTemporarily();
+    adminMessage.textContent = 'Quitando sello...';
+    adminMessage.style.color = '#5bc0de';
+
+    try {
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            if (docSnapshot.exists()) {
+                const currentStamps = docSnapshot.data().stamps || 0;
+                const userEmail = docSnapshot.data().userEmail || targetClientEmail;
+                if (currentStamps > 0) {
+                    transaction.update(docRef, { stamps: currentStamps - 1, lastUpdate: new Date() });
+                    adminMessage.textContent = `Sello quitado con éxito de ${userEmail}. Sellos actuales: ${currentStamps - 1}`;
+                    adminMessage.style.color = '#5cb85c';
+                } else {
+                    adminMessage.textContent = `El cliente ${userEmail} no tiene sellos para quitar.`;
+                    adminMessage.style.color = '#f0ad4e';
+                }
+            } else {
+                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
+                adminMessage.style.color = '#f0ad4e';
+            }
+        });
+        // Reutilizar docRef ya declarado
+        const updatedDocSnap = await getDoc(docRef);
+        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+
+    } catch (error) {
+        console.error("removeStampBtn ERROR: Error al quitar sello:", error);
+        adminMessage.textContent = `Error al quitar el sello. Por favor, revisa y vuelve a intentarlo.`;
+        adminMessage.style.color = '#d9534f';
+    } finally {
+        enableAdminControlsAfterOperation();
+    }
+});
+
+redeemCoffeeBtn.addEventListener('click', async () => {
+    if (!targetClientEmail) return;
+
+    disableAdminControlsTemporarily();
+    adminMessage.textContent = 'Canjeando café...';
+    adminMessage.style.color = '#5bc0de';
+
+    try {
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            if (docSnapshot.exists()) {
+                const currentStamps = docSnapshot.data().stamps || 0;
+                const userEmail = docSnapshot.data().userEmail || targetClientEmail;
+                if (currentStamps >= MAX_STAMPS) {
+                    transaction.update(docRef, { stamps: currentStamps - MAX_STAMPS, lastUpdate: new Date() });
+                    adminMessage.textContent = `¡Café canjeado para ${userEmail}! Sellos restantes: ${currentStamps - MAX_STAMPS}`;
+                    adminMessage.style.color = '#5cb85c';
+                } else {
+                    adminMessage.textContent = `El cliente ${userEmail} no tiene suficientes sellos (${currentStamps}/${MAX_STAMPS}) para canjear un café.`;
+                    adminMessage.style.color = '#f0ad4e';
+                }
+            } else {
+                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
+                adminMessage.style.color = '#f0ad4e';
+            }
+        });
+        // Reutilizar docRef ya declarado
+        const updatedDocSnap = await getDoc(docRef);
+        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+
+    } catch (error) {
+        console.error("redeemCoffeeBtn ERROR: Error al canjear café:", error);
+        adminMessage.textContent = `Error al canjear el café. Por favor, revisa y vuelve a intentarlo.`;
+        adminMessage.style.color = '#d9534f';
+    } finally {
+        enableAdminControlsAfterOperation();
+    }
+});
+
+resetStampsBtn.addEventListener('click', async () => {
+    if (!targetClientEmail) return;
+
+    // Obtener el email del cliente mostrado en el panel admin para la confirmación
+    const clientInfoElement = adminClientInfo.querySelector('strong');
+    const userEmailForConfirm = clientInfoElement ? clientInfoElement.textContent.split(' ')[0] : targetClientEmail;
+
+    if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${userEmailForConfirm}? Esto pondrá sus sellos a 0.`)) {
+        return;
+    }
+
+    disableAdminControlsTemporarily();
+    adminMessage.textContent = 'Reiniciando tarjeta...';
+    adminMessage.style.color = '#5bc0de';
+
+    try {
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
+        await setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmailForConfirm }, { merge: true })
+            .then(() => {
+                adminMessage.textContent = `¡Tarjeta de ${userEmailForConfirm} reiniciada a 0 sellos con éxito!`;
+                adminMessage.style.color = '#5cb85c';
+            })
+            .catch((error) => {
+                console.error("resetStampsBtn ERROR: Error al reiniciar tarjeta:", error);
+                adminMessage.textContent = `Error al reiniciar la tarjeta. Por favor, revisa y vuelve a intentarlo.`;
+                adminMessage.style.color = '#d9534f';
+            });
+
+        // Reutilizar docRef ya declarado
+        const updatedDocSnap = await getDoc(docRef);
+        await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
+
+    } catch (error) {
+        console.error("resetStampsBtn ERROR (fuera de setDoc): Error al reiniciar tarjeta:", error);
+        adminMessage.textContent = `Error al reiniciar la tarjeta. Por favor, revisa y vuelve a intentarlo.`;
+        adminMessage.style.color = '#d9534f';
+    } finally {
+        enableAdminControlsAfterOperation();
+    }
+});
+
+
+// Inicializar el display al cargar la página (para mostrar 0 sellos si no hay sesión)
+document.addEventListener('DOMContentLoaded', () => {
+    renderStamps(0);
+});
