@@ -3,61 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cafetería Favorita - Tarjeta de Lealtad</title>
+    <title>Mi Cafetería - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module">
+        // Importaciones necesarias para que el navegador sepa de dónde cargar los módulos
+        // Aunque se importan en script.js, los CDNs deben estar disponibles globalmente o pre-cargados.
+        // Aquí se incluyen para asegurar que las librerías base de Firebase estén listas.
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><span class="coffee-icon">☕</span> Mi Cafetería Favorita <span class="coffee-icon">☕</span></h1>
-            <p>¡Colecciona sellos y obtén un café gratis!</p>
-        </header>
-
-        <section id="auth-section">
-            <p id="user-display">Por favor, inicia sesión.</p>
+    <header>
+        <h1>☕ Mi Cafetería ☕</h1>
+        <div class="auth-controls">
+            <span id="user-display">Por favor, inicia sesión.</span>
             <button id="auth-btn">Iniciar Sesión con Google</button>
-        </section>
+        </div>
+    </header>
 
-        <section id="loyalty-card">
+    <main>
+        <section id="loyalty-card" class="card hidden">
+            <h2>Tu Tarjeta de Lealtad</h2>
             <div id="stamps-display" class="stamps-grid">
                 </div>
-            <p id="message">Inicia sesión para ver tu tarjeta de lealtad.</p>
+            <p id="message"></p>
             <div class="confetti-container">
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
+                <div class="confetti" style="background-color: #f0f;"></div>
+                <div class="confetti" style="background-color: #0ff;"></div>
+                <div class="confetti" style="background-color: #ff0;"></div>
+                <div class="confetti" style="background-color: #f00;"></div>
+                <div class="confetti" style="background-color: #0f0;"></div>
+                <div class="confetti" style="background-color: #00f;"></div>
             </div>
+            <canvas id="qrcode-canvas" class="qr-code" style="display: none; margin: 20px auto; border: 1px solid #ccc;"></canvas>
+            <p id="qr-instruction" style="display: none; text-align: center;">Escanea este código para tus sellos</p>
         </section>
 
-        <section id="admin-section" class="hidden">
+        <section id="admin-section" class="card hidden">
             <h2>Panel de Administración</h2>
-            <p>Solo para personal autorizado.</p>
             <div class="admin-controls">
-                <input type="email" id="admin-email-input" placeholder="Email del cliente">
-                <button id="search-client-btn" class="btn-primary">Buscar Cliente</button>
-                <div id="admin-client-info">
-                    <p>No hay cliente cargado.</p>
-                </div>
-                <p id="admin-message" class="message"></p>
-                <button id="add-stamp-btn" class="btn-success" disabled>Añadir Sello a Cliente</button>
-                <button id="remove-stamp-btn" class="btn-danger" disabled>Quitar Sello de Cliente</button>
-                <button id="redeem-coffee-btn" class="btn-info" disabled>Canjear Café de Cliente</button>
-                <button id="reset-stamps-btn" class="btn-secondary" disabled>Reiniciar Tarjeta de Cliente</button>
+                <label for="admin-email-input">Email o UID del Cliente:</label>
+                <input type="text" id="admin-email-input" placeholder="Introduce email o UID">
+                <button id="search-client-btn">Buscar Cliente</button>
             </div>
+            <div id="admin-client-info" class="client-info">
+                <p>No hay cliente cargado.</p>
+            </div>
+            <div class="admin-actions">
+                <button id="add-stamp-btn">Añadir Sello</button>
+                <button id="remove-stamp-btn">Quitar Sello</button>
+                <button id="redeem-coffee-btn">Canjear Café</button>
+                <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
+            </div>
+            <p id="admin-message" class="message"></p>
         </section>
-    </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Mi Cafetería. Todos los derechos reservados.</p>
+    </footer>
 
     <script type="module" src="script.js"></script>
 </body>
