@@ -98,15 +98,13 @@ p {
 }
 
 .stamp {
-    /* **CAMBIO CLAVE AQUÍ PARA LA PROPORCIÓN DEL CÍRCULO** */
-    /* Usaremos min-width, min-height para asegurar el tamaño mínimo */
-    /* Y flex-basis para que se ajuste en el grid manteniendo la proporción */
-    min-width: 60px; /* Tamaño mínimo que quieres para cada sello */
-    min-height: 60px; /* Mismo valor para ser cuadrado */
+    /* **NUEVO ENFOQUE PARA LA PROPORCIÓN DEL CÍRCULO** */
     width: 100%; /* Ocupa todo el ancho de la celda del grid */
-    height: 0; /* Lo ponemos a 0 para que padding-bottom lo defina */
-    padding-bottom: 100%; /* Esto hace que la altura sea igual al ancho, creando un cuadrado */
-    position: relative; /* Para que el contenido interno se posicione bien */
+    aspect-ratio: 1 / 1; /* Esto fuerza la relación de aspecto 1:1 (cuadrado) */
+    /* Elimina padding-bottom para evitar conflictos con aspect-ratio */
+    /* min-width, min-height ya no son tan críticos pero pueden ayudar como fallback */
+    min-width: 60px;
+    min-height: 60px;
 
     background-color: #e0b07d; /* Color de sello no obtenido */
     border-radius: 50%; /* Forma circular */
@@ -118,26 +116,20 @@ p {
     color: #fff; /* Color del número */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    /* Eliminar cualquier padding vertical aquí que pueda estirar el círculo */
-    padding-top: 0;
-    padding-bottom: 100%; /* Asegurarse de que el padding-bottom sea el único que define la altura */
+    
+    /* Eliminar cualquier posicionamiento absoluto del contenido */
+    /* El flexbox de .stamp ahora se encarga del centrado */
+    position: static; /* Asegúrate de que no haya posicionamiento relativo/absoluto innecesario */
 }
 
-/* El contenido real del sello (número o emoji) necesita estar centrado dentro del sello */
-.stamp > * {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    line-height: 1; /* Asegura que el contenido no tenga altura de línea extra */
-    white-space: nowrap; /* Evita que el texto o emoji se rompa en varias líneas */
-}
-
+/* El contenido dentro del sello (el número o el emoji) */
+/* Ya no necesitamos una regla específica para el contenido directo, el flexbox de .stamp lo centra */
 
 .stamp.obtained {
     background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
     color: #fff; /* Color del ícono de café */
-    font-size: 2.8em; /* Tamaño del emoji '☕' para pantallas grandes */
+    font-size: 2.5em; /* Ajustado para el emoji '☕', un poco menos agresivo */
+    line-height: 1; /* Ayuda a centrar verticalmente el emoji */
 }
 
 
@@ -362,14 +354,13 @@ p {
     }
 
     .stamp {
-        /* Para móvil, podemos ajustar el min-width/height si es necesario */
         min-width: 50px;
         min-height: 50px;
         font-size: 1.3em; /* Tamaño del número para móvil */
     }
 
     .stamp.obtained {
-        font-size: 2.2em; /* Tamaño del emoji para móviles, ajustado */
+        font-size: 2em; /* Ajustado el tamaño del emoji para móviles */
     }
 
     /* Ajustes para botones del admin: Apilarlos */
@@ -415,7 +406,7 @@ p {
         font-size: 1.1em; /* Más pequeño para el número en pantallas muy pequeñas */
     }
     .stamp.obtained {
-        font-size: 1.8em; /* Más pequeño para el emoji en pantallas muy pequeñas */
+        font-size: 1.6em; /* Más pequeño para el emoji en pantallas muy pequeñas */
     }
     #stamps-display {
         gap: 6px;
