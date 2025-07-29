@@ -1,7 +1,7 @@
 // Este console.log es para verificar que el script se está cargando.
 console.log("************ SCRIPT.JS ESTÁ CARGANDO ************");
 
-const MAX_STAMPS = 10;
+const MAX_STAMPS = 10; // <<-- ¡ASEGÚRATE DE QUE ESTA CONSTANTE ESTÁ CORRECTAMENTE DEFINIDA!
 let currentStamps = 0;
 let currentUser = null; // Variable para guardar el usuario actual
 let adminSelectedClientUid = null; // UID del cliente seleccionado por el administrador
@@ -80,7 +80,7 @@ function loadStamps() {
         }
         updateDisplay();
     }).catch((error) => {
-        console.error("Error al cargar los sellos del cliente:", error);
+        console.error("Error al cargar los sellos del cliente:", error); // Esto se estaba activando por el error de tipeo
         messageDisplay.textContent = "Error al cargar la tarjeta. Intenta de nuevo.";
     });
 }
@@ -281,7 +281,7 @@ function signOutUser() {
 // --- Lógica de la Interfaz (cliente) ---
 function updateDisplay() {
     stampsDisplay.innerHTML = '';
-    for (let i = 0; i < MAX_STAMPS; i++) {
+    for (let i = 0; i < MAX_STAMPS; i++) { // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
         const stamp = document.createElement('div');
         stamp.classList.add('stamp');
         if (i < currentStamps) {
@@ -293,10 +293,10 @@ function updateDisplay() {
         stampsDisplay.appendChild(stamp);
     }
 
-    if (currentStamps >= MAX_STamps) {
+    if (currentStamps >= MAX_STAMPS) { // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
         messageDisplay.textContent = '¡Felicidades! Has ganado un café gratis. 🎉';
     } else {
-        const remaining = MAX_STAMPS - currentStamps;
+        const remaining = MAX_STAMPS - currentStamps; // <-- CORRECCIÓN: CAMBIADO DE MAX_STamps a MAX_STAMPS
         messageDisplay.textContent = `Te faltan ${remaining} sello${remaining !== 1 ? 's' : ''} para tu café gratis.`;
     }
     // NOTA: Los botones de control de sellos (Añadir, Canjear, Reiniciar)
