@@ -23,7 +23,7 @@ const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Guardará el objeto de usuario de Firebase
-let adminUserEmail = 'worm.jim@gmail.com'; // **CORREO DEL ADMINISTRADOR ACTUALIZADO**
+let adminUserEmail = 'worm.jim@gmail.com'; // Correo del administrador
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
 let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
 let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin
@@ -115,7 +115,7 @@ function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
 function clearAdminClientInfo() {
     adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
     setAdminControlsEnabled(false);
-    targetClientEmail = null;
+    targetClientEmail = null; // Mantener para el input del admin, pero la búsqueda usará el UID
     if (adminClientListener) {
         adminClientListener();
         adminClientListener = null;
@@ -152,7 +152,8 @@ onAuthStateChanged(auth, async user => {
             }
         }
 
-        loadAndListenForStamps(currentUser.email);
+        // *** CAMBIO CLAVE AQUÍ: Usar currentUser.uid para el cliente normal ***
+        loadAndListenForStamps(currentUser.uid);
 
     } else {
         currentUser = null;
@@ -178,15 +179,16 @@ onAuthStateChanged(auth, async user => {
 });
 
 
-async function loadAndListenForStamps(email) {
-    console.log(`loadAndListenForStamps: Intentando cargar sellos para el email: ${email}`); // DEBUG
-    if (!email) {
-        console.error("loadAndListenForStamps: No se proporcionó un email.");
+// *** CAMBIO CLAVE AQUÍ: Ahora la función espera un UID, no un email, para las operaciones de Firestore del CLIENTE ***
+async function loadAndListenForStamps(uid) {
+    console.log(`loadAndListenForStamps: Intentando cargar sellos para el UID: ${uid}`); // DEBUG
+    if (!uid) {
+        console.error("loadAndListenForStamps: No se proporcionó un UID.");
         return;
     }
 
-    const docRef = doc(db, 'loyaltyCards', email);
-    console.log(`loadAndListenForStamps: Referencia del documento: loyaltyCards/${email}`); // DEBUG
+    const docRef = doc(db, 'loyaltyCards', uid);
+    console.log(`loadAndListenForStamps: Referencia del documento: loyaltyCards/${uid}`); // DEBUG
 
     if (clientListener) {
         clientListener();
@@ -201,13 +203,14 @@ async function loadAndListenForStamps(email) {
             console.log(`onSnapshot: Documento existe. Sellos: ${stamps}`); // DEBUG
             renderStamps(stamps);
         } else {
-            console.log(`onSnapshot: Documento NO existe para ${email}. Intentando crear.`); // DEBUG
+            console.log(`onSnapshot: Documento NO existe para ${uid}. Intentando crear.`); // DEBUG
             renderStamps(0);
             messageDisplay.textContent = 'Tu tarjeta de lealtad ha sido creada.';
             messageDisplay.style.color = '#555'; // Color normal al crear
-            if (currentUser && currentUser.email === email) {
-                 setDoc(docRef, { stamps: 0, lastUpdate: new Date() })
-                    .then(() => console.log(`setDoc: Tarjeta inicial creada para ${email}`)) // DEBUG
+            // Solo crear el documento si el usuario actual es el propietario de este UID
+            if (currentUser && currentUser.uid === uid) {
+                 setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: currentUser.email }) // Guardar email también
+                    .then(() => console.log(`setDoc: Tarjeta inicial creada para UID: ${uid}`)) // DEBUG
                     .catch(e => console.error("setDoc: Error al crear la tarjeta inicial:", e)); // DEBUG
             }
         }
@@ -247,10 +250,14 @@ authBtn.addEventListener('click', () => {
     }
 });
 
+// *** CAMBIO CLAVE AQUÍ: El admin ahora buscará y operará por UID, no por email ***
+// Esto implica que el adminEmailInput DEBE ser un UID válido del cliente
+// o que necesites una forma de buscar el UID a partir del email.
+// Por ahora, asumiremos que el admin introduce el UID directamente en el input.
 searchClientBtn.addEventListener('click', async () => {
-    const email = adminEmailInput.value.trim();
-    if (!email) {
-        adminMessage.textContent = 'Por favor, introduce el email de un cliente.';
+    const clientId = adminEmailInput.value.trim(); // Ahora esperamos un UID aquí
+    if (!clientId) {
+        adminMessage.textContent = 'Por favor, introduce el UID de un cliente.';
         adminMessage.style.color = '#d9534f';
         clearAdminClientInfo();
         return;
@@ -260,48 +267,49 @@ searchClientBtn.addEventListener('click', async () => {
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const clientDocRef = doc(db, 'loyaltyCards', email);
-        console.log(`Admin search: Buscando documento para ${email}`); // DEBUG
+        const clientDocRef = doc(db, 'loyaltyCards', clientId);
+        console.log(`Admin search: Buscando documento para UID: ${clientId}`); // DEBUG
 
         if (adminClientListener) {
             adminClientListener();
             adminClientListener = null;
         }
-        if (clientListener && currentUser && currentUser.email === email) {
+        if (clientListener && currentUser && currentUser.uid === clientId) { // Comparar con UID del currentUser
             clientListener();
             clientListener = null;
         }
 
         const clientDoc = await getDoc(clientDocRef);
-        console.log(`Admin search: Resultado de getDoc para ${email}. Existe: ${clientDoc.exists()}`); // DEBUG
+        console.log(`Admin search: Resultado de getDoc para UID: ${clientId}. Existe: ${clientDoc.exists()}`); // DEBUG
 
         if (clientDoc.exists()) {
             const data = clientDoc.data();
             const stamps = data.stamps || 0;
-            targetClientEmail = email;
+            const clientEmailDisplay = data.userEmail || clientId; // Mostrar email si existe, sino el UID
+            targetClientEmail = clientId; // Almacenamos el UID en targetClientEmail para las funciones de botones
             adminClientInfo.innerHTML = `
-                <p>Cliente: <strong>${email}</strong></p>
+                <p>Cliente: <strong>${clientEmailDisplay}</strong> (UID: ${clientId})</p>
                 <p>Sellos actuales: <strong id="admin-current-stamps">${stamps}</strong></p>
             `;
             setAdminControlsEnabled(true);
-            adminMessage.textContent = `Cliente ${email} cargado.`;
+            adminMessage.textContent = `Cliente ${clientEmailDisplay} cargado.`;
             adminMessage.style.color = '#5cb85c';
 
             adminClientListener = onSnapshot(clientDocRef, docSnapshot => {
-                console.log(`Admin onSnapshot: Recibiendo datos para ${email}. Existe: ${docSnapshot.exists()}`); // DEBUG
+                console.log(`Admin onSnapshot: Recibiendo datos para UID: ${clientId}. Existe: ${docSnapshot.exists()}`); // DEBUG
                 if (docSnapshot.exists()) {
                     const latestStamps = docSnapshot.data().stamps || 0;
                     document.getElementById('admin-current-stamps').textContent = latestStamps;
                     if (latestStamps >= 10) {
-                        adminMessage.textContent = `Cliente ${targetClientEmail} tiene ${latestStamps} sellos (¡café gratis!).`;
+                        adminMessage.textContent = `Cliente ${clientEmailDisplay} tiene ${latestStamps} sellos (¡café gratis!).`;
                         adminMessage.style.color = '#5cb85c';
                     } else {
-                        adminMessage.textContent = `Cliente ${targetClientEmail} cargado.`;
+                        adminMessage.textContent = `Cliente ${clientEmailDisplay} cargado.`;
                         adminMessage.style.color = '#5cb85c';
                     }
                 } else {
                     clearAdminClientInfo();
-                    adminMessage.textContent = `El cliente ${email} ya no existe.`;
+                    adminMessage.textContent = `El cliente con UID ${clientId} ya no existe.`;
                     adminMessage.style.color = '#d9534f';
                 }
             }, error => {
@@ -312,9 +320,9 @@ searchClientBtn.addEventListener('click', async () => {
 
         } else {
             clearAdminClientInfo();
-            adminMessage.textContent = `Cliente ${email} no encontrado. Puedes añadirle sellos para crearlo.`;
+            adminMessage.textContent = `Cliente con UID ${clientId} no encontrado. Puedes añadirle sellos para crearlo.`;
             adminMessage.style.color = '#f0ad4e';
-            targetClientEmail = email; // Permite añadir sellos y crear el cliente
+            targetClientEmail = clientId; // Almacenamos el UID aquí
             setAdminControlsEnabled(true, true); // Habilitar solo "Añadir Sello" y "Resetear"
         }
     } catch (error) {
@@ -325,8 +333,9 @@ searchClientBtn.addEventListener('click', async () => {
     }
 });
 
+// *** CAMBIO CLAVE AQUÍ: Usar targetClientEmail (que ahora contiene el UID) ***
 addStampBtn.addEventListener('click', async () => {
-    if (!targetClientEmail) return;
+    if (!targetClientEmail) return; // targetClientEmail ahora es el UID
 
     adminMessage.textContent = 'Añadiendo sello...';
     adminMessage.style.color = '#5bc0de';
@@ -336,20 +345,37 @@ addStampBtn.addEventListener('click', async () => {
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             let currentStamps = 0;
+            let userEmail = ''; // Para guardar el email si ya existe
             if (docSnapshot.exists()) {
                 currentStamps = docSnapshot.data().stamps || 0;
+                userEmail = docSnapshot.data().userEmail || ''; // Recuperar email si está guardado
             } else {
-                console.log(`addStampBtn: Documento no existe para ${targetClientEmail}. Creando con 0 sellos.`); // DEBUG
-                transaction.set(docRef, { stamps: 0, lastUpdate: new Date() }); // Crear con 0 si no existe
+                // Si el documento no existe y estamos añadiendo el primer sello,
+                // significa que un nuevo usuario se está registrando o está siendo creado por el admin.
+                // Aquí podrías querer preguntar al admin por el email asociado o intentar obtenerlo.
+                // Por simplicidad, si no existe el email asociado al UID en Firebase Auth,
+                // solo usaremos el UID para el display.
+                // Una solución más robusta aquí sería usar Cloud Functions para
+                // sincronizar el email del usuario con el documento de Firestore si es la primera vez.
+                // Por ahora, si no hay email, solo se guardará el UID.
+                console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`); // DEBUG
+                // Si el admin está creando la tarjeta para un nuevo UID, no tenemos el email automáticamente.
+                // Podrías pasar el email desde el input del admin o dejar solo el UID.
+                // Por ahora, asumimos que si no existe, el 'userEmail' no se seteará a menos que se obtenga de Auth.
+                // Para el admin, podríamos pedirle que ponga el email en el input y lo guarde aquí.
+                // O mejor, si ya el usuario se autenticó antes, su UID tendrá un email asociado.
+                // Para simplificar, si no hay email asociado, solo se creará con el UID.
+                // Una solución avanzada sería buscar el email del UID en Firebase Authentication (requiere admin SDK)
+                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail }); // Añadir userEmail si existe
             }
 
             if (currentStamps < MAX_STAMPS) {
                 transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
-                adminMessage.textContent = `Sello añadido a ${targetClientEmail}. Sellos actuales: ${currentStamps + 1}`;
+                adminMessage.textContent = `Sello añadido a ${userEmail || targetClientEmail}. Sellos actuales: ${currentStamps + 1}`;
                 adminMessage.style.color = '#5cb85c';
             } else {
                 transaction.update(docRef, { stamps: currentStamps + 1, lastUpdate: new Date() });
-                adminMessage.textContent = `Sello añadido (extra) a ${targetClientEmail}. Sellos totales: ${currentStamps + 1}`;
+                adminMessage.textContent = `Sello añadido (extra) a ${userEmail || targetClientEmail}. Sellos totales: ${currentStamps + 1}`;
                 adminMessage.style.color = '#5cb85c';
             }
         });
@@ -360,6 +386,7 @@ addStampBtn.addEventListener('click', async () => {
     }
 });
 
+// Los siguientes eventos (removeStampBtn, redeemCoffeeBtn, resetStampsBtn) también usarán targetClientEmail (UID)
 removeStampBtn.addEventListener('click', async () => {
     if (!targetClientEmail) return;
 
@@ -372,21 +399,22 @@ removeStampBtn.addEventListener('click', async () => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
                 const currentStamps = docSnapshot.data().stamps || 0;
+                const userEmail = docSnapshot.data().userEmail || targetClientEmail; // Para mostrar en el mensaje
                 if (currentStamps > 0) {
                     transaction.update(docRef, { stamps: currentStamps - 1, lastUpdate: new Date() });
-                    adminMessage.textContent = `Sello quitado de ${targetClientEmail}. Sellos actuales: ${currentStamps - 1}`;
+                    adminMessage.textContent = `Sello quitado de ${userEmail}. Sellos actuales: ${currentStamps - 1}`;
                     adminMessage.style.color = '#5cb85c';
                 } else {
-                    adminMessage.textContent = `El cliente ${targetClientEmail} no tiene sellos para quitar.`;
+                    adminMessage.textContent = `El cliente ${userEmail} no tiene sellos para quitar.`;
                     adminMessage.style.color = '#f0ad4e';
                 }
             } else {
-                adminMessage.textContent = `El cliente ${targetClientEmail} no tiene una tarjeta.`;
+                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta.`;
                 adminMessage.style.color = '#f0ad4e';
             }
         });
     } catch (error) {
-        console.error("removeStampBtn ERROR: Error al quitar sello:", error); // DEBUG
+        console.error("removeStampBtn ERROR: Error al quitar sello:", error);
         adminMessage.textContent = 'Error al quitar sello: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -404,21 +432,22 @@ redeemCoffeeBtn.addEventListener('click', async () => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
                 const currentStamps = docSnapshot.data().stamps || 0;
+                const userEmail = docSnapshot.data().userEmail || targetClientEmail;
                 if (currentStamps >= MAX_STAMPS) {
                     transaction.update(docRef, { stamps: currentStamps - MAX_STAMPS, lastUpdate: new Date() });
-                    adminMessage.textContent = `Café canjeado para ${targetClientEmail}. Sellos restantes: ${currentStamps - MAX_STAMPS}`;
+                    adminMessage.textContent = `Café canjeado para ${userEmail}. Sellos restantes: ${currentStamps - MAX_STAMPS}`;
                     adminMessage.style.color = '#5cb85c';
                 } else {
-                    adminMessage.textContent = `El cliente ${targetClientEmail} no tiene suficientes sellos (${currentStamps}/${MAX_STAMPS}) para canjear un café.`;
+                    adminMessage.textContent = `El cliente ${userEmail} no tiene suficientes sellos (${currentStamps}/${MAX_STAMPS}) para canjear un café.`;
                     adminMessage.style.color = '#f0ad4e';
                 }
             } else {
-                adminMessage.textContent = `El cliente ${targetClientEmail} no tiene una tarjeta.`;
+                adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta.`;
                 adminMessage.style.color = '#f0ad4e';
             }
         });
     } catch (error) {
-        console.error("redeemCoffeeBtn ERROR: Error al canjear café:", error); // DEBUG
+        console.error("redeemCoffeeBtn ERROR: Error al canjear café:", error);
         adminMessage.textContent = 'Error al canjear café: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
@@ -427,7 +456,8 @@ redeemCoffeeBtn.addEventListener('click', async () => {
 resetStampsBtn.addEventListener('click', async () => {
     if (!targetClientEmail) return;
 
-    if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${targetClientEmail}? Esto pondrá sus sellos a 0.`)) {
+    const userEmailForConfirm = adminClientInfo.querySelector('strong').textContent.split(' ')[0] || targetClientEmail;
+    if (!confirm(`¿Estás seguro de que quieres reiniciar la tarjeta de ${userEmailForConfirm}? Esto pondrá sus sellos a 0.`)) {
         return;
     }
 
@@ -436,19 +466,19 @@ resetStampsBtn.addEventListener('click', async () => {
 
     try {
         const docRef = doc(db, 'loyaltyCards', targetClientEmail);
-        await setDoc(docRef, { stamps: 0, lastUpdate: new Date() }, { merge: true })
+        await setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmailForConfirm }) // Mantener el email si ya existía
             .then(() => {
-                adminMessage.textContent = `Tarjeta de ${targetClientEmail} reiniciada a 0 sellos.`;
+                adminMessage.textContent = `Tarjeta de ${userEmailForConfirm} reiniciada a 0 sellos.`;
                 adminMessage.style.color = '#5cb85c';
             })
             .catch((error) => {
-                console.error("resetStampsBtn ERROR: Error al reiniciar tarjeta:", error); // DEBUG
+                console.error("resetStampsBtn ERROR: Error al reiniciar tarjeta:", error);
                 adminMessage.textContent = 'Error al reiniciar tarjeta: ' + error.message;
                 adminMessage.style.color = '#d9534f';
             });
 
     } catch (error) {
-        console.error("resetStampsBtn ERROR (fuera de setDoc): Error al reiniciar tarjeta:", error); // DEBUG
+        console.error("resetStampsBtn ERROR (fuera de setDoc): Error al reiniciar tarjeta:", error);
         adminMessage.textContent = 'Error al reiniciar tarjeta: ' + error.message;
         adminMessage.style.color = '#d9534f';
     }
