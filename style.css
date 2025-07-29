@@ -1,706 +1,231 @@
-/* style.css */
-
-/* --- Base Styles --- */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial, sans-serif;
     margin: 0;
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2); /* Fondo suave */
+    padding: 0;
+    background-color: #f4f4f4;
     color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-    box-sizing: border-box;
+    line-height: 1.6;
 }
 
 header {
-    width: 100%;
-    max-width: 600px;
-    background-color: #7a4a2b; /* Café oscuro */
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 header h1 {
     margin: 0;
-    font-size: 1.8em;
+    font-size: 2.5rem;
 }
 
-.user-info {
-    font-size: 0.9em;
-    text-align: right;
+nav {
+    margin-top: 10px;
 }
 
-#auth-btn {
-    background-color: #ff9800; /* Naranja vibrante */
+nav button {
+    background-color: #5cb85c;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 10px 20px;
+    margin: 0 5px;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 1rem;
     transition: background-color 0.3s ease;
 }
 
-#auth-btn:hover {
-    background-color: #e68a00;
+nav button:hover {
+    background-color: #4cae4c;
 }
 
 main {
-    width: 100%;
-    max-width: 800px; /* Ancho máximo para el contenido principal */
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    padding: 20px;
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 section {
-    background-color: #fff;
-    padding: 25px;
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fdfdfd;
 }
 
-.hidden {
-    display: none !important;
+h2, h3 {
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
 }
 
-/* --- Loyalty Card (User) Styles --- */
-#loyalty-card h2 {
-    color: #7a4a2b;
-    text-align: center;
+.message {
+    padding: 10px;
     margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
 }
 
-#stamps-display {
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-color: #bee5eb;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.message.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffeeba;
+}
+
+/* Estilos de la tarjeta de sellos */
+.stamps-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* 5 columnas */
-    gap: 15px;
+    grid-template-columns: repeat(5, 1fr); /* 5 columnas */
+    gap: 10px;
+    margin-top: 20px;
+    justify-items: center;
+}
+
+.stamp {
+    width: 50px;
+    height: 50px;
+    border: 2px dashed #ccc;
+    border-radius: 50%;
+    display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ccc;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.stamp.obtained {
+    border-color: #4CAF50;
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+/* Estilos para el panel de administración */
+input[type="email"], select {
+    width: calc(100% - 22px);
     padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+}
+
+.admin-actions button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.admin-actions button:hover {
+    background-color: #0056b3;
+}
+
+#add-stamp-btn { background-color: #28a745; }
+#add-stamp-btn:hover { background-color: #218838; }
+#remove-stamp-btn { background-color: #dc3545; }
+#remove-stamp-btn:hover { background-color: #c82333; }
+#redeem-coffee-btn { background-color: #ffc107; color: #333; }
+#redeem-coffee-btn:hover { background-color: #e0a800; }
+#reset-card-btn { background-color: #6c757d; }
+#reset-card-btn:hover { background-color: #5a6268; }
+#show-client-qr-btn { background-color: #17a2b8; margin-top: 10px; }
+#show-client-qr-btn:hover { background-color: #138496; }
+#admin-scan-qr-btn { background-color: #17a2b8; margin-top: 10px; }
+#admin-scan-qr-btn:hover { background-color: #138496; }
+
+#client-qr-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin-top: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
 }
 
-.stamp {
-    width: 60px;
-    height: 60px;
-    background-color: #e0e0e0;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5em; /* Tamaño de los números 1-10 */
-    font-weight: bold;
-    color: #7a4a2b;
-    border: 3px solid #ccc;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    position: relative; /* Necesario para posicionar ::before */
-    overflow: hidden; /* Asegura que el contenido no se desborde */
-}
-
-.stamp.obtained {
-    background-color: #7a4a2b; /* Color de café para sellos obtenidos */
-    color: transparent; /* Oculta el número si lo hubiera, ya que usaremos ::before */
-    border-color: #5c3b22;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-/* ESTILO DEFINITIVO PARA EL ICONO DEL CAFÉ EN SELLOS OBTENIDOS */
-.stamp.obtained::before {
-    content: '☕'; /* Icono de café Unicode */
-    position: absolute; /* Para centrarlo y controlarlo mejor */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centrar el icono */
-    font-size: 1.8em; /* Tamaño del emoji de café */
-    line-height: 1; /* Eliminar espacio extra si el emoji lo tiene */
-    color: #fff; /* Color del emoji (si el sistema lo permite) */
-    display: flex; /* Para centrarlo correctamente */
-    justify-content: center;
-    align-items: center;
-    width: 100%; /* Asegura que ocupe todo el ancho disponible para centrado */
-    height: 100%; /* Asegura que ocupe toda la altura disponible para centrado */
-}
-
-/* NUEVA CLASE: Animación para el sello que se añade */
-.stamp.animate-stamp::before {
-    animation: bounceIn 0.5s ease-out; /* Animación simple al añadir */
-}
-
-@keyframes bounceIn {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-#message {
-    text-align: center;
-    font-size: 1.1em;
-    font-weight: 500;
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #e8f5e9; /* Un fondo suave para el mensaje */
-    border-radius: 5px;
-    color: #388e3c;
-}
-
-.confetti-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Permite clics a través del contenedor */
-    overflow: hidden;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.5s ease-out;
-}
-
-.confetti-container.active {
-    opacity: 1;
-}
-
-.confetti {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background-color: #f06292; /* Color por defecto, se sobrescribe en JS */
-    border-radius: 50%;
-    opacity: 0;
-}
-
-/* Animaciones para el confeti */
-@keyframes confetti-fall-1 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--rand-x, 0px), var(--rand-y, 500px)) rotate(720deg); opacity: 0; }
-}
-
-@keyframes confetti-fall-2 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--rand-x, 0px), var(--rand-y, 450px)) rotate(540deg); opacity: 0; }
-}
-
-@keyframes confetti-fall-3 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--rand-x, 0px), var(--rand-y, 550px)) rotate(900deg); opacity: 0; }
-}
-
-@keyframes confetti-fall-4 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--rand-x, 0px), var(--rand-y, 480px)) rotate(600deg); opacity: 0; }
-}
-
-@keyframes confetti-fall-5 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--rand-x, 0px), var(--rand-y, 520px)) rotate(780deg); opacity: 0; }
-}
-
-
-/* --- QR Code Styles --- */
-#qr-section {
-    text-align: center;
-    background-color: #fff;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-}
-
-#qrcode-canvas {
-    display: block;
-    margin: 20px auto 10px auto;
-    border: 5px solid #7a4a2b;
-    border-radius: 8px;
-    max-width: 200px; /* Ensures it's not too large on mobile */
-    height: auto;
-}
-
-#qr-instruction {
-    font-size: 0.9em;
-    color: #555;
-}
-
-
-/* --- Transaction History Styles --- */
-#history-section h3 {
-    color: #7a4a2b;
+#client-qr-display img {
     margin-bottom: 15px;
-}
-
-#stamps-history-list {
-    list-style: none;
-    padding: 0;
-    max-height: 250px; /* Max height for scrolling */
-    overflow-y: auto; /* Enable vertical scroll */
-    border: 1px solid #eee;
-    border-radius: 5px;
-    background-color: #fdfdfd;
-}
-
-#stamps-history-list li {
-    padding: 10px 15px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9em;
-}
-
-#stamps-history-list li:last-child {
-    border-bottom: none;
-}
-
-#stamps-history-list li:nth-child(even) {
-    background-color: #f0f0f0;
-}
-
-#stamps-history-list li .description {
-    flex-grow: 1;
-    color: #333;
-}
-
-#stamps-history-list li .timestamp {
-    color: #777;
-    font-size: 0.8em;
-    white-space: nowrap; /* Prevent date from breaking lines */
-    margin-left: 10px;
-}
-
-/* --- Admin Panel Styles --- */
-#admin-section h2 {
-    color: #7a4a2b;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.admin-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    align-items: center;
-    flex-wrap: wrap; /* Added for responsiveness */
-}
-
-.admin-input-group input[type="text"] {
-    flex-grow: 1;
-    padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1em;
-    min-width: 150px; /* Ensure input doesn't get too small */
+    padding: 5px;
+    background-color: white;
 }
 
-/* REFORZADO: Estilo para los botones en el grupo de input del admin */
-.admin-input-group button {
-    background-color: #007bff; /* Azul */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-    flex-shrink: 0; /* Prevent buttons from shrinking too much */
-}
-
-.admin-input-group button:hover {
-    background-color: #0056b3;
-}
-
-#admin-client-info {
-    background-color: #e9ecef;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    border-left: 5px solid #7a4a2b;
-}
-
-#admin-client-info p {
-    margin: 5px 0;
-    font-size: 0.95em;
-}
-
-#admin-client-info strong {
-    color: #5a2e15;
-}
-
-.admin-actions {
-    display: flex;
-    flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
-/* REFORZADO: Estilo para los botones de acción del admin */
-.admin-actions button {
-    flex: 1 1 auto; /* Allows buttons to grow and shrink */
-    min-width: 120px; /* Minimum width for each button */
-    padding: 12px 20px;
-    font-size: 1em;
-    font-weight: bold;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added subtle shadow */
-}
-
-/* Colores específicos para los botones de acción */
-#add-stamp-btn { background-color: #28a745; } /* Green */
-#add-stamp-btn:hover { background-color: #218838; }
-
-#remove-stamp-btn { background-color: #dc3545; } /* Red */
-#remove-stamp-btn:hover { background-color: #c82333; }
-
-#redeem-coffee-btn { background-color: #17a2b8; } /* Cyan Blue */
-#redeem-coffee-btn:hover { background-color: #138496; }
-
-#reset-stamps-btn { background-color: #6c757d; } /* Gray */
-#reset-stamps-btn:hover { background-color: #5a6268; }
-
-#admin-message {
-    text-align: center;
-    margin-top: 10px;
-    font-size: 0.9em;
-    font-weight: bold;
-}
-
-/* --- Admin Dashboard Styles --- */
-#admin-dashboard h3 {
-    color: #7a4a2b;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.dashboard-stats {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.stat-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px 20px;
-    text-align: center;
-    flex: 1;
-    min-width: 150px; /* Minimum width for each stat box */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.stat-box h4 {
-    margin: 0 0 8px 0;
-    color: #555;
-    font-size: 0.9em;
-    text-transform: uppercase;
-}
-
-.stat-box p {
-    margin: 0;
-    font-size: 2em;
-    font-weight: bold;
-    color: #7a4a2b;
-}
-
-/* --- Reports Styles --- */
-#report-section h3 {
-    color: #7a4a2b;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.report-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap; /* Added for responsiveness */
-}
-
-.report-controls select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-}
-
-.report-controls button {
-    background-color: #2196F3; /* Blue for report button */
+#client-qr-display button {
+    background-color: #6c757d;
     color: white;
     border: none;
     padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#client-qr-display button:hover {
+    background-color: #5a6268;
+}
+
+#report-results ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#report-results ul li {
+    background-color: #e9ecef;
+    margin-bottom: 5px;
+    padding: 8px;
     border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
 }
 
-.report-controls button:hover {
-    background-color: #1976D2;
-}
-
-#report-results {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-    min-height: 100px;
-}
-
-#report-results h4 {
-    margin-top: 0;
-    color: #7a4a2b;
-}
-
-#report-results p {
-    margin: 5px 0;
-}
-
-
-/* --- QR Scanner Styles --- */
-#qr-scanner-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.85);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-#qr-scanner-container {
-    width: 90%;
-    max-width: 400px;
-    height: 400px; /* Adjust height for scan area */
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    overflow: hidden; /* Ensures camera view is contained */
-    position: relative;
-    padding: 20px; /* Add some padding around the reader */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-#reader {
-    width: 100%;
-    height: 100%;
-    /* html5-qrcode specific styles for video */
-}
-#reader > div:first-child { /* The div containing the video */
-    width: 100% !important;
-    height: auto !important;
-}
-#reader video {
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain; /* To make the video fit well */
-}
-
-
-#close-scanner-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    font-size: 1.2em;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease;
-    z-index: 1001; /* Ensure it's above the reader */
-}
-
-#close-scanner-btn:hover {
-    background-color: #c82333;
-}
-
-#scanner-message {
-    color: #fff;
-    margin-top: 15px;
-    font-size: 1.1em;
+footer {
     text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    background-color: #333;
+    color: white;
+    font-size: 0.9rem;
 }
 
-
-/* --- Loading States Styles --- */
-.admin-section.loading {
-    cursor: wait;
-    opacity: 0.7; /* Optional: to indicate it's less interactive */
-    pointer-events: none; /* Disable clicks on the entire section */
-}
-
-/* Style for disabled buttons */
-button:disabled {
-    cursor: not-allowed !important;
-    opacity: 0.6 !important;
-}
-
-/* Style for disabled inputs */
-input:disabled {
-    cursor: not-allowed !important;
-    background-color: #e9ecef !important;
-}
-
-/* Optional: a simple spinner if you want to add it */
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: #7a4a2b; /* Your brand color */
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-
-/* --- Responsive Design / Media Queries --- */
+/* Responsivo */
 @media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
+    .stamps-grid {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Más flexible en pantallas pequeñas */
     }
-
-    header h1 {
-        font-size: 1.5em;
-    }
-
-    #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* 4 or 5 smaller columns */
-        gap: 10px;
-    }
-
-    .stamp {
-        width: 50px;
-        height: 50px;
-        font-size: 1.2em; /* Adjusted for smaller screens */
-    }
-
-    .stamp.obtained::before {
-        font-size: 1.5em; /* Adjusted emoji size for smaller screens */
-    }
-
-    .admin-input-group {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .admin-input-group input[type="text"] {
-        width: 100%; /* Full width for input in small screens */
-        min-width: unset;
-    }
-
-    .admin-input-group button {
-        width: 100%; /* Full width for buttons in small screens */
-    }
-
     .admin-actions button {
-        flex: 1 1 48%; /* Two buttons per row */
-    }
-
-    .dashboard-stats .stat-box {
-        min-width: 120px;
-        flex: 1 1 45%; /* Two boxes per row */
-    }
-
-    .report-controls {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    #qr-scanner-container {
-        width: 95%;
-        height: 350px;
-    }
-
-    #scanner-message {
-        font-size: 1em;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 10px;
-    }
-
-    header {
-        padding: 10px 15px;
-    }
-
-    section {
-        padding: 15px;
-    }
-
-    #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Even smaller on very small mobiles */
-        gap: 8px;
-    }
-
-    .stamp {
-        width: 45px;
-        height: 45px;
-        font-size: 1.1em; /* Adjusted for very small screens */
-    }
-
-    .stamp.obtained::before {
-        font-size: 1.3em; /* Adjusted emoji size for very small mobiles */
-    }
-
-    .admin-actions button {
-        flex: 1 1 100%; /* One button per row on very small screens */
-        min-width: unset;
-    }
-
-    .dashboard-stats .stat-box {
-        flex: 1 1 100%; /* One box per row on very small screens */
-    }
-
-    #qr-scanner-container {
-        padding: 10px;
+        width: 100%;
+        margin-right: 0;
     }
 }
