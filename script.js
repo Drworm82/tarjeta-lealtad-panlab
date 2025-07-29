@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: "mi-cafeteria-lealtad",
   storageBucket: "mi-cafeteria-lealtad.appspot.com",
   messagingSenderId: "1098066759983",
-  appId: "TU_APP_ID_AQUI" // <-- ¡IMPORTANTE! REEMPLAZA ESTO CON TU APP ID REAL
+  appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da" // <-- ¡IMPORTANTE! REEMPLAZA ESTO CON TU APP ID REAL
 };
 
 // Inicializa Firebase
