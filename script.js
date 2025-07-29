@@ -25,6 +25,7 @@ let currentStamps = 0;
 let currentUser = null; // Guardará el objeto de usuario de Firebase
 let adminUserEmail = 'TU_CORREO_DE_ADMIN@ejemplo.com'; // **REEMPLAZA CON EL CORREO DEL ADMINISTRADOR**
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
+let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -45,7 +46,7 @@ const confettiContainer = document.querySelector('.confetti-container');
 // --- Funciones de Autenticación ---
 
 // Manejar el estado de autenticación
-onAuthStateChanged(auth, user => { // Usamos onAuthStateChanged de la versión 9
+onAuthStateChanged(auth, user => {
     if (user) {
         currentUser = user;
         userDisplay.textContent = `Bienvenido, ${currentUser.displayName || currentUser.email}`;
@@ -55,6 +56,8 @@ onAuthStateChanged(auth, user => { // Usamos onAuthStateChanged de la versión 9
         if (currentUser.email === adminUserEmail) {
             adminSection.classList.remove('hidden');
             userDisplay.textContent += ' (Admin)';
+            setAdminControlsEnabled(false); // Deshabilitar botones de admin hasta buscar cliente
+            clearAdminClientInfo(); // Limpiar info del cliente en admin al loggearse como admin
         } else {
             adminSection.classList.add('hidden');
         }
@@ -71,24 +74,29 @@ onAuthStateChanged(auth, user => { // Usamos onAuthStateChanged de la versión 9
         updateDisplay(); // Actualizar la vista de sellos
         messageDisplay.textContent = 'Inicia sesión para ver tu tarjeta de lealtad.';
         
-        // Detener el listener de Firestore si existía
+        // Detener los listeners de Firestore si existían
         if (clientListener) {
-            clientListener(); // Desuscribirse del listener
+            clientListener(); // Desuscribirse del listener del usuario normal
             clientListener = null;
         }
+        if (adminClientListener) {
+            adminClientListener(); // Desuscribirse del listener del admin (si estaba activo)
+            adminClientListener = null;
+        }
+        clearAdminClientInfo(); // Asegurarse de limpiar el panel de admin también
     }
 });
 
 // Función para iniciar/cerrar sesión
 authBtn.addEventListener('click', () => {
     if (currentUser) {
-        signOut(auth) // Usamos signOut de la versión 9
+        signOut(auth)
             .catch(error => {
                 console.error("Error al cerrar sesión:", error);
                 alert("Error al cerrar sesión: " + error.message);
             });
     } else {
-        signInWithPopup(auth, googleProvider) // Usamos signInWithPopup de la versión 9
+        signInWithPopup(auth, googleProvider)
             .catch(error => {
                 console.error("Error al iniciar sesión:", error);
                 alert("Error al iniciar sesión: " + error.message);
@@ -100,25 +108,27 @@ authBtn.addEventListener('click', () => {
 
 // Carga y suscribe un listener a los sellos de un usuario específico
 async function loadAndListenForStamps(userEmail) {
-    const userDocRef = doc(db, 'loyaltyCards', userEmail); // Usamos doc de la versión 9
+    const userDocRef = doc(db, 'loyaltyCards', userEmail);
 
-    // Si ya hay un listener activo, desuscribirse primero
+    // Si ya hay un listener activo para el usuario normal, desuscribirse primero
     if (clientListener) {
         clientListener();
     }
 
-    clientListener = onSnapshot(userDocRef, docSnapshot => { // Usamos onSnapshot de la versión 9
-        if (docSnapshot.exists()) { // exists() es un método en V9
+    clientListener = onSnapshot(userDocRef, docSnapshot => {
+        if (docSnapshot.exists()) {
             currentStamps = docSnapshot.data().stamps || 0;
+            console.log(`Sellos cargados para el cliente ${userEmail}: ${currentStamps}`); // Para depuración
         } else {
             // Si el documento no existe, crearlo con 0 sellos
-            setDoc(userDocRef, { stamps: 0 }) // Usamos setDoc de la versión 9
+            setDoc(userDocRef, { stamps: 0 })
                 .then(() => {
                     currentStamps = 0;
-                    console.log("Documento de usuario creado.");
+                    console.log("Documento de usuario creado con 0 sellos.");
                 })
                 .catch(error => {
                     console.error("Error al crear documento de usuario:", error);
+                    alert("Error al crear la tarjeta de lealtad: " + error.message);
                 });
         }
         updateDisplay();
@@ -133,17 +143,13 @@ function updateDisplay() {
     const stampsDisplay = document.getElementById('stamps-display');
     stampsDisplay.innerHTML = ''; // Limpiar sellos existentes
 
-    // Asegurarse de que el confeti esté oculto al iniciar o actualizar
+    // Ocultar y reiniciar animaciones del confeti
     confettiContainer.classList.remove('active');
-    // Reiniciar las animaciones del confeti para que se disparen de nuevo
     document.querySelectorAll('.confetti').forEach(confetti => {
-        confetti.style.animation = 'none'; // Detener animación
+        confetti.style.animation = 'none';
         confetti.offsetHeight; // Truco para forzar un reflow/repaint
-        // Vuelve a aplicar la animación después de un pequeño retraso (0ms)
         setTimeout(() => {
-            // Asigna una animación de caída aleatoria y su retraso original
             const randomAnimation = `confetti-fall-${Math.floor(Math.random() * 5) + 1}`;
-            // Intenta leer el retraso original del CSS o establece 0s si no existe
             const style = window.getComputedStyle(confetti);
             const initialDelay = parseFloat(style.animationDelay) || 0;
             confetti.style.animation = `${randomAnimation} 2s ${initialDelay}s ease-out forwards`;
@@ -167,25 +173,27 @@ function updateDisplay() {
         messageDisplay.style.color = '#2e8b57'; // Color verde para el mensaje de éxito
         
         // ACTIVAR LA ANIMACIÓN DE CONFETI
-        confettiContainer.classList.add('active');
-
-        // Desactivar el botón "Añadir Sello" en la interfaz de administrador si existe y es el límite
-        if (currentUser && currentUser.email === adminUserEmail) {
-            if (addStampBtn) { // Asegúrate de que el botón existe antes de manipularlo
-                addStampBtn.disabled = true;
-                addStampBtn.style.backgroundColor = '#ccc';
-            }
+        if (currentUser && currentUser.email !== adminUserEmail) { // Solo si no es el admin
+             confettiContainer.classList.add('active');
+             setTimeout(() => { // Ocultar confeti después de un tiempo
+                 confettiContainer.classList.remove('active');
+             }, 3000); // 3 segundos
         }
+        
     } else {
         messageDisplay.textContent = `Te faltan ${MAX_STAMPS - currentStamps} sellos para tu café gratis.`;
         messageDisplay.style.color = '#555'; // Color normal
-        
-        // Activar el botón "Añadir Sello" en la interfaz de administrador
-        if (currentUser && currentUser.email === adminUserEmail) {
-            if (addStampBtn) { // Asegúrate de que el botón existe antes de manipularlo
-                addStampBtn.disabled = false;
-                addStampBtn.style.backgroundColor = '#28a745';
-            }
+    }
+
+    // Lógica para deshabilitar/habilitar el botón "Añadir Sello" en la interfaz de administrador
+    // (Esto se maneja en searchClientBtn y updateClientStamps ahora, pero es bueno tenerlo aquí también si el estado del usuario logueado cambia)
+    if (currentUser && currentUser.email === adminUserEmail && addStampBtn) {
+        if (currentStamps >= MAX_STAMPS) {
+            addStampBtn.disabled = true;
+            addStampBtn.style.backgroundColor = '#ccc';
+        } else {
+            addStampBtn.disabled = false;
+            addStampBtn.style.backgroundColor = '#28a745';
         }
     }
 }
@@ -206,10 +214,16 @@ searchClientBtn.addEventListener('click', async () => {
     }
 
     try {
-        const clientDocRef = doc(db, 'loyaltyCards', email); // Usamos doc de la versión 9
-        const clientDoc = await getDoc(clientDocRef); // Usamos getDoc de la versión 9
+        const clientDocRef = doc(db, 'loyaltyCards', email);
+        const clientDoc = await getDoc(clientDocRef);
 
-        if (clientDoc.exists()) { // exists() es un método en V9
+        // Desuscribir el listener anterior si existe para evitar múltiples escuchas
+        if (adminClientListener) {
+            adminClientListener();
+            adminClientListener = null;
+        }
+
+        if (clientDoc.exists()) {
             targetClientEmail = email;
             const clientData = clientDoc.data();
             adminClientInfo.innerHTML = `
@@ -220,23 +234,27 @@ searchClientBtn.addEventListener('click', async () => {
             adminMessage.textContent = `Cliente ${email} cargado.`;
             adminMessage.style.color = '#28a745';
 
-            // Escuchar cambios en los sellos del cliente buscado en tiempo real
-            if (clientListener) { // Si ya hay un listener para el usuario actual, lo cerramos para evitar conflictos
-                clientListener();
-            }
-            clientListener = onSnapshot(clientDocRef, docSnapshot => { // onSnapshot de V9
+            // Escuchar cambios en los sellos del cliente buscado en tiempo real en el panel de admin
+            adminClientListener = onSnapshot(clientDocRef, docSnapshot => {
                 if (docSnapshot.exists()) {
                     const latestStamps = docSnapshot.data().stamps || 0;
                     document.getElementById('admin-current-stamps').textContent = latestStamps;
+                } else {
+                    // Si el documento se borra, resetear el panel de admin
+                    clearAdminClientInfo();
+                    adminMessage.textContent = `El cliente ${email} ya no existe.`;
+                    adminMessage.style.color = '#d9534f';
                 }
             }, error => {
                 console.error("Error al escuchar sellos del cliente en admin:", error);
+                adminMessage.textContent = 'Error al escuchar sellos del cliente: ' + error.message;
+                adminMessage.style.color = '#d9534f';
             });
 
         } else {
             adminMessage.textContent = 'Cliente no encontrado. Puedes añadirle sellos para crearlo.';
             adminMessage.style.color = '#f0ad4e'; // Naranja para advertencia
-            clearAdminClientInfo();
+            clearAdminClientInfo(); // Limpia la info existente si no se encuentra
             targetClientEmail = email; // Permite añadir sellos y crear el cliente
             setAdminControlsEnabled(true, true); // Habilitar solo "Añadir Sello" y "Resetear"
         }
@@ -252,24 +270,24 @@ searchClientBtn.addEventListener('click', async () => {
 // Función auxiliar para habilitar/deshabilitar botones de admin
 function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
     addStampBtn.disabled = !enabled;
-    removeStampBtn.disabled = !enabled || allowAddAndResetOnly; // Deshabilitar si solo se permite añadir/reset
+    removeStampBtn.disabled = !enabled || allowAddAndResetOnly;
     redeemCoffeeBtn.disabled = !enabled || allowAddAndResetOnly;
     resetStampsBtn.disabled = !enabled;
 
     // Ajustar color de los botones
     addStampBtn.style.backgroundColor = enabled ? '#28a745' : '#ccc';
-    removeStampBtn.style.backgroundColor = (enabled && !allowAddAndResetOnly) ? '#dc3545' : '#ccc'; // Rojo para quitar
-    redeemCoffeeBtn.style.backgroundColor = (enabled && !allowAddAndResetOnly) ? '#007bff' : '#ccc'; // Azul para canjear
-    resetStampsBtn.style.backgroundColor = enabled ? '#6c757d' : '#ccc'; // Gris para resetear
+    removeStampBtn.style.backgroundColor = (enabled && !allowAddAndResetOnly) ? '#dc3545' : '#ccc';
+    redeemCoffeeBtn.style.backgroundColor = (enabled && !allowAddAndResetOnly) ? '#17a2b8' : '#ccc';
+    resetStampsBtn.style.backgroundColor = enabled ? '#6c757d' : '#ccc';
 }
 
 function clearAdminClientInfo() {
     adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
     setAdminControlsEnabled(false);
     targetClientEmail = null;
-    if (clientListener) { // Detener listener del cliente anterior si existe
-        clientListener();
-        clientListener = null;
+    if (adminClientListener) { // Detener listener del cliente anterior si existe
+        adminClientListener();
+        adminClientListener = null;
     }
 }
 
@@ -286,22 +304,23 @@ async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (par
         return;
     }
 
-    const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail); // Usamos doc de la versión 9
+    const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail);
     adminMessage.textContent = 'Actualizando sellos...';
     adminMessage.style.color = '#007bff';
 
     try {
-        await runTransaction(db, async (transaction) => { // Usamos runTransaction de la versión 9
-            const docSnapshot = await transaction.get(clientDocRef); // Usamos get de la transacción
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(clientDocRef);
 
             let currentClientStamps = 0;
 
             if (docSnapshot.exists()) {
                 currentClientStamps = docSnapshot.data().stamps || 0;
             } else if (change === 1) { // Si el documento no existe y estamos añadiendo sellos, crearlo
-                transaction.set(clientDocRef, { stamps: 0 }); // Usamos set de la transacción
+                transaction.set(clientDocRef, { stamps: 0 }); // Lo crea con 0 y luego se le suma 1
+                currentClientStamps = 0; // Asegurarse de que el cálculo se haga sobre 0
             } else {
-                adminMessage.textContent = 'El cliente no tiene sellos para quitar/canjear/resetear.';
+                adminMessage.textContent = 'El cliente no tiene sellos para quitar/canjear/resetear, o no existe.';
                 adminMessage.style.color = '#f0ad4e';
                 return; // Salir de la transacción si no hay documento y no es un add
             }
@@ -342,7 +361,7 @@ async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (par
                     adminMessage.style.color = '#28a745';
                 }
             }
-            transaction.update(clientDocRef, { stamps: newStamps }); // Usamos update de la transacción
+            transaction.update(clientDocRef, { stamps: newStamps });
         });
         
     } catch (error) {
