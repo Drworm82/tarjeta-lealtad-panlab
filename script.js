@@ -23,10 +23,10 @@ const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 const MAX_STAMPS = 10;
 let currentStamps = 0;
 let currentUser = null; // Guardará el objeto de usuario de Firebase
-let adminUserEmail = 'worm.jim@gmail.com'; // **¡IMPORTANTE! REEMPLAZA CON EL CORREO ELECTRÓNICO DE TU ADMINISTRADOR**
+let adminUserEmail = 'worm.jim@gmail.com'; // **¡CORREO DEL ADMINISTRADOR ACTUALIZADO!**
 let clientListener = null; // Para almacenar el listener de Firestore del cliente actual
 let adminClientListener = null; // Para almacenar el listener de Firestore del cliente en el panel de admin
-let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin // <-- ¡ESTA ES LA LÍNEA AÑADIDA!
+let targetClientEmail = null; // Para almacenar el email del cliente en el panel de admin
 
 // --- Elementos del DOM ---
 const userDisplay = document.getElementById('user-display');
@@ -115,7 +115,7 @@ function setAdminControlsEnabled(enabled, allowAddAndResetOnly = false) {
 function clearAdminClientInfo() {
     adminClientInfo.innerHTML = '<p>No hay cliente cargado.</p>';
     setAdminControlsEnabled(false);
-    targetClientEmail = null; // Esta línea ahora está bien porque targetClientEmail está declarado
+    targetClientEmail = null;
     if (adminClientListener) {
         adminClientListener();
         adminClientListener = null;
