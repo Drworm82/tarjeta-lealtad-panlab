@@ -9,6 +9,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    overflow-x: hidden; /* Evita el scroll horizontal no deseado */
 }
 
 header {
@@ -62,6 +63,8 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%; /* Asegura que el main ocupe todo el ancho disponible */
+    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
 }
 
 .card {
@@ -73,6 +76,7 @@ main {
     width: 100%;
     max-width: 600px;
     text-align: center;
+    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
 }
 
 .card h2 {
@@ -124,11 +128,14 @@ main {
 
 /* Contenedor de Confeti */
 .confetti-container {
-    position: relative; /* Para posicionar el confeti relativo a este contenedor */
+    position: fixed; /* Cambiado de 'relative' a 'fixed' para cubrir toda la ventana */
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100px; /* Altura para el efecto de confeti */
+    height: 100%;
     overflow: hidden;
-    margin-top: 20px;
+    pointer-events: none; /* Permite hacer clic a través del confeti */
+    z-index: 9999; /* Asegura que el confeti esté por encima de todo */
     display: none; /* Oculto por defecto, activado por JS */
 }
 
@@ -141,36 +148,36 @@ main {
     width: 10px;
     height: 10px;
     background-color: #ccc; /* Color por defecto, sobrescrito por JS */
-    border-radius: 50%;
-    opacity: 0;
-    animation-fill-mode: forwards;
+    border-radius: 50%; /* Para confeti redondo */
+    opacity: 0; /* Empieza invisible */
+    animation-fill-mode: forwards; /* Mantiene el estado final de la animación */
 }
 
 /* Animaciones de Confeti (ejemplo de 5 variaciones) */
 @keyframes confetti-fall-1 {
-    0% { transform: translate(0, -100px) rotate(0deg); opacity: 0; }
+    0% { transform: translate(0, -100vh) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translate(50px, 300px) rotate(360deg); opacity: 0; }
+    100% { transform: translate(50px, 100vh) rotate(360deg); opacity: 0; }
 }
 @keyframes confetti-fall-2 {
-    0% { transform: translate(100px, -150px) rotate(0deg); opacity: 0; }
+    0% { transform: translate(100px, -100vh) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translate(-50px, 350px) rotate(-360deg); opacity: 0; }
+    100% { transform: translate(-50px, 100vh) rotate(-360deg); opacity: 0; }
 }
 @keyframes confetti-fall-3 {
-    0% { transform: translate(-50px, -200px) rotate(0deg); opacity: 0; }
+    0% { transform: translate(-50px, -100vh) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translate(100px, 400px) rotate(720deg); opacity: 0; }
+    100% { transform: translate(100px, 100vh) rotate(720deg); opacity: 0; }
 }
 @keyframes confetti-fall-4 {
-    0% { transform: translate(150px, -100px) rotate(0deg); opacity: 0; }
+    0% { transform: translate(150px, -100vh) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translate(-100px, 300px) rotate(-720deg); opacity: 0; }
+    100% { transform: translate(-100px, 100vh) rotate(-720deg); opacity: 0; }
 }
 @keyframes confetti-fall-5 {
-    0% { transform: translate(-100px, -150px) rotate(0deg); opacity: 0; }
+    0% { transform: translate(-100px, -100vh) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translate(50px, 350px) rotate(360deg); opacity: 0; }
+    100% { transform: translate(50px, 100vh) rotate(360deg); opacity: 0; }
 }
 
 
@@ -233,9 +240,27 @@ main {
 #reset-stamps-btn { background-color: #6c757d; } /* Gris */
 #reset-stamps-btn:hover:not(:disabled) { background-color: #5a6268; }
 
+/* Estilos para el Código QR y sus instrucciones */
+#qrcode-canvas {
+    display: block !important; /* Asegura que siempre se muestre cuando sea visible */
+    margin: 20px auto; /* Centra el QR */
+    max-width: 90%; /* Limita el ancho máximo para que no se desborde */
+    height: auto; /* Mantiene la proporción */
+    border: 1px solid #ccc; /* Un borde sutil para que sea visible */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra para destacarlo */
+}
+
+#qr-instruction {
+    display: block !important; /* Asegura que la instrucción siempre se muestre cuando sea visible */
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+
 /* Para esconder elementos */
 .hidden {
-    display: none !important;
+    display: none !important; /* Usamos !important para asegurar que se oculte */
 }
 
 /* Pie de página */
@@ -245,4 +270,92 @@ footer {
     text-align: center;
     padding: 10px;
     margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box; /* Incluye padding en el ancho */
+}
+
+/* Media query para pantallas pequeñas (móviles) */
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+    }
+
+    .auth-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    #user-display {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    button {
+        width: 90%; /* Botones más anchos en móvil */
+        margin-bottom: 10px;
+    }
+
+    main {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .stamps-grid {
+        grid-template-columns: repeat(4, 1fr); /* 4 columnas en pantallas pequeñas para mejor ajuste */
+        gap: 10px;
+    }
+
+    .stamp {
+        width: 50px; /* Sellos un poco más pequeños */
+        height: 50px;
+        font-size: 1.1em;
+    }
+    .stamp.obtained {
+        font-size: 1.8em;
+    }
+
+    .admin-controls input[type="text"],
+    .admin-controls input[type="email"] {
+        max-width: 100%; /* El input de admin ocupa todo el ancho */
+    }
+
+    .admin-actions button {
+        min-width: unset; /* Reinicia el min-width */
+        width: 100%; /* Botones de acción del admin al 100% en móvil */
+    }
+
+    #qrcode-canvas {
+        width: 180px; /* Tamaño del QR ligeramente más pequeño en móviles */
+        height: 180px;
+    }
+}
+
+/* Media query para pantallas aún más pequeñas (ej. iPhone 5/SE, viejos Android) */
+@media (max-width: 350px) {
+    .stamps-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas para pantallas muy estrechas */
+    }
+    .stamp {
+        width: 45px;
+        height: 45px;
+        font-size: 1em;
+    }
+    .stamp.obtained {
+        font-size: 1.6em;
+    }
+    #qrcode-canvas {
+        width: 150px;
+        height: 150px;
+    }
 }
