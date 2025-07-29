@@ -1,314 +1,226 @@
-/* --- Global Reset & Box Sizing --- */
-*, *::before, *::after {
-    box-sizing: border-box; /* Incluye padding y border en el ancho/alto total */
-    margin: 0;
-    padding: 0;
-}
-
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4e8d8; /* Un beige claro para el fondo */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f2ed;
     color: #333;
-    display: flex; /* Usa flexbox para centrar el contenido */
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh; /* Ocupa al menos el 100% del alto de la ventana */
-    padding: 20px; /* Padding general para pantallas grandes */
-    line-height: 1.6; /* Mejorar legibilidad del texto general */
-    overflow-y: auto; /* Permite desplazamiento vertical si el contenido es demasiado alto */
-}
-
-/* --- Contenedor Principal de la Aplicación --- */
-.container {
-    background-color: #fff; /* Fondo blanco para el contenido */
-    border-radius: 15px; /* Bordes redondeados */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra para profundidad */
-    padding: 30px;
-    text-align: center;
-    max-width: 450px; /* Ancho máximo para el contenedor principal */
-    width: 100%; /* Ocupa todo el ancho disponible hasta el max-width */
-    position: relative; /* Para posibles elementos posicionados */
-    display: flex; /* Usar flexbox para organizar el contenido verticalmente */
-    flex-direction: column;
-    align-items: center; /* Centrar elementos dentro del contenedor */
-    overflow: hidden; /* Importante para que el confeti no se desborde fuera del contenedor */
-}
-
-/* --- Encabezado y Títulos --- */
-h1 {
-    font-size: 2.2em;
-    color: #5a3c26; /* Marrón oscuro para el título principal */
-    margin-bottom: 10px;
+    margin: 0;
+    padding: 20px;
     display: flex;
     justify-content: center;
+    align-items: flex-start; /* Align items to the top */
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    margin-top: 20px; /* Add some top margin */
+    box-sizing: border-box;
+}
+
+header h1 {
+    color: #4a2a1a;
+    font-size: 2.2em;
+    margin-bottom: 10px;
+    display: flex;
     align-items: center;
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio */
-    text-align: center; /* Asegura que el texto se centre si hay salto de línea */
+    justify-content: center;
 }
 
-h1 .coffee-icon {
-    font-size: 1.2em; /* Tamaño de las tazas en el título */
-    margin: 0 5px; /* Margen horizontal para separarlos del texto */
-    vertical-align: middle;
-    line-height: 1;
-    display: inline-block;
+header h1 .coffee-icon {
+    font-size: 1.2em;
+    margin: 0 10px;
+    color: #8b4513; /* Color de taza de café */
 }
 
-p {
-    margin-bottom: 15px;
-    line-height: 1.5;
-}
-
-/* --- Display de Usuario y Botón de Autenticación --- */
-#user-display {
+header p {
+    color: #6a4a3a;
     font-size: 1.1em;
-    font-weight: bold;
-    color: #6c4e38;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
-#auth-btn {
-    background-color: #a46d3a; /* Marrón medio para el botón de auth */
+section {
+    background-color: #fdfaf7;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e0d9d1;
+}
+
+#auth-section p {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    color: #555;
+}
+
+button {
+    background-color: #8b4513;
     color: white;
     padding: 12px 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.3s ease;
-    width: 100%; /* Ocupa todo el ancho disponible */
-    max-width: 300px; /* Limita el ancho del botón en pantallas grandes */
-    margin-bottom: 25px;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    width: auto;
+    display: inline-block;
+    margin-top: 10px;
 }
 
-#auth-btn:hover {
-    background-color: #7b4f2c; /* Marrón oscuro al pasar el ratón */
+button:hover {
+    background-color: #6a350f;
+    transform: translateY(-2px);
 }
 
-/* --- Sección de Sellos del Cliente --- */
-#stamps-display {
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#loyalty-card {
+    position: relative; /* Para el confeti */
+    border: 2px dashed #d1c4b3;
+    background-color: #fffaf5;
+}
+
+.stamps-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columnas fijas */
-    gap: 12px; /* Espacio entre los sellos */
-    background-color: #f7f0e6; /* Fondo más claro para el área de sellos */
-    border: 2px dashed #e0b07d; /* Borde punteado */
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    width: 100%; /* Asegura que el grid ocupe el 100% del contenedor */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin: 20px auto;
+    max-width: 380px;
 }
 
 .stamp {
-    width: 100%; /* Ocupa todo el ancho de la celda del grid */
-    aspect-ratio: 1 / 1; /* Esto fuerza la relación de aspecto 1:1 (cuadrado) */
-    min-width: 60px;
-    min-height: 60px;
-
-    background-color: #e0b07d; /* Color de sello no obtenido */
-    border-radius: 50%; /* Forma circular */
-    display: flex; /* Usar flexbox para centrar el contenido (número o icono) */
+    width: 60px;
+    height: 60px;
+    background-color: #e0b48c; /* Color claro para sellos no obtenidos */
+    border-radius: 50%;
+    display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.8em; /* Tamaño del número (1, 2, 3...) */
+    font-size: 1.5em;
     font-weight: bold;
-    color: #fff; /* Color del número */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    position: static;
+    color: #7b4a20; /* Color de número para sellos no obtenidos */
+    border: 2px solid #c2a07c;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .stamp.obtained {
-    background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
-    color: #fff; /* Color del ícono de café */
-    font-size: 2.5em; /* Ajustado para el emoji '☕' */
-    line-height: 1; /* Ayuda a centrar verticalmente el emoji */
+    background-color: #5a2e1e; /* Color oscuro para sellos obtenidos */
+    color: #fff; /* Color de texto/icono blanco para sellos obtenidos */
+    font-size: 2em; /* Tamaño más grande para el icono de café */
+    border-color: #4a2a1a;
 }
 
-
-/* Mensaje de la tarjeta del cliente */
 #message {
-    font-size: 1em;
+    margin-top: 20px;
+    font-size: 1.1em;
+    font-weight: bold;
     color: #555;
-    margin-top: 15px;
-    min-height: 25px; /* Para evitar saltos cuando no hay mensaje */
 }
 
-/* --- Botones de Control (Ocultos para Cliente Normal) --- */
-.client-control.hidden {
-    display: none !important;
-}
-
-/* --- Sección de Administración --- */
-#admin-section {
-    background-color: #e6f7ed; /* Fondo verde claro para el admin */
-    border: 1px solid #c9e6d4;
-    border-radius: 10px;
-    padding: 25px;
-    margin-top: 30px;
-    width: 100%; /* Asegura que ocupe el ancho del contenedor */
-    text-align: left; /* Restablecer alineación de texto dentro de esta sección */
-}
-
+/* Estilos de la sección de administración */
 #admin-section h2 {
-    font-size: 1.6em;
-    color: #2e8b57; /* Verde para el título del admin */
+    color: #4a2a1a;
     margin-bottom: 15px;
-    text-align: center; /* Centrar el título del admin */
 }
 
-#admin-section p {
-    font-size: 0.9em;
-    color: #555;
-    margin-bottom: 20px;
-    text-align: center; /* Centrar el párrafo de la descripción */
+.admin-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
 }
 
-.input-group {
-    display: flex; /* Flexbox para el input y el botón de búsqueda */
-    margin-bottom: 15px;
-    gap: 10px; /* Espacio entre el input y el botón */
-    flex-wrap: wrap; /* Permitir que los elementos se envuelvan */
-}
-
-.input-group input[type="email"] {
-    flex-grow: 1; /* El input ocupa el espacio restante */
-    padding: 10px;
+.admin-controls input[type="email"] {
+    padding: 12px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 1em;
-    min-width: 150px; /* Para evitar que sea demasiado pequeño en móvil */
-}
-
-.input-group button {
-    flex-shrink: 0; /* El botón no se encoge */
-    background-color: #4CAF50; /* Verde brillante para el botón de búsqueda */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-}
-
-.input-group button:hover {
-    background-color: #45a049;
+    width: calc(100% - 24px); /* Full width minus padding */
+    margin-bottom: 5px;
 }
 
 #admin-client-info {
-    background-color: #f0fdf4; /* Fondo aún más claro para la info del cliente */
-    border: 1px solid #d4edda;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
     border-radius: 8px;
     padding: 15px;
-    margin-top: 15px;
-    margin-bottom: 20px;
+    margin-top: 10px;
     text-align: left;
-    min-height: 60px; /* Para evitar saltos */
+    color: #333;
 }
 
 #admin-client-info p {
     margin: 5px 0;
-    font-size: 1em;
-    color: #333;
+    font-size: 0.95em;
 }
 
-#admin-client-info strong {
-    color: #2e8b57;
+.message {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 0.9em;
 }
 
-#admin-client-controls {
-    display: flex;
-    flex-wrap: wrap; /* Permite que los botones se envuelvan a la siguiente línea */
-    justify-content: center; /* Centra los botones */
-    gap: 10px; /* Espacio entre los botones */
-    margin-top: 20px;
+.hidden {
+    display: none;
 }
 
-#admin-client-controls button {
-    background-color: #28a745; /* Otro tono de verde para los botones de control */
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.05em;
-    transition: background-color 0.3s ease;
-    flex-grow: 1; /* Permite que crezcan para llenar el espacio */
-    flex-basis: calc(33.33% - 10px); /* Intenta dividir en 3 columnas */
-    min-width: 120px; /* Ancho mínimo para que no se hagan demasiado pequeños */
+/* Estilos para los botones de administración */
+.btn-primary {
+    background-color: #007bff; /* Azul */
+}
+.btn-primary:hover {
+    background-color: #0056b3;
 }
 
-
-#admin-client-controls button:hover {
+.btn-success {
+    background-color: #28a745; /* Verde */
+}
+.btn-success:hover {
     background-color: #218838;
 }
 
-#admin-message {
-    margin-top: 20px;
-    font-weight: bold;
-    color: #d9534f; /* Color para mensajes de error/info del admin */
-    min-height: 25px;
-    text-align: center;
+.btn-danger {
+    background-color: #dc3545; /* Rojo */
+}
+.btn-danger:hover {
+    background-color: #c82333;
 }
 
-/* --- ANIMACIONES DE SELLOS --- */
-
-/* Animación para el nuevo sello añadido */
-.stamp.animate-new-stamp {
-    animation: newStampPulse 0.7s ease-out forwards;
+.btn-info {
+    background-color: #17a2b8; /* Azul claro/cian */
+}
+.btn-info:hover {
+    background-color: #138496;
 }
 
-@keyframes newStampPulse {
-    0% {
-        transform: scale(1);
-        background-color: #e0b07d; /* Color normal */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    50% {
-        transform: scale(1.15); /* Crece un poco */
-        background-color: #a46d3a; /* Un color más oscuro para el "pulso" */
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-    }
-    100% {
-        transform: scale(1); /* Vuelve al tamaño normal */
-        background-color: #7b4f2c; /* Color de sello obtenido */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
+.btn-secondary {
+    background-color: #6c757d; /* Gris */
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
 }
 
-/* Animación para el reinicio/canjeo de sellos */
-.stamp.animate-reset-stamp {
-    animation: resetStampFade 0.7s ease-out forwards;
-}
-
-@keyframes resetStampFade {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-        background-color: #7b4f2c; /* Color del sello obtenido */
-    }
-    50% {
-        opacity: 0.2; /* Se desvanece casi por completo */
-        transform: translateY(-10px); /* Se mueve ligeramente hacia arriba */
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        background-color: #e0b07d; /* Vuelve al color original del sello no obtenido */
-    }
-}
-
-/* --- ESTILOS Y ANIMACIONES DE CONFETI --- */
+/* Estilos del Confeti */
 .confetti-container {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Permite clics a través del confeti */
-    overflow: hidden; /* Asegura que el confeti no se desborde */
-    opacity: 0; /* Inicialmente oculto */
-    transition: opacity 0.5s ease-out; /* Para desvanecer el contenedor de confeti */
+    overflow: hidden;
+    pointer-events: none; /* Make it not interfere with clicks */
+    z-index: 10;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s ease;
 }
 
 .confetti-container.active {
@@ -317,178 +229,61 @@ p {
 
 .confetti {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    background-color: #e0b07d; /* Color base */
-    border-radius: 50%; /* Para que sea circular */
-    opacity: 0; /* Inicialmente oculto individualmente */
-    animation-timing-function: ease-out; /* Desaceleración al final */
-    animation-fill-mode: forwards; /* Mantiene el estado final de la animación */
-    animation-iteration-count: 1; /* Se reproduce una vez */
+    width: 10px;
+    height: 10px;
+    background-color: #ffd700; /* Gold */
+    border-radius: 50%;
+    opacity: 0;
+    animation-duration: 2s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
-/* Colores de confeti variados (inspirados en México) */
-.confetti:nth-child(3n+0) { background-color: #FF6B6B; } /* Rojo */
-.confetti:nth-child(3n+1) { background-color: #4ECDC4; } /* Turquesa */
-.confetti:nth-child(3n+2) { background-color: #FFC14F; } /* Amarillo/Naranja */
-.confetti:nth-child(5n+0) { background-color: #90EE90; } /* Verde claro */
-.confetti:nth-child(5n+1) { background-color: #87CEEB; } /* Azul cielo */
+/* Variaciones de color para el confeti */
+.confetti:nth-child(2n) { background-color: #ff69b4; /* Hot Pink */ }
+.confetti:nth-child(3n) { background-color: #00ced1; /* Dark Turquoise */ }
+.confetti:nth-child(4n) { background-color: #9370db; /* Medium Purple */ }
+.confetti:nth-child(5n) { background-color: #3cb371; /* Medium Sea Green */ }
 
-/* Posiciones iniciales aleatorias y retrasos de animación para cada pedazo */
-.confetti:nth-child(1) { left: 10%; top: 20%; animation: confetti-fall-1 2s 0.1s; }
-.confetti:nth-child(2) { left: 20%; top: 15%; animation: confetti-fall-2 2s 0.2s; }
-.confetti:nth-child(3) { left: 30%; top: 25%; animation: confetti-fall-3 2s 0.3s; }
-.confetti:nth-child(4) { left: 40%; top: 10%; animation: confetti-fall-4 2s 0.4s; }
-.confetti:nth-child(5) { left: 50%; top: 30%; animation: confetti-fall-5 2s 0.5s; }
-.confetti:nth-child(6) { left: 60%; top: 5%; animation: confetti-fall-1 2s 0.6s; }
-.confetti:nth-child(7) { left: 70%; top: 22%; animation: confetti-fall-2 2s 0.7s; }
-.confetti:nth-child(8) { left: 80%; top: 18%; animation: confetti-fall-3 2s 0.8s; }
-.confetti:nth-child(9) { left: 90%; top: 28%; animation: confetti-fall-4 2s 0.9s; }
-.confetti:nth-child(10) { left: 5%; top: 5%; animation: confetti-fall-5 2s 1.0s; }
-.confetti:nth-child(11) { left: 15%; top: 35%; animation: confetti-fall-1 2s 0.2s; }
-.confetti:nth-child(12) { left: 25%; top: 40%; animation: confetti-fall-2 2s 0.4s; }
-.confetti:nth-child(13) { left: 35%; top: 32%; animation: confetti-fall-3 2s 0.6s; }
-.confetti:nth-child(14) { left: 45%; top: 42%; animation: confetti-fall-4 2s 0.8s; }
-.confetti:nth-child(15) { left: 55%; top: 38%; animation: confetti-fall-5 2s 1.0s; }
-.confetti:nth-child(16) { left: 65%; top: 48%; animation: confetti-fall-1 2s 0.3s; }
-.confetti:nth-child(17) { left: 75%; top: 44%; animation: confetti-fall-2 2s 0.5s; }
-.confetti:nth-child(18) { left: 85%; top: 50%; animation: confetti-fall-3 2s 0.7s; }
-.confetti:nth-child(19) { left: 95%; top: 46%; animation: confetti-fall-4 2s 0.9s; }
-.confetti:nth-child(20) { left: 2%; top: 25%; animation: confetti-fall-5 2s 1.1s; }
+/* Posiciones iniciales aleatorias para el confeti */
+.confetti:nth-child(1) { left: 10%; top: -10%; animation-delay: 0s; }
+.confetti:nth-child(2) { left: 20%; top: -5%; animation-delay: 0.2s; }
+.confetti:nth-child(3) { left: 30%; top: -15%; animation-delay: 0.4s; }
+.confetti:nth-child(4) { left: 40%; top: -8%; animation-delay: 0.6s; }
+.confetti:nth-child(5) { left: 50%; top: -12%; animation-delay: 0.8s; }
+.confetti:nth-child(6) { left: 60%; top: -7%; animation-delay: 1s; }
+.confetti:nth-child(7) { left: 70%; top: -14%; animation-delay: 1.2s; }
+.confetti:nth-child(8) { left: 80%; top: -9%; animation-delay: 1.4s; }
+.confetti:nth-child(9) { left: 90%; top: -11%; animation-delay: 1.6s; }
+.confetti:nth-child(10) { left: 5%; top: -18%; animation-delay: 0.1s; }
+.confetti:nth-child(11) { left: 15%; top: -3%; animation-delay: 0.3s; }
+.confetti:nth-child(12) { left: 25%; top: -10%; animation-delay: 0.5s; }
+.confetti:nth-child(13) { left: 35%; top: -6%; animation-delay: 0.7s; }
+.confetti:nth-child(14) { left: 45%; top: -16%; animation-delay: 0.9s; }
+.confetti:nth-child(15) { left: 55%; top: -4%; animation-delay: 1.1s; }
 
-
-/* Animaciones de caída de confeti con variaciones */
+/* Animaciones de caída del confeti */
 @keyframes confetti-fall-1 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(50px, 300px) rotate(360deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(50px, 600px) rotate(720deg); opacity: 0; }
 }
 
 @keyframes confetti-fall-2 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(-30px, 280px) rotate(-360deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-30px, 620px) rotate(-540deg); opacity: 0; }
 }
 
 @keyframes confetti-fall-3 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(0px, 320px) rotate(720deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(70px, 650px) rotate(360deg); opacity: 0; }
 }
 
 @keyframes confetti-fall-4 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(80px, 290px) rotate(-540deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-80px, 580px) rotate(720deg); opacity: 0; }
 }
 
 @keyframes confetti-fall-5 {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(-60px, 310px) rotate(450deg); opacity: 0; }
-}
-
-
-/* --- DISEÑO RESPONSIVO --- */
-
-/* Reglas para pantallas más pequeñas (máximo 768px de ancho, típico de tabletas y móviles) */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-
-    .container {
-        padding: 20px;
-        max-width: 95%;
-    }
-
-    h1 {
-        font-size: 1.8em;
-    }
-
-    h1 .coffee-icon {
-        font-size: 0.7em; /* Un poco más pequeña en móvil */
-        margin: 0 3px; /* Espacio reducido en móvil */
-    }
-
-    h2 {
-        font-size: 1.4em;
-    }
-
-    p {
-        font-size: 0.9em;
-    }
-
-    #user-display {
-        font-size: 1em;
-    }
-
-    #auth-btn {
-        padding: 10px 20px;
-        font-size: 1em;
-    }
-
-    #stamps-display {
-        grid-template-columns: repeat(5, 1fr); /* 5 columnas fijas */
-        gap: 8px;
-        padding: 15px;
-    }
-
-    .stamp {
-        min-width: 50px;
-        min-height: 50px;
-        font-size: 1.3em; /* Tamaño del número para móvil */
-    }
-
-    .stamp.obtained {
-        font-size: 2em; /* Ajustado el tamaño del emoji para móviles */
-    }
-
-    .input-group {
-        flex-direction: column; /* Apila el input y el botón de búsqueda */
-        gap: 0; /* Elimina el gap horizontal */
-    }
-
-    .input-group input[type="email"],
-    .input-group button {
-        width: 100%; /* Ocupan todo el ancho disponible */
-        margin-bottom: 10px; /* Espacio entre ellos al apilarse */
-    }
-
-    .input-group button {
-        margin-left: 0;
-    }
-
-    #admin-client-controls {
-        flex-direction: column; /* Apila los botones de control del admin */
-    }
-
-    #admin-client-controls button {
-        width: 100%; /* Los botones de control del admin también ocupan todo el ancho */
-        margin: 5px 0; /* Más compacto */
-    }
-}
-
-/* Reglas adicionales para pantallas muy pequeñas (ej. iPhone SE, ancho < 375px) */
-@media (max-width: 375px) {
-    h1 {
-        font-size: 1.6em;
-    }
-    h1 .coffee-icon {
-        font-size: 0.6em;
-    }
-    .container {
-        padding: 15px;
-    }
-    .stamp {
-        min-width: 45px;
-        min-height: 45px;
-        font-size: 1.1em; /* Más pequeño para el número en pantallas muy pequeñas */
-    }
-    .stamp.obtained {
-        font-size: 1.6em; /* Más pequeño para el emoji en pantallas muy pequeñas */
-    }
-    #stamps-display {
-        gap: 6px;
-    }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(20px, 590px) rotate(-360deg); opacity: 0; }
 }
