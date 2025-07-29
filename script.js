@@ -1,5 +1,5 @@
 // Este console.log es para verificar que el script se está cargando.
-console.log("************ SCRIPT.JS ESTÁ CARGANDO ************"); //
+console.log("************ SCRIPT.JS ESTÁ CARGANDO ************");
 
 const MAX_STAMPS = 10;
 let currentStamps = 0;
@@ -8,21 +8,21 @@ let adminSelectedClientUid = null; // UID del cliente seleccionado por el admini
 let adminSelectedClientStamps = 0; // Sellos del cliente seleccionado por el administrador
 
 // =======================================================
-// EMAIL(S) DEL ADMINISTRADOR (¡MUY IMPORTANTE: CAMBIA ESTO POR TU EMAIL REAL DE GOOGLE!)
+// EMAIL(S) DEL ADMINISTRADOR (¡Ya incluido con tu email!)
 // =======================================================
-const ADMIN_EMAILS = ['worm.jim@gmail.com']; // <-- ¡CAMBIA ESTO!
-// Puedes añadir más emails: ['email1@dominio.com', 'email2@dominio.com'];
+const ADMIN_EMAILS = ['worm.jim@gmail.com']; // <-- ¡TU EMAIL DE ADMINISTRADOR YA ESTÁ AQUÍ!
+// Puedes añadir más emails si lo necesitas: ['email1@dominio.com', 'email2@dominio.com'];
 
 // =======================================================
 // TU FIREBASE CONFIG REAL (¡Ya insertado con tus claves!)
 // =======================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo", //
-  authDomain: "mi-cafeteria-lealtad.firebaseapp.com", //
-  projectId: "mi-cafeteria-lealtad", //
-  storageBucket: "mi-cafeteria-lealtad.firebasestorage.app", //
-  messagingSenderId: "1098066759983", //
-  appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da" //
+  apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo",
+  authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
+  projectId: "mi-cafeteria-lealtad",
+  storageBucket: "mi-cafeteria-lealtad.firebasestorage.app",
+  messagingSenderId: "1098066759983",
+  appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
 };
 
 
@@ -95,7 +95,7 @@ function saveStamps() {
     // Guardar el email del usuario al actualizar la tarjeta (importante para el admin)
     userRef.set({ stamps: currentStamps, email: currentUser.email || 'anonymo.us' })
         .then(() => {
-            console.log("Sellos guardados con éxito para el cliente."); //
+            console.log("Sellos guardados con éxito para el cliente.");
         })
         .catch((error) => {
             console.error("Error al guardar los sellos del cliente:", error);
@@ -174,12 +174,12 @@ async function updateClientStamps(uid, newStamps) {
 function signInAnonymously() {
     auth.signInAnonymously()
         .then(() => {
-            console.log("Inicio de sesión anónimo exitoso."); //
+            console.log("Inicio de sesión anónimo exitoso.");
             // onAuthStateChanged se disparará después de esto.
         })
         .catch((error) => {
             console.error("Error al iniciar sesión anónimamente:", error);
-            messageDisplay.textContent = "Error al conectar la tarjeta. Intenta de nuevo."; //
+            messageDisplay.textContent = "Error al conectar la tarjeta. Intenta de nuevo.";
         });
 }
 
@@ -189,13 +189,13 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
         const userEmail = currentUser.email || '';
-        const userName = currentUser.displayName || userEmail || 'Invitado'; //
+        const userName = currentUser.displayName || userEmail || 'Invitado';
         userDisplay.textContent = `Hola, ${userName}!`;
         authBtn.textContent = 'Cerrar Sesión';
 
         // Determinar si es administrador
         if (ADMIN_EMAILS.includes(userEmail)) {
-            console.log("Administrador logueado:", userEmail, "UID:", currentUser.uid); // // <--- ¡AQUÍ ESTÁ TU UID!
+            console.log("Administrador logueado:", userEmail, "UID:", currentUser.uid);
             clientSection.classList.add('hidden'); // Ocultar sección de cliente
             adminSection.classList.remove('hidden'); // Mostrar sección de administración
             // Ocultar botones de cliente si estás en modo admin
@@ -209,7 +209,7 @@ auth.onAuthStateChanged((user) => {
             adminResetBtn.disabled = true;
         } else {
             // USUARIO NO ES ADMINISTRADOR (cliente normal)
-            console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid); //
+            console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid);
             clientSection.classList.remove('hidden'); // Mostrar sección de cliente
             adminSection.classList.add('hidden'); // Ocultar sección de administración
 
@@ -224,7 +224,7 @@ auth.onAuthStateChanged((user) => {
         // No hay usuario logueado o sesión cerrada (usuario anónimo)
         currentUser = null;
         userDisplay.textContent = 'Invitado';
-        authBtn.textContent = 'Iniciar Sesión / Registrarse';
+        authBtn.textContent = 'Iniciar Sesión / Registrarse'; // <-- CORRECCIÓN: Botón debe decir Iniciar Sesión
         clientSection.classList.remove('hidden'); // Mostrar sección de cliente
         adminSection.classList.add('hidden'); // Ocultar sección de administración
 
@@ -243,12 +243,11 @@ function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
         .then((result) => {
-            console.log("Inicio de sesión con Google exitoso:", result.user.displayName); //
+            console.log("Inicio de sesión con Google exitoso:", result.user.displayName);
             // onAuthStateChanged se disparará y manejará el resto
         })
         .catch((error) => {
             console.error("Error al iniciar sesión con Google:", error);
-            // Si el error es por dominios no autorizados (Auth/unauthorized-domain), el mensaje de Firebase ya lo indica
             messageDisplay.textContent = `Error al iniciar sesión: ${error.message}`;
         });
 }
@@ -260,7 +259,7 @@ function signOutUser() {
             currentStamps = 0; // Reiniciar sellos visualmente
             updateDisplay(); // Actualizar interfaz del cliente
             messageDisplay.textContent = 'Sesión cerrada. Puedes iniciar sesión o continuar como invitado.';
-            // onAuthStateChanged se disparará y cambiará al usuario anónimo
+            // onAuthStateChanged se disparará y cambiará al usuario anónimo (y el botón se actualizará ahí)
         })
         .catch((error) => {
             console.error("Error al cerrar sesión:", error);
@@ -286,56 +285,20 @@ function updateDisplay() {
 
     if (currentStamps >= MAX_STAMPS) {
         messageDisplay.textContent = '¡Felicidades! Has ganado un café gratis. 🎉';
-        // Los botones de canjear/reiniciar serán controlados por el admin, no por el cliente directamente
-        // redeemBtn.classList.remove('hidden'); // Comentado o eliminado
-        // addStampBtn.classList.add('hidden'); // Comentado o eliminado
-        // resetBtn.classList.remove('hidden'); // Comentado o eliminado
     } else {
         const remaining = MAX_STAMPS - currentStamps;
         messageDisplay.textContent = `Te faltan ${remaining} sello${remaining !== 1 ? 's' : ''} para tu café gratis.`;
-        // Los botones de añadir/canjear/reiniciar serán controlados por el admin, no por el cliente directamente
-        // redeemBtn.classList.add('hidden'); // Comentado o eliminado
-        // addStampBtn.classList.remove('hidden'); // Comentado o eliminado
-        // resetBtn.classList.add('hidden'); // Comentado o eliminado
     }
+    // NOTA: Los botones de control de sellos (Añadir, Canjear, Reiniciar)
+    // ahora son controlados por el onAuthStateChanged para ser visibles solo para el admin.
+    // Los event listeners para estos botones en la sección de cliente
+    // fueron eliminados/comentados en la versión anterior para evitar que el cliente los use.
 }
 
 // --- Event Listeners ---
 
-// Los siguientes event listeners para addStampBtn, redeemBtn, resetBtn (cliente)
-// ya no son relevantes si el cliente no los verá. Los mantenemos comentados
-// o los eliminamos para evitar confusión. El control de sellos pasa al admin.
-
-/*
-addStampBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
-    if (currentStamps < MAX_STAMPS) {
-        currentStamps++;
-        saveStamps(); // Guarda en Firebase
-        updateDisplay();
-    }
-});
-
-redeemBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
-    if (currentStamps >= MAX_STAMPS) {
-        currentStamps = 0;
-        saveStamps(); // Guarda en Firebase
-        updateDisplay();
-        alert('¡Recompensa canjeada! Disfruta tu café gratis. 😉');
-    }
-});
-
-resetBtn.addEventListener('click', () => {
-    // Este botón ahora solo es visible para clientes no administradores (ahora oculto)
-    if (confirm('¿Estás seguro de que quieres reiniciar la tarjeta? Esto borrará todos los sellos.')) {
-        currentStamps = 0;
-        saveStamps(); // Guarda en Firebase
-        updateDisplay();
-        alert('Tarjeta de lealtad reiniciada.');
-    }
-});
-*/
+// Se han eliminado/comentado los event listeners para addStampBtn, redeemBtn, resetBtn
+// en la sección de cliente ya que ahora son controlados exclusivamente por el admin.
 
 authBtn.addEventListener('click', () => {
     if (currentUser && !currentUser.isAnonymous) {
