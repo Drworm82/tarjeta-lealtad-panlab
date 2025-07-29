@@ -161,6 +161,12 @@ function showConfetti() {
         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.left = `${Math.random() * 100}%`;
 
+        // CORRECCIÓN: Definir las propiedades personalizadas para las variables CSS
+        const randX = Math.random() * 800 - 400; // Un rango de -400 a 400 para la posición X final
+        const randY = Math.random() * 200; // Un rango de 0 a 200 para la posición Y final
+        confetti.style.setProperty('--rand-x', randX);
+        confetti.style.setProperty('--rand-y', randY);
+
         const randomAnimationIndex = Math.floor(Math.random() * 5) + 1;
         const randomAnimationName = `confetti-fall-${randomAnimationIndex}`;
 
@@ -902,7 +908,7 @@ addStampBtn.addEventListener('click', async () => {
                 stampsSpan.remove(); // Eliminar el ícono animado después de la animación
             }, { once: true });
         }
-        loadAndDisplayHistory(targetClientEmail); // Actualizar el historial visible para el admin
+        loadAndDisplayHistory(targetClientEmail);
 
 
     } catch (error) {
