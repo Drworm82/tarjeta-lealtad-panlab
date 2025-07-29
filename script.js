@@ -518,9 +518,9 @@ onAuthStateChanged(auth, async user => {
 });
 
 // Función auxiliar para actualizar la visualización y controles del admin
-async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
-    if (docSnapshot.exists()) {
-        const data = docSnap.data();
+async function updateAdminClientDisplayAndControls(clientId, docSnapshot) { // <-- Parámetro CORRECTO: docSnapshot
+    if (docSnapshot.exists()) { // <-- USO CORRECTO: docSnapshot
+        const data = docSnapshot.data(); // <-- USO CORRECTO: docSnapshot
         const stamps = data.stamps || 0;
         const clientEmailDisplay = data.userEmail || clientId;
         targetClientEmail = clientId;
@@ -805,8 +805,9 @@ searchClientBtn.addEventListener('click', async () => {
     const clientDocRef = doc(db, 'loyaltyCards', clientIdToSearch);
     try {
         const docSnap = await getDoc(clientDocRef);
-        // La función updateAdminClientDisplayAndControls recibe el UID y el docSnap (o null si no existe)
-        await updateAdminClientDisplayAndControls(clientIdToSearch, docSnapshot);
+        // Aquí se pasa docSnap, y la función updateAdminClientDisplayAndControls espera 'docSnapshot'
+        // que es el nombre correcto del parámetro dentro de su definición.
+        await updateAdminClientDisplayAndControls(clientIdToSearch, docSnap);
 
         // Cargar y mostrar el historial de transacciones para el cliente seleccionado en el panel de administrador
         // Se carga el historial independientemente de si el documento existe o no,
