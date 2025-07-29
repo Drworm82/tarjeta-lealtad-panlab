@@ -223,14 +223,19 @@ async function loadAndListenForStamps(uid) {
     }
 
     clientListener = onSnapshot(docRef, docSnapshot => {
-        console.log("onSnapshot callback: Recibiendo datos del documento.");
+        console.log("onSnapshot callback: Recibiendo datos del documento para el cliente.");
         if (docSnapshot.exists()) {
             const data = docSnapshot.data();
             const stamps = data.stamps || 0;
-            console.log(`onSnapshot: Documento existe. Sellos: ${stamps}`);
+            // *** AÑADIDO PARA DEPURACIÓN ***
+            console.log(`[CLIENTE] Sellos recibidos del documento para UID ${uid}: ${stamps}`);
+            // ******************************
             renderStamps(stamps); // Esto actualizará messageDisplay
         } else {
-            console.log(`onSnapshot: Documento NO existe para ${uid}. Intentando crear.`);
+            console.log(`onSnapshot (client): Documento NO existe para ${uid}.`);
+            // *** AÑADIDO PARA DEPURACIÓN ***
+            console.log(`[CLIENTE] Se asume 0 sellos al no existir el documento para UID ${uid}.`);
+            // ******************************
             renderStamps(0); // Esto actualizará messageDisplay
             messageDisplay.textContent = '¡Bienvenido! Tu nueva tarjeta de lealtad ha sido creada.'; // Mensaje más amigable
             messageDisplay.style.color = '#555';
@@ -241,7 +246,7 @@ async function loadAndListenForStamps(uid) {
             }
         }
     }, error => {
-        console.error("onSnapshot ERROR: Error al cargar o escuchar la tarjeta de lealtad:", error);
+        console.error("onSnapshot ERROR (client): Error al cargar o escuchar la tarjeta de lealtad:", error);
         messageDisplay.textContent = `Lo sentimos, no pudimos cargar tu tarjeta de lealtad. Por favor, intenta de nuevo.`;
         messageDisplay.style.color = '#d9534f';
     });
@@ -267,6 +272,9 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
         adminClientListener = onSnapshot(clientDocRef, snap => {
             if (snap.exists()) {
                 const latestStamps = snap.data().stamps || 0;
+                // *** AÑADIDO PARA DEPURACIÓN ***
+                console.log(`[ADMIN LISTENER] Sellos recibidos del documento para UID ${clientId}: ${latestStamps}`);
+                // ******************************
                 document.getElementById('admin-current-stamps').textContent = latestStamps;
                 if (latestStamps >= 10) {
                     adminMessage.textContent = `Cliente ${clientEmailDisplay} tiene ${latestStamps} sellos (¡café gratis!).`;
