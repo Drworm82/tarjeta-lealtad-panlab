@@ -211,7 +211,6 @@ async function loadAndListenForStamps(uid) {
     console.log(`loadAndListenForStamps: Intentando cargar sellos para el UID: ${uid}`);
     if (!uid) {
         console.error("loadAndListenForStamps: No se proporcionó un UID.");
-        // messageDisplay ya debería tener un mensaje de carga o de inicio de sesión
         return;
     }
 
@@ -365,7 +364,7 @@ addStampBtn.addEventListener('click', async () => {
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             let currentStamps = 0;
@@ -375,10 +374,6 @@ addStampBtn.addEventListener('click', async () => {
                 userEmail = docSnapshot.data().userEmail || '';
             } else {
                 console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
-                // Al crear, podemos intentar obtener el email del usuario si se autenticó antes para ese UID
-                // Esto es solo si el admin añade un sello a un UID que nunca antes se autenticó.
-                // Podría ser un escenario complejo para manejar el email aquí sin Auth Admin SDK.
-                // Por ahora, se crea con el UID como identificador principal.
                 transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail });
             }
 
@@ -392,8 +387,7 @@ addStampBtn.addEventListener('click', async () => {
                 adminMessage.style.color = '#5cb85c';
             }
         });
-        // Después de la transacción, actualiza la info del cliente para reflejar los cambios
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        // Reutilizar docRef ya declarado
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
@@ -402,7 +396,7 @@ addStampBtn.addEventListener('click', async () => {
         adminMessage.textContent = `Error al añadir el sello. Por favor, revisa y vuelve a intentarlo.`;
         adminMessage.style.color = '#d9534f';
     } finally {
-        enableAdminControlsAfterOperation(); // Habilitar controles de nuevo
+        enableAdminControlsAfterOperation();
     }
 });
 
@@ -414,7 +408,7 @@ removeStampBtn.addEventListener('click', async () => {
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
@@ -433,7 +427,7 @@ removeStampBtn.addEventListener('click', async () => {
                 adminMessage.style.color = '#f0ad4e';
             }
         });
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        // Reutilizar docRef ya declarado
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
@@ -454,7 +448,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
         await runTransaction(db, async (transaction) => {
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists()) {
@@ -473,7 +467,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
                 adminMessage.style.color = '#f0ad4e';
             }
         });
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        // Reutilizar docRef ya declarado
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
@@ -499,7 +493,7 @@ resetStampsBtn.addEventListener('click', async () => {
     adminMessage.style.color = '#5bc0de';
 
     try {
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        const docRef = doc(db, 'loyaltyCards', targetClientEmail); // Primera declaración
         await setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmailForConfirm }, { merge: true })
             .then(() => {
                 adminMessage.textContent = `¡Tarjeta de ${userEmailForConfirm} reiniciada a 0 sellos con éxito!`;
@@ -511,7 +505,7 @@ resetStampsBtn.addEventListener('click', async () => {
                 adminMessage.style.color = '#d9534f';
             });
 
-        const docRef = doc(db, 'loyaltyCards', targetClientEmail);
+        // Reutilizar docRef ya declarado
         const updatedDocSnap = await getDoc(docRef);
         await updateAdminClientDisplayAndControls(targetClientEmail, updatedDocSnap);
 
