@@ -58,7 +58,7 @@ const averageStampsStat = document.getElementById('average-stamps-stat');
 
 // Elementos de reportes
 const reportPeriodSelect = document.getElementById('report-period-select');
-const generateReportBtn = document.getElementById('generate-report-btn'); // CORRECCIÓN AQUÍ
+const generateReportBtn = document.getElementById('generate-report-btn');
 const reportPeriodDisplay = document.getElementById('report-period-display');
 const stampsAddedStat = document.getElementById('stamps-added-stat');
 const rewardsRedeemedStat = document.getElementById('rewards-redeemed-stat');
@@ -167,39 +167,56 @@ function renderStamps(stampsCount, previousStamps = 0) {
 
 // Genera el QR code
 function generateQRCode(uid) {
+    // Verificar si qrcodeCanvas existe y si tiene un contexto 2D
+    if (!qrcodeCanvas || !qrcodeCanvas.getContext) {
+        console.error("qrcodeCanvas no encontrado o no es un elemento canvas válido.");
+        return;
+    }
+
     const canvas = qrcodeCanvas;
-    // qr.toCanvas(canvas, uid, { scale: 8 }, function (error) {
-    //     if (error) console.error(error);
-    // });
-    // Usando una solución alternativa para QR code, ya que qr.js no estaba definido
-    // Puedes usar una librería como qrcode.js o qr-code-styling si necesitas más personalización.
-    // Para simplificar, si no tienes una librería QR específica cargada, esto generará un placeholder.
-    // La forma más robusta sería cargar una librería QR dedicada.
-    // Ejemplo con una librería QR simplificada (asume que qrcode.js está cargado)
-    // new QRCode(canvas, {
-    //     text: uid,
-    //     width: 200,
-    //     height: 200,
-    //     colorDark : "#7a4a2b",
-    //     colorLight : "#ffffff",
-    //     correctLevel : QRCode.CorrectLevel.H
-    // });
-    // Si no tienes ninguna librería QR, puedes mostrar un mensaje o un QR placeholder
     const context = canvas.getContext('2d');
     canvas.width = 200;
     canvas.height = 200;
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+
+    // Intentar usar la librería qrcode.js si está disponible (requiere importación)
+    // Para que esto funcione, necesitarías <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    // o una similar. Si la tienes, descomenta el siguiente bloque:
+    /*
+    if (typeof QRCode !== 'undefined') {
+        // Limpiar el canvas si hay un QR anterior
+        if (canvas._qrcode) { // qrcode.js a veces almacena la instancia
+            canvas._qrcode.clear();
+        }
+        canvas.innerHTML = ''; // Asegurarse de que no haya contenido previo
+        // Crear una nueva instancia de QRCode.js en el canvas
+        canvas._qrcode = new QRCode(canvas, { // Almacenar la instancia para poder limpiarla
+            text: uid,
+            width: 200,
+            height: 200,
+            colorDark : "#7a4a2b",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    } else {
+        // Fallback si la librería qrcode.js no está cargada
+        console.warn("Librería qrcode.js no encontrada. Mostrando texto placeholder.");
+        context.fillStyle = '#7a4a2b';
+        context.font = '16px Arial';
+        context.textAlign = 'center';
+        context.fillText('Código QR aquí', canvas.width / 2, canvas.height / 2);
+        context.fillText('(Librería no cargada)', canvas.width / 2, canvas.height / 2 + 20);
+    }
+    */
+    // Si no estás usando la librería 'qrcode.js' y solo quieres un placeholder:
     context.fillStyle = '#7a4a2b';
     context.font = '16px Arial';
     context.textAlign = 'center';
     context.fillText('Código QR aquí', canvas.width / 2, canvas.height / 2);
-    context.fillText('(Generado por JS)', canvas.width / 2, canvas.height / 2 + 20);
-
-    // Si estás usando la librería 'qrcode' (npm install qrcode), podrías hacer:
-    // QRCode.toCanvas(qrcodeCanvas, uid, { width: 200, color: { dark: '#7a4a2b', light: '#ffffff' } })
-    //     .then(() => console.log('QR generado'))
-    //     .catch(err => console.error(err));
+    context.fillText('(Muestra este al barista)', canvas.width / 2, canvas.height / 2 + 20);
+    context.fillText(`UID: ${uid.substring(0, 8)}...`, canvas.width / 2, canvas.height / 2 + 40); // Mostrar parte del UID
 }
+
 
 // 5. Funciones de Datos (Firestore)
 
@@ -259,7 +276,7 @@ async function addStamp(uid, previousStamps) {
             if (!userDoc.exists) {
                 adminMessage.textContent = 'Error: Cliente no encontrado.';
                 adminMessage.style.color = 'red';
-                return;
+                return Promise.reject(new Error('Cliente no encontrado')); // Rechazar la transacción si el cliente no existe
             }
 
             let currentStamps = userDoc.data().stamps || 0;
@@ -280,11 +297,13 @@ async function addStamp(uid, previousStamps) {
             };
             transaction.set(userRef.collection('history').doc(), historyEntry);
 
-            adminMessage.textContent = `Sello añadido. ${newStamps}/${MAX_STAMPS} sellos.`;
-            adminMessage.style.color = 'green';
+            // Actualizar datos del cliente cargado localmente (para la UI del admin)
             currentClientData = { ...userDoc.data(), stamps: newStamps, rewardsRedeemed: rewardsRedeemed };
             updateAdminClientInfo(currentClientData);
 
+            adminMessage.textContent = `Sello añadido. ${newStamps}/${MAX_STAMPS} sellos.`;
+            adminMessage.style.color = 'green';
+            
             // Trigger confetti if max stamps reached after adding
             if (newStamps === MAX_STAMPS && currentStamps < MAX_STAMPS) {
                 triggerConfetti();
@@ -316,7 +335,7 @@ async function removeStamp(uid) {
             if (!userDoc.exists) {
                 adminMessage.textContent = 'Error: Cliente no encontrado.';
                 adminMessage.style.color = 'red';
-                return;
+                return Promise.reject(new Error('Cliente no encontrado'));
             }
 
             let currentStamps = userDoc.data().stamps || 0;
@@ -336,10 +355,12 @@ async function removeStamp(uid) {
             };
             transaction.set(userRef.collection('history').doc(), historyEntry);
 
-            adminMessage.textContent = `Sello quitado. ${newStamps}/${MAX_STAMPS} sellos.`;
-            adminMessage.style.color = 'green';
+            // Actualizar datos del cliente cargado localmente
             currentClientData = { ...userDoc.data(), stamps: newStamps };
             updateAdminClientInfo(currentClientData);
+
+            adminMessage.textContent = `Sello quitado. ${newStamps}/${MAX_STAMPS} sellos.`;
+            adminMessage.style.color = 'green';
         });
     } catch (error) {
         console.error("Error quitando sello:", error);
@@ -367,7 +388,7 @@ async function redeemCoffee(uid) {
             if (!userDoc.exists) {
                 adminMessage.textContent = 'Error: Cliente no encontrado.';
                 adminMessage.style.color = 'red';
-                return;
+                return Promise.reject(new Error('Cliente no encontrado'));
             }
 
             let currentStamps = userDoc.data().stamps || 0;
@@ -376,7 +397,7 @@ async function redeemCoffee(uid) {
             if (currentStamps < MAX_STAMPS) {
                 adminMessage.textContent = 'Error: El cliente no tiene suficientes sellos para canjear un café gratis.';
                 adminMessage.style.color = 'red';
-                return;
+                return Promise.reject(new Error('No suficientes sellos'));
             }
 
             transaction.update(userRef, {
@@ -394,10 +415,12 @@ async function redeemCoffee(uid) {
             };
             transaction.set(userRef.collection('history').doc(), historyEntry);
 
-            adminMessage.textContent = `Café gratis canjeado. Sellos reiniciados. El cliente ha canjeado ${rewardsRedeemed + 1} cafés.`;
-            adminMessage.style.color = 'green';
+            // Actualizar datos del cliente cargado localmente
             currentClientData = { ...userDoc.data(), stamps: 0, rewardsRedeemed: rewardsRedeemed + 1 };
             updateAdminClientInfo(currentClientData);
+
+            adminMessage.textContent = `Café gratis canjeado. Sellos reiniciados. El cliente ha canjeado ${rewardsRedeemed + 1} cafés.`;
+            adminMessage.style.color = 'green';
         });
     } catch (error) {
         console.error("Error canjeando café:", error);
@@ -425,7 +448,7 @@ async function resetStamps(uid) {
             if (!userDoc.exists) {
                 adminMessage.textContent = 'Error: Cliente no encontrado.';
                 adminMessage.style.color = 'red';
-                return;
+                return Promise.reject(new Error('Cliente no encontrado'));
             }
 
             transaction.update(userRef, {
@@ -442,10 +465,12 @@ async function resetStamps(uid) {
             };
             transaction.set(userRef.collection('history').doc(), historyEntry);
 
-            adminMessage.textContent = `Tarjeta de sellos reiniciada a 0.`;
-            adminMessage.style.color = 'green';
+            // Actualizar datos del cliente cargado localmente
             currentClientData = { ...userDoc.data(), stamps: 0 };
             updateAdminClientInfo(currentClientData);
+
+            adminMessage.textContent = `Tarjeta de sellos reiniciada a 0.`;
+            adminMessage.style.color = 'green';
         });
     } catch (error) {
         console.error("Error reiniciando tarjeta:", error);
@@ -751,7 +776,10 @@ function startQrScanner() {
     html5QrCode = new Html5Qrcode("reader");
     Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length) {
-            var cameraId = devices[0].id; // Usar la primera cámara disponible
+            // Preferir la cámara trasera si está disponible
+            const rearCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('trasera'));
+            const cameraId = rearCamera ? rearCamera.id : devices[0].id; // Usar trasera o la primera disponible
+
             html5QrCode.start(
                 cameraId,
                 {
@@ -786,7 +814,8 @@ function startQrScanner() {
 }
 
 function stopQrScanner() {
-    if (html5QrCode && html5QrCode.is<table>) {
+    // CORRECCIÓN: Usar html5QrCode.isScanning para verificar si el escáner está activo
+    if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => {
             console.log("QR scanner detenido.");
             scannerMessage.textContent = "Escáner detenido.";
