@@ -19,7 +19,8 @@
         <section id="loyalty-card" class="card hidden">
             <h2>Tu Tarjeta de Lealtad</h2>
             <div id="stamps-display" class="stamps-grid">
-                </div>
+                <!-- Los sellos se renderizarán aquí por JavaScript -->
+            </div>
             <p id="message"></p>
             <div class="confetti-container"></div>
             
@@ -29,9 +30,11 @@
                 <p id="qr-instruction">Muestra este código al barista para registrar tu compra.</p>
             </div>
 
+            <!-- NUEVA SECCIÓN: Historial de Sellos del Cliente -->
             <div class="history-section">
                 <h3>Tu Historial de Sellos</h3>
                 <ul id="stamps-history-list">
+                    <!-- Las transacciones se cargarán aquí por JavaScript -->
                     <li>Cargando historial...</li>
                 </ul>
             </div>
@@ -62,6 +65,7 @@
                     <label for="admin-email-input">Email o UID del Cliente:</label>
                     <input type="text" id="admin-email-input" placeholder="ejemplo@email.com o UID del cliente">
                     <button id="search-client-btn">Buscar Cliente</button>
+                    <!-- NUEVO BOTÓN PARA ESCANEAR QR -->
                     <button id="scan-qr-btn">Escanear QR</button>
                 </div>
 
@@ -79,6 +83,7 @@
                 </div>
             </div>
 
+            <!-- NUEVA SECCIÓN: Reportes y Analíticas Básicas -->
             <div class="card admin-reports-section">
                 <h2>Reportes y Analíticas Básicas</h2>
                 <div>
@@ -96,10 +101,12 @@
                 </div>
             </div>
 
+            <!-- Contenedor para el escáner de QR como overlay -->
             <div id="qr-scanner-overlay" class="hidden">
                 <div class="qr-scanner-card card">
                     <h2>Escanea el Código QR</h2>
                     <p>Asegúrate de que el código QR esté bien iluminado y centrado en el recuadro.</p>
+                    <!-- El div 'reader' donde html5-qrcode montará la vista de la cámara -->
                     <div id="reader" style="width: 100%; min-height: 250px;"></div> 
                     <div id="scanner-message" style="margin-top: 10px; font-weight: bold; color: #7a4a2b;"></div>
                     <button id="close-scanner-btn" style="margin-top: 20px;">Cerrar Escáner</button>
@@ -112,14 +119,18 @@
         <p>&copy; 2024 Cafetería "El Grano de Oro". Todos los derechos reservados.</p>
     </footer>
 
+    <!-- Importa Firebase SDK -->
     <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
 
+    <!-- Importa la librería QRious (para generar el QR del cliente) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
+    <!-- Importa la librería html5-qrcode (para escanear el QR en el admin) -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
+    <!-- Tu script principal (DEBE IR DESPUÉS DE TODAS LAS LIBRERÍAS EXTERNAS) -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
