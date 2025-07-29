@@ -41,16 +41,19 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px; /* Espacio entre el texto y las tazas */
+    /* gap: 10px; Eliminar gap, usaremos margin en los iconos */
     flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio */
     text-align: center; /* Asegura que el texto se centre si hay salto de línea */
 }
 
 h1 .coffee-icon {
     font-size: 1.2em; /* Tamaño de las tazas en el título, un poco más grandes */
+    /* Ajuste de margen para separar del texto y entre sí */
+    margin: 0 5px;
+    /* Resetear propiedades que puedan afectar el tamaño del emoji */
     vertical-align: middle;
-    margin: 0 5px; /* Pequeño margen horizontal para separarlos del texto y entre sí */
-    padding: 0;
+    line-height: 1;
+    display: inline-block; /* Para que margin funcione bien */
 }
 
 p {
@@ -100,7 +103,7 @@ p {
 .stamp {
     width: 100%; /* El sello ocupa todo el ancho de su celda de grid */
     padding-bottom: 100%; /* Truco para hacer el elemento cuadrado (aspect ratio) */
-    position: relative;
+    position: relative; /* Necesario para posicionar el contenido */
     background-color: #e0b07d; /* Color de sello no obtenido */
     border-radius: 50%; /* Forma circular */
     display: flex; /* Usar flexbox para centrar el contenido (número o icono) */
@@ -111,15 +114,24 @@ p {
     color: #fff; /* Color del número */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    /* NO necesitamos transform aquí si usamos flexbox para centrar */
+}
+
+/* Contenido dentro del sello (el número o el emoji) */
+.stamp > span { /* Asumiendo que el contenido es un <span>, si es texto directo, esto no aplica */
+    /* Si el contenido es texto directo, el flexbox de .stamp ya lo centra */
 }
 
 .stamp.obtained {
     background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
     color: #fff; /* Color del ícono de café (si aplica) */
-    /* Para el ícono de la taza, ajustar el tamaño aquí */
-    font-size: 2.2em; /* Aumenta el tamaño del emoji '☕' para que se vea bien */
+    /* Ajustes específicos para el emoji de la taza */
+    font-size: 2.8em; /* **AUMENTADO** el tamaño del emoji '☕' para que ocupe bien el círculo */
     line-height: 1; /* Ayuda a centrar verticalmente el emoji */
+    padding-top: 5%; /* Pequeño ajuste vertical para algunos emojis */
+    padding-bottom: 5%;
 }
+
 
 /* Mensaje de la tarjeta del cliente */
 #message {
@@ -234,6 +246,7 @@ p {
     min-width: 120px; /* Ancho mínimo para que no se hagan demasiado pequeños */
 }
 
+
 #admin-client-controls button:hover {
     background-color: #218838;
 }
@@ -250,7 +263,6 @@ p {
 
 /* Animación para el nuevo sello añadido */
 .stamp.animate-new-stamp {
-    /* No se necesita transform aquí porque el contenido ya está centrado por flexbox */
     animation: newStampPulse 0.7s ease-out forwards;
 }
 
@@ -342,14 +354,13 @@ p {
     }
 
     .stamp {
-        /* Ya no necesitamos height fijo, padding-bottom hace el círculo */
-        /* font-size para el número */
-        font-size: 1.3em;
+        font-size: 1.3em; /* Tamaño del número para móvil */
     }
 
     .stamp.obtained {
-        /* font-size para el emoji en móvil */
-        font-size: 1.8em; /* Ajusta el tamaño del emoji para móviles */
+        font-size: 2.2em; /* **AUMENTADO** el tamaño del emoji para móviles */
+        padding-top: 0; /* Restablecer padding si no es necesario */
+        padding-bottom: 0; /* Restablecer padding si no es necesario */
     }
 
     /* Ajustes para botones del admin: Apilarlos */
@@ -393,7 +404,7 @@ p {
         font-size: 1.1em; /* Más pequeño para el número en pantallas muy pequeñas */
     }
     .stamp.obtained {
-        font-size: 1.6em; /* Más pequeño para el emoji en pantallas muy pequeñas */
+        font-size: 1.8em; /* Más pequeño para el emoji en pantallas muy pequeñas */
     }
     #stamps-display {
         gap: 6px;
