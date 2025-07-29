@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientInfoDiv = document.getElementById('client-info');
     const addStampBtn = document.getElementById('add-stamp-btn');
     const removeStampBtn = document.getElementById('remove-stamp-btn');
-    const redeemCoffeeBtn = document = document.getElementById('redeem-coffee-btn'); // Corregido: document = document.getElementById
+    const redeemCoffeeBtn = document.getElementById('redeem-coffee-btn'); // ¡CORREGIDO AQUÍ!
     const resetCardBtn = document.getElementById('reset-card-btn');
     const totalClientsDisplay = document.getElementById('total-clients');
     const pendingFreeCoffeesDisplay = document.getElementById('pending-free-coffees');
