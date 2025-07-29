@@ -28,9 +28,34 @@
                 <canvas id="qrcode-canvas" class="qr-canvas"></canvas>
                 <p id="qr-instruction">Muestra este código al barista para registrar tu compra.</p>
             </div>
+
+            <div class="history-section">
+                <h3>Tu Historial de Sellos</h3>
+                <ul id="stamps-history-list">
+                    <li>Cargando historial...</li>
+                </ul>
+            </div>
         </section>
 
         <section id="admin-section" class="hidden">
+            <div class="card admin-dashboard-summary">
+                <h2>Resumen del Programa de Lealtad</h2>
+                <div class="stats-grid">
+                    <div>
+                        <h4>Total Clientes</h4>
+                        <p id="total-clients">0</p>
+                    </div>
+                    <div>
+                        <h4>Cafés Gratis Pendientes</h4>
+                        <p id="free-coffees-pending">0</p>
+                    </div>
+                    <div>
+                        <h4>Promedio de Sellos</h4>
+                        <p id="avg-stamps">0</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>Panel de Administración</h2>
                 <div class="admin-controls">
@@ -51,6 +76,23 @@
                     <button id="remove-stamp-btn">Quitar Sello</button>
                     <button id="redeem-coffee-btn">Canjear Café Gratis</button>
                     <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
+                </div>
+            </div>
+
+            <div class="card admin-reports-section">
+                <h2>Reportes y Analíticas Básicas</h2>
+                <div>
+                    <label for="report-period">Ver datos de los últimos:</label>
+                    <select id="report-period">
+                        <option value="7">7 días</option>
+                        <option value="30">30 días</option>
+                        <option value="90">90 días</option>
+                        <option value="365">1 año</option>
+                    </select>
+                    <button id="generate-report-btn">Generar Reporte</button>
+                </div>
+                <div id="report-results" style="margin-top: 20px;">
+                    <p>Selecciona un período y haz clic en "Generar Reporte".</p>
                 </div>
             </div>
 
