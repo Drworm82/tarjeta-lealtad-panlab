@@ -186,12 +186,19 @@ function signInAnonymously() {
 
 // Listener para el cambio de estado de autenticación (se activa al cargar, iniciar o cerrar sesión)
 auth.onAuthStateChanged((user) => {
-    if (user) {
-        currentUser = user;
+    currentUser = user; // Siempre actualiza el usuario actual
+
+    // *** MODIFICACIÓN CLAVE AQUÍ: Definir el texto del botón basado en si es un usuario real o anónimo/nulo ***
+    if (currentUser && !currentUser.isAnonymous) {
+        authBtn.textContent = 'Cerrar Sesión';
+    } else {
+        authBtn.textContent = 'Iniciar Sesión / Registrarse';
+    }
+
+    if (currentUser) {
         const userEmail = currentUser.email || '';
         const userName = currentUser.displayName || userEmail || 'Invitado';
         userDisplay.textContent = `Hola, ${userName}!`;
-        authBtn.textContent = 'Cerrar Sesión';
 
         // Determinar si es administrador
         if (ADMIN_EMAILS.includes(userEmail)) {
@@ -208,12 +215,12 @@ auth.onAuthStateChanged((user) => {
             adminRedeemBtn.disabled = true;
             adminResetBtn.disabled = true;
         } else {
-            // USUARIO NO ES ADMINISTRADOR (cliente normal)
+            // USUARIO NO ES ADMINISTRADOR (cliente normal o anónimo)
             console.log("Usuario cliente logueado:", userEmail, "UID:", currentUser.uid);
             clientSection.classList.remove('hidden'); // Mostrar sección de cliente
             adminSection.classList.add('hidden'); // Ocultar sección de administración
 
-            // OCULTAR LOS BOTONES DE CONTROL DE SELLOS PARA EL CLIENTE NORMAL
+            // OCULTAR LOS BOTONES DE CONTROL DE SELLOS PARA EL CLIENTE NORMAL Y ANÓNIMO
             addStampBtn.classList.add('hidden');
             redeemBtn.classList.add('hidden');
             resetBtn.classList.add('hidden');
@@ -221,19 +228,22 @@ auth.onAuthStateChanged((user) => {
             loadStamps(); // Cargar sellos del cliente
         }
     } else {
-        // No hay usuario logueado o sesión cerrada (usuario anónimo)
-        currentUser = null;
+        // No hay usuario logueado (ni siquiera anónimo, lo cual es raro a menos que sea un sign out explícito)
+        // Pero la lógica de signInAnonymously() en la parte inferior lo volverá a loguear anónimamente.
         userDisplay.textContent = 'Invitado';
-        authBtn.textContent = 'Iniciar Sesión / Registrarse'; // <-- CORRECCIÓN: Botón debe decir Iniciar Sesión
         clientSection.classList.remove('hidden'); // Mostrar sección de cliente
         adminSection.classList.add('hidden'); // Ocultar sección de administración
 
-        // OCULTAR LOS BOTONES DE CONTROL DE SELLOS TAMBIÉN PARA USUARIOS ANÓNIMOS
+        // OCULTAR LOS BOTONES DE CONTROL DE SELLOS
         addStampBtn.classList.add('hidden');
         redeemBtn.classList.add('hidden');
         resetBtn.classList.add('hidden');
 
-        signInAnonymously(); // Mantener el flujo anónimo para invitados
+        // Solo iniciamos sesión anónimamente si no hay ningún usuario (ni siquiera el anónimo)
+        // Esto previene bucles si el usuario ya está anónimo.
+        if (!auth.currentUser) { // Comprobamos explícitamente si NO hay un usuario actual
+            signInAnonymously(); // Mantener el flujo anónimo para invitados
+        }
     }
 });
 
@@ -259,7 +269,7 @@ function signOutUser() {
             currentStamps = 0; // Reiniciar sellos visualmente
             updateDisplay(); // Actualizar interfaz del cliente
             messageDisplay.textContent = 'Sesión cerrada. Puedes iniciar sesión o continuar como invitado.';
-            // onAuthStateChanged se disparará y cambiará al usuario anónimo (y el botón se actualizará ahí)
+            // onAuthStateChanged se disparará y cambiará el estado del botón y la interfaz
         })
         .catch((error) => {
             console.error("Error al cerrar sesión:", error);
@@ -283,7 +293,7 @@ function updateDisplay() {
         stampsDisplay.appendChild(stamp);
     }
 
-    if (currentStamps >= MAX_STAMPS) {
+    if (currentStamps >= MAX_STamps) {
         messageDisplay.textContent = '¡Felicidades! Has ganado un café gratis. 🎉';
     } else {
         const remaining = MAX_STAMPS - currentStamps;
@@ -291,8 +301,6 @@ function updateDisplay() {
     }
     // NOTA: Los botones de control de sellos (Añadir, Canjear, Reiniciar)
     // ahora son controlados por el onAuthStateChanged para ser visibles solo para el admin.
-    // Los event listeners para estos botones en la sección de cliente
-    // fueron eliminados/comentados en la versión anterior para evitar que el cliente los use.
 }
 
 // --- Event Listeners ---
@@ -301,10 +309,10 @@ function updateDisplay() {
 // en la sección de cliente ya que ahora son controlados exclusivamente por el admin.
 
 authBtn.addEventListener('click', () => {
-    if (currentUser && !currentUser.isAnonymous) {
-        signOutUser();
-    } else {
-        signInWithGoogle();
+    if (currentUser && !currentUser.isAnonymous) { // Si hay un usuario logueado Y NO es anónimo
+        signOutUser(); // Cerrar sesión
+    } else { // Si no hay usuario logueado o es anónimo
+        signInWithGoogle(); // Iniciar sesión con Google
     }
 });
 
@@ -353,3 +361,7 @@ adminResetBtn.addEventListener('click', () => {
 
 // --- Inicio de la Aplicación ---
 // onAuthStateChanged ya maneja el flujo inicial de signInAnonymously().
+// Para evitar que signInAnonymously se ejecute múltiples veces al cargar la página
+// (si un usuario ya está logueado de alguna forma), lo movemos aquí y lo controlamos.
+// La función onAuthStateChanged se encarga de cargar los sellos y mostrar la interfaz correcta.
+// Si no hay un usuario autenticado al inicio, Firebase Auth intentará loguear anónimamente.
