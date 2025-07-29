@@ -806,7 +806,7 @@ searchClientBtn.addEventListener('click', async () => {
     try {
         const docSnap = await getDoc(clientDocRef);
         // La función updateAdminClientDisplayAndControls recibe el UID y el docSnap (o null si no existe)
-        await updateAdminClientDisplayAndControls(clientIdToSearch, docSnap);
+        await updateAdminClientDisplayAndControls(clientIdToSearch, docSnapshot);
 
         // Cargar y mostrar el historial de transacciones para el cliente seleccionado en el panel de administrador
         // Se carga el historial independientemente de si el documento existe o no,
