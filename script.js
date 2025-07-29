@@ -44,7 +44,7 @@ const messageDisplay = document.getElementById('message');
 const confettiContainer = document.querySelector('.confetti-container');
 const qrcodeCanvas = document.getElementById('qrcode-canvas');
 const qrInstruction = document.getElementById('qr-instruction');
-const stampsHistoryList = document.getElementById('stamps-history-list');
+const stampsHistoryList = document.getElementById('stamps-history-list'); // NUEVO
 
 // Elementos del panel de administración
 const adminSection = document.getElementById('admin-section');
@@ -758,7 +758,6 @@ searchClientBtn.addEventListener('click', async () => {
         console.error("searchClientBtn ERROR: Error al buscar cliente:", error);
         adminMessage.textContent = `Error al buscar el cliente. Por favor, verifica el email/UID e intenta de nuevo.`;
         adminMessage.style.color = '#d9534f';
-        clearAdminClientInfo();
     } finally {
         enableAdminControlsAfterOperation();
     }
