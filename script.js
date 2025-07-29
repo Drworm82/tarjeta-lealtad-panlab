@@ -10,7 +10,7 @@ let adminSelectedClientStamps = 0; // Sellos del cliente seleccionado por el adm
 // =======================================================
 // EMAIL(S) DEL ADMINISTRADOR (¡MUY IMPORTANTE: CAMBIA ESTO POR TU EMAIL REAL DE GOOGLE!)
 // =======================================================
-const ADMIN_EMAILS = ['tu_email_admin@example.com']; // <-- ¡CAMBIA ESTO!
+const ADMIN_EMAILS = ['worm.jim@gmail.com']; // <-- ¡CAMBIA ESTO!
 // Puedes añadir más emails: ['email1@dominio.com', 'email2@dominio.com'];
 
 // =======================================================
