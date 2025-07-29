@@ -424,7 +424,7 @@ function generateQRCode(uid) {
 }
 
 
-// --- NUEVAS Funciones para el Escáner QR (usa html5-qrcode) ---
+// --- Funciones para el Escáner QR (usa html5-qrcode) ---
 
 async function startQrScanner() {
     scannerMessage.textContent = 'Cargando cámara...';
@@ -700,7 +700,7 @@ redeemCoffeeBtn.addEventListener('click', async () => {
                     adminMessage.style.color = '#f0ad4e';
                 }
             } else {
-S                newStampsAfterRedeem = 0;
+                newStampsAfterRedeem = 0; // CORREGIDO: la "S" solitaria ha sido eliminada.
                 adminMessage.textContent = `El cliente con UID ${targetClientEmail} no tiene una tarjeta de lealtad.`;
                 adminMessage.style.color = '#f0ad4e';
             }
