@@ -3,24 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cafetería - Tarjeta de Lealtad</title>
+    <title>Cafetería "El Grano de Oro" - Tarjeta de Lealtad</title>
     <link rel="stylesheet" href="style.css">
-    <script type="module">
-        // Importaciones necesarias para que el navegador sepa de dónde cargar los módulos
-        // Aunque se importan en script.js, los CDNs deben estar disponibles globalmente o pre-cargados.
-        // Aquí se incluyen para asegurar que las librerías base de Firebase estén listas.
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-
 </head>
 <body>
     <header>
-        <h1>☕ Mi Cafetería ☕</h1>
-        <div class="auth-controls">
-            <span id="user-display">Por favor, inicia sesión.</span>
+        <div class="header-content">
+            <h1>Cafetería "El Grano de Oro"</h1>
+            <p id="user-display">Por favor, inicia sesión.</p>
             <button id="auth-btn">Iniciar Sesión con Google</button>
         </div>
     </header>
@@ -31,42 +21,63 @@
             <div id="stamps-display" class="stamps-grid">
                 </div>
             <p id="message"></p>
-            <div class="confetti-container">
-                <div class="confetti" style="background-color: #f0f;"></div>
-                <div class="confetti" style="background-color: #0ff;"></div>
-                <div class="confetti" style="background-color: #ff0;"></div>
-                <div class="confetti" style="background-color: #f00;"></div>
-                <div class="confetti" style="background-color: #0f0;"></div>
-                <div class="confetti" style="background-color: #00f;"></div>
+            <div class="confetti-container"></div>
+            
+            <div class="qr-code-section">
+                <h3>Escanea este código para acumular sellos:</h3>
+                <canvas id="qrcode-canvas" class="qr-canvas"></canvas>
+                <p id="qr-instruction">Muestra este código al barista para registrar tu compra.</p>
             </div>
-            <canvas id="qrcode-canvas" class="qr-code" style="display: none; margin: 20px auto; border: 1px solid #ccc;"></canvas>
-            <p id="qr-instruction" style="display: none; text-align: center;">Escanea este código para tus sellos</p>
         </section>
 
-        <section id="admin-section" class="card hidden">
-            <h2>Panel de Administración</h2>
-            <div class="admin-controls">
-                <label for="admin-email-input">Email o UID del Cliente:</label>
-                <input type="text" id="admin-email-input" placeholder="Introduce email o UID">
-                <button id="search-client-btn">Buscar Cliente</button>
+        <section id="admin-section" class="hidden">
+            <div class="card">
+                <h2>Panel de Administración</h2>
+                <div class="admin-controls">
+                    <label for="admin-email-input">Email o UID del Cliente:</label>
+                    <input type="text" id="admin-email-input" placeholder="ejemplo@email.com o UID del cliente">
+                    <button id="search-client-btn">Buscar Cliente</button>
+                    <button id="scan-qr-btn">Escanear QR</button>
+                </div>
+
+                <div id="admin-message" class="message"></div>
+
+                <div id="admin-client-info">
+                    <p>No hay cliente cargado.</p>
+                </div>
+
+                <div class="admin-actions">
+                    <button id="add-stamp-btn">Añadir Sello</button>
+                    <button id="remove-stamp-btn">Quitar Sello</button>
+                    <button id="redeem-coffee-btn">Canjear Café Gratis</button>
+                    <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
+                </div>
             </div>
-            <div id="admin-client-info" class="client-info">
-                <p>No hay cliente cargado.</p>
+
+            <div id="qr-scanner-overlay" class="hidden">
+                <div class="qr-scanner-card card">
+                    <h2>Escanea el Código QR</h2>
+                    <p>Asegúrate de que el código QR esté bien iluminado y centrado en el recuadro.</p>
+                    <div id="reader" style="width: 100%; min-height: 200px;"></div>
+                    <div id="scanner-message" style="margin-top: 10px; font-weight: bold; color: #7a4a2b;"></div>
+                    <button id="close-scanner-btn" style="margin-top: 20px;">Cerrar Escáner</button>
+                </div>
             </div>
-            <div class="admin-actions">
-                <button id="add-stamp-btn">Añadir Sello</button>
-                <button id="remove-stamp-btn">Quitar Sello</button>
-                <button id="redeem-coffee-btn">Canjear Café</button>
-                <button id="reset-stamps-btn">Reiniciar Tarjeta</button>
-            </div>
-            <p id="admin-message" class="message"></p>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2023 Mi Cafetería. Todos los derechos reservados.</p>
+        <p>&copy; 2024 Cafetería "El Grano de Oro". Todos los derechos reservados.</p>
     </footer>
 
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <script type="module" src="script.js"></script>
 </body>
 </html>
