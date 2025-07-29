@@ -14,6 +14,7 @@ body {
     align-items: center;
     min-height: 100vh; /* Ocupa al menos el 100% del alto de la ventana */
     padding: 20px; /* Padding general para pantallas grandes */
+    line-height: 1.6; /* Mejorar legibilidad del texto general */
 }
 
 /* --- Contenedor Principal de la Aplicación --- */
@@ -25,8 +26,10 @@ body {
     text-align: center;
     max-width: 450px; /* Ancho máximo para el contenedor principal */
     width: 100%; /* Ocupa todo el ancho disponible hasta el max-width */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     position: relative; /* Para posibles elementos posicionados */
+    display: flex; /* Usar flexbox para organizar el contenido verticalmente */
+    flex-direction: column;
+    align-items: center; /* Centrar elementos dentro del contenedor */
 }
 
 /* --- Encabezado y Títulos --- */
@@ -38,11 +41,15 @@ h1 {
     justify-content: center;
     align-items: center;
     gap: 10px; /* Espacio entre el texto y las tazas */
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio */
+    text-align: center; /* Asegura que el texto se centre si hay salto de línea */
 }
 
 h1 .coffee-icon {
-    font-size: 0.8em; /* Tamaño de las tazas en el título */
+    font-size: 1.2em; /* Tamaño de las tazas en el título, un poco más grandes */
     vertical-align: middle;
+    margin: 0;
+    padding: 0;
 }
 
 p {
@@ -68,6 +75,7 @@ p {
     font-size: 1.1em;
     transition: background-color 0.3s ease;
     width: 100%; /* Ocupa todo el ancho disponible */
+    max-width: 300px; /* Limita el ancho del botón en pantallas grandes */
     margin-bottom: 25px;
 }
 
@@ -78,18 +86,20 @@ p {
 /* --- Sección de Sellos del Cliente --- */
 #stamps-display {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columnas */
+    grid-template-columns: repeat(5, 1fr); /* 5 columnas fijas */
     gap: 12px; /* Espacio entre los sellos */
     background-color: #f7f0e6; /* Fondo más claro para el área de sellos */
     border: 2px dashed #e0b07d; /* Borde punteado */
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
+    width: 100%; /* Asegura que el grid ocupe el 100% del contenedor */
 }
 
 .stamp {
-    width: 70px; /* Tamaño fijo para el círculo del sello */
-    height: 70px;
+    width: 100%; /* El sello ocupa todo el ancho de su celda de grid */
+    padding-bottom: 100%; /* Truco para hacer el elemento cuadrado (aspect ratio) */
+    position: relative;
     background-color: #e0b07d; /* Color de sello no obtenido */
     border-radius: 50%; /* Forma circular */
     display: flex;
@@ -100,11 +110,29 @@ p {
     color: #fff; /* Color del número */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    /* Centrar el contenido verticalmente y horizontalmente */
+    text-align: center;
+    line-height: 1; /* Para alinear el texto/icono en el centro */
 }
 
 .stamp.obtained {
     background-color: #7b4f2c; /* Marrón oscuro para el sello obtenido */
     color: #fff; /* Color del ícono de café */
+}
+
+/* Si el contenido es un icono, asegurar que se centre visualmente */
+.stamp.obtained::before {
+    content: attr(data-icon); /* Usar un atributo de datos si se implementa un icono */
+    font-size: 1em; /* Ajustar el tamaño si el icono es más grande que el texto */
+}
+
+
+/* El contenido real del sello (número o icono) */
+.stamp > * {
+    position: absolute; /* Posicionar el contenido al centro */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* Mensaje de la tarjeta del cliente */
@@ -117,7 +145,7 @@ p {
 
 /* --- Botones de Control (Ocultos para Cliente Normal) --- */
 .client-control.hidden {
-    display: none;
+    display: none !important;
 }
 
 /* --- Sección de Administración --- */
@@ -127,24 +155,29 @@ p {
     border-radius: 10px;
     padding: 25px;
     margin-top: 30px;
+    width: 100%; /* Asegura que ocupe el ancho del contenedor */
+    text-align: left; /* Restablecer alineación de texto dentro de esta sección */
 }
 
 #admin-section h2 {
     font-size: 1.6em;
     color: #2e8b57; /* Verde para el título del admin */
     margin-bottom: 15px;
+    text-align: center; /* Centrar el título del admin */
 }
 
 #admin-section p {
     font-size: 0.9em;
     color: #555;
     margin-bottom: 20px;
+    text-align: center; /* Centrar el párrafo de la descripción */
 }
 
 .input-group {
     display: flex; /* Flexbox para el input y el botón de búsqueda */
     margin-bottom: 15px;
     gap: 10px; /* Espacio entre el input y el botón */
+    flex-wrap: wrap; /* Permitir que los elementos se envuelvan */
 }
 
 .input-group input[type="email"] {
@@ -153,6 +186,7 @@ p {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 1em;
+    min-width: 150px; /* Para evitar que sea demasiado pequeño en móvil */
 }
 
 .input-group button {
@@ -192,6 +226,14 @@ p {
     color: #2e8b57;
 }
 
+#admin-client-controls {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los botones se envuelvan a la siguiente línea */
+    justify-content: center; /* Centra los botones */
+    gap: 10px; /* Espacio entre los botones */
+    margin-top: 20px;
+}
+
 #admin-client-controls button {
     background-color: #28a745; /* Otro tono de verde para los botones de control */
     color: white;
@@ -201,17 +243,9 @@ p {
     cursor: pointer;
     font-size: 1.05em;
     transition: background-color 0.3s ease;
-    width: calc(33.33% - 10px); /* Intenta dividir en 3 columnas, ajusta el gap */
-    margin: 5px; /* Espacio entre los botones */
+    flex-grow: 1; /* Permite que crezcan para llenar el espacio */
+    flex-basis: calc(33.33% - 10px); /* Intenta dividir en 3 columnas */
     min-width: 120px; /* Ancho mínimo para que no se hagan demasiado pequeños */
-}
-
-#admin-client-controls {
-    display: flex;
-    flex-wrap: wrap; /* Permite que los botones se envuelvan a la siguiente línea */
-    justify-content: center; /* Centra los botones */
-    gap: 10px; /* Espacio entre los botones */
-    margin-top: 20px;
 }
 
 
@@ -224,11 +258,7 @@ p {
     font-weight: bold;
     color: #d9534f; /* Color para mensajes de error/info del admin */
     min-height: 25px;
-}
-
-/* Clases de utilidad */
-.hidden {
-    display: none !important; /* Asegura que se oculte */
+    text-align: center;
 }
 
 /* --- ANIMACIONES DE SELLOS --- */
@@ -240,17 +270,17 @@ p {
 
 @keyframes newStampPulse {
     0% {
-        transform: scale(1);
+        transform: scale(1) translate(-50%, -50%); /* Ajuste para el nuevo posicionamiento */
         background-color: #e0b07d; /* Color normal */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     50% {
-        transform: scale(1.15); /* Crece un poco */
+        transform: scale(1.15) translate(-50%, -50%); /* Crece un poco */
         background-color: #a46d3a; /* Un color más oscuro para el "pulso" */
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     }
     100% {
-        transform: scale(1); /* Vuelve al tamaño normal */
+        transform: scale(1) translate(-50%, -50%); /* Vuelve al tamaño normal */
         background-color: #7b4f2c; /* Color de sello obtenido */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
@@ -264,17 +294,17 @@ p {
 @keyframes resetStampFade {
     0% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) translate(-50%, -50%); /* Ajuste para el nuevo posicionamiento */
         background-color: #7b4f2c; /* Color del sello obtenido */
     }
     50% {
         opacity: 0.2; /* Se desvanece casi por completo */
-        transform: translateY(-10px); /* Se mueve ligeramente hacia arriba */
+        transform: translateY(-10px) translate(-50%, -50%); /* Se mueve ligeramente hacia arriba */
     }
     100% {
         opacity: 1;
-        transform: translateY(0);
-        background-color: #e0b07d; /* Vuelve al color original del sello no obtenido */
+        transform: translateY(0) translate(-50%, -50%); /* Vuelve al color original del sello no obtenido */
+        background-color: #e0b07d; /* Color original del sello no obtenido */
     }
 }
 
@@ -284,20 +314,20 @@ p {
 /* Reglas para pantallas más pequeñas (máximo 768px de ancho, típico de tabletas y móviles) */
 @media (max-width: 768px) {
     body {
-        padding: 10px; /* Reduce el padding global */
+        padding: 10px;
     }
 
     .container {
-        padding: 20px; /* Reduce el padding interno del contenedor principal */
-        max-width: 95%; /* Permite que ocupe más ancho en pantallas pequeñas */
+        padding: 20px;
+        max-width: 95%;
     }
 
     h1 {
-        font-size: 1.8em; /* Reduce el tamaño del título principal */
+        font-size: 1.8em;
     }
 
     h1 .coffee-icon {
-        font-size: 0.7em;
+        font-size: 0.7em; /* Un poco más pequeña en móvil */
     }
 
     h2 {
@@ -317,23 +347,23 @@ p {
         font-size: 1em;
     }
 
-    /* Ajustes para los sellos */
+    /* Ajustes para los sellos: FORZAR 5 COLUMNAS EN MÓVIL */
     #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr)); /* Hace que los sellos se adapten mejor */
-        gap: 8px; /* Reduce el espacio entre sellos */
+        grid-template-columns: repeat(5, 1fr); /* Esto es clave: 5 columnas fijas */
+        gap: 8px;
         padding: 15px;
     }
 
     .stamp {
-        width: 55px; /* Ajusta el tamaño del sello */
-        height: 55px;
-        font-size: 1.4em; /* Ajusta el tamaño del ícono/número del sello */
+        width: 100%; /* Ocupa el ancho completo de su columna */
+        padding-bottom: 100%; /* Mantiene la forma cuadrada */
+        font-size: 1.4em;
     }
 
-    /* Ajustes para botones del admin */
+    /* Ajustes para botones del admin: Apilarlos */
     .input-group {
         flex-direction: column; /* Apila el input y el botón de búsqueda */
-        gap: 0;
+        gap: 0; /* Elimina el gap horizontal */
     }
 
     .input-group input[type="email"],
@@ -343,7 +373,11 @@ p {
     }
 
     .input-group button {
-        margin-left: 0; /* Elimina margen izquierdo si lo tuviera */
+        margin-left: 0;
+    }
+
+    #admin-client-controls {
+        flex-direction: column; /* Apila los botones de control del admin */
     }
 
     #admin-client-controls button {
@@ -364,12 +398,9 @@ p {
         padding: 15px;
     }
     .stamp {
-        width: 48px; /* Un poco más pequeños en pantallas muy pequeñas */
-        height: 48px;
         font-size: 1.2em;
     }
     #stamps-display {
-        grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
         gap: 6px;
     }
 }
