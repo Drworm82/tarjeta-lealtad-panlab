@@ -114,12 +114,6 @@ section {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-.stamp.obtained::before {
-    content: '☕'; /* Icono de café para sellos obtenidos */
-    font-size: 1.8em; /* Ajusta el tamaño del emoji */
-    animation: bounceIn 0.5s ease-out; /* Animación simple al añadir */
-}
-
 /* Animación para el sello que se añade */
 .stamp.animate {
     animation: bounceIn 0.5s ease-out;
