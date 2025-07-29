@@ -44,7 +44,7 @@ const messageDisplay = document.getElementById('message');
 const confettiContainer = document.querySelector('.confetti-container');
 const qrcodeCanvas = document.getElementById('qrcode-canvas');
 const qrInstruction = document.getElementById('qr-instruction');
-const stampsHistoryList = document.getElementById('stamps-history-list'); // NUEVO
+const stampsHistoryList = document.getElementById('stamps-history-list');
 
 // Elementos del panel de administración
 const adminSection = document.getElementById('admin-section');
@@ -199,7 +199,61 @@ function clearAdminClientInfo() {
     adminMessage.textContent = '';
 }
 
+// Función para generar el Código QR del cliente (usa QRious.js)
+function generateQRCode(uid) {
+    if (!qrcodeCanvas) {
+        console.error("Canvas para QR no encontrado.");
+        return;
+    }
+
+    const context = qrcodeCanvas.getContext('2d');
+    context.clearRect(0, 0, qrcodeCanvas.width, qrcodeCanvas.height);
+
+    try {
+        new QRious({
+            element: qrcodeCanvas,
+            value: uid, // El valor que contendrá el QR es el UID del usuario
+            size: 200,
+            level: 'H'
+        });
+        console.log("Código QR generado para UID:", uid);
+    } catch (error) {
+        console.error("Error al generar el Código QR:", error);
+        qrInstruction.textContent = "Error al generar el código QR. Por favor, recarga la página.";
+        qrInstruction.style.color = '#d9534f';
+    }
+}
+
 // --- Funciones de Firebase y Lógica de la Aplicación ---
+
+// Función para escuchar y mostrar los sellos del cliente en tiempo real
+// ESTA FUNCIÓN DEBE ESTAR DEFINIDA TEMPRANO EN EL SCRIPT, YA QUE SE LLAMA EN onAuthStateChanged
+function loadAndListenForStamps(uid) {
+    if (clientListener) {
+        clientListener(); // Desuscribir listener anterior si existe
+        clientListener = null;
+    }
+    const docRef = doc(db, 'loyaltyCards', uid);
+    clientListener = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            currentStamps = data.stamps || 0;
+            console.log(`[CLIENTE] Sellos recibidos del documento para UID ${uid}: ${currentStamps}`);
+            renderStamps(currentStamps);
+        } else {
+            console.log("No se encontró tarjeta de lealtad para este usuario. Creando una nueva.");
+            renderStamps(0); // Muestra 0 sellos
+            messageDisplay.textContent = "¡Bienvenido! Parece que eres nuevo. Hemos creado tu tarjeta de lealtad.";
+            messageDisplay.style.color = '#5cb85c';
+            // No creamos aquí la tarjeta, eso se maneja en onAuthStateChanged
+        }
+    }, (error) => {
+        console.error("Error al escuchar sellos:", error);
+        messageDisplay.textContent = "Error al cargar tu tarjeta de lealtad. Por favor, recarga.";
+        messageDisplay.style.color = '#d9534f';
+    });
+}
+
 
 // Función para obtener el UID a partir de un email
 async function getUidByEmail(email) {
@@ -352,8 +406,7 @@ onAuthStateChanged(auth, async user => {
             
             // EL ADMINISTRADOR NO TIENE UNA TARJETA DE LEALTAD "PROPIA"
             // Por lo tanto, no llamamos a loadAndListenForStamps(currentUser.uid) aquí
-            // para el administrador. Esto es lo que causaba el log "loadAndListenForStamps: Intentando cargar sellos para el UID: px7HgfYqfFXVtVeF2fIuhNXjNbR2"
-            // que era el UID del admin.
+            // para el administrador.
             
         } else { // Este es un usuario normal (no admin)
             adminSection.classList.add('hidden');
@@ -460,30 +513,6 @@ async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
     }
 }
 
-// Función para generar el Código QR del cliente (usa QRious.js)
-function generateQRCode(uid) {
-    if (!qrcodeCanvas) {
-        console.error("Canvas para QR no encontrado.");
-        return;
-    }
-
-    const context = qrcodeCanvas.getContext('2d');
-    context.clearRect(0, 0, qrcodeCanvas.width, qrcodeCanvas.height);
-
-    try {
-        new QRious({
-            element: qrcodeCanvas,
-            value: uid, // El valor que contendrá el QR es el UID del usuario
-            size: 200,
-            level: 'H'
-        });
-        console.log("Código QR generado para UID:", uid);
-    } catch (error) {
-        console.error("Error al generar el Código QR:", error);
-        qrInstruction.textContent = "Error al generar el código QR. Por favor, recarga la página.";
-        qrInstruction.style.color = '#d9534f';
-    }
-}
 
 // --- Funciones para el Dashboard de Administración ---
 async function loadAdminDashboardSummary() {
