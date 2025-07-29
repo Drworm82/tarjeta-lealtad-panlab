@@ -64,7 +64,7 @@ const avgStampsDisplay = document.getElementById('avg-stamps');
 
 // NUEVOS Elementos del DOM para Reportes
 const reportPeriodSelect = document.getElementById('report-period');
-const generateReportBtn = document('generate-report-btn');
+const generateReportBtn = document.getElementById('generate-report-btn'); // CORRECCIÓN
 const reportResultsDiv = document.getElementById('report-results');
 
 
