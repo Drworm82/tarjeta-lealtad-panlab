@@ -241,6 +241,7 @@ async function logTransaction(uid, type, stampsBefore, stampsAfter, description 
 
 // --- Nueva función para cargar y mostrar el historial del cliente ---
 async function loadAndDisplayHistory(uid) {
+    console.log(`loadAndDisplayHistory: Se está ejecutando para UID: ${uid}`); // Añadido para depuración
     stampsHistoryList.innerHTML = '<li>Cargando historial...</li>'; // Mensaje de carga
 
     const transactionsColRef = collection(db, 'loyaltyCards', uid, 'transactions');
@@ -348,6 +349,12 @@ onAuthStateChanged(auth, async user => {
             }
             // Limpiar historial del cliente si el admin está logueado
             stampsHistoryList.innerHTML = '<li>No aplicable para administradores.</li>';
+            
+            // EL ADMINISTRADOR NO TIENE UNA TARJETA DE LEALTAD "PROPIA"
+            // Por lo tanto, no llamamos a loadAndListenForStamps(currentUser.uid) aquí
+            // para el administrador. Esto es lo que causaba el log "loadAndListenForStamps: Intentando cargar sellos para el UID: px7HgfYqfFXVtVeF2fIuhNXjNbR2"
+            // que era el UID del admin.
+            
         } else { // Este es un usuario normal (no admin)
             adminSection.classList.add('hidden');
             stopQrScanner(); // Asegurarse de que el escáner se detenga si se cambia a usuario normal
@@ -361,12 +368,14 @@ onAuthStateChanged(auth, async user => {
                 qrInstruction.style.display = 'block';
                 generateQRCode(currentUser.uid);
             }
-            loadAndDisplayHistory(currentUser.uid); // Cargar y mostrar historial para el usuario normal
+            loadAndDisplayHistory(currentUser.uid); // <-- ESTA ES LA LÍNEA CLAVE PARA EL HISTORIAL DEL CLIENTE
         }
 
         messageDisplay.textContent = "Cargando tu tarjeta de lealtad...";
         messageDisplay.style.color = '#5bc0de';
-        loadAndListenForStamps(currentUser.uid);
+        // loadAndListenForStamps siempre debe ir aquí fuera del if/else de admin,
+        // ya que el cliente siempre necesita cargar sus sellos.
+        loadAndListenForStamps(currentUser.uid); // Asegura que se cargan los sellos del cliente
 
     } else { // No hay usuario autenticado
         currentUser = null;
@@ -399,47 +408,6 @@ onAuthStateChanged(auth, async user => {
         stampsHistoryList.innerHTML = '<li>Inicia sesión para ver tu historial de transacciones.</li>';
     }
 });
-
-// Función para cargar y escuchar cambios en los sellos del usuario actual
-async function loadAndListenForStamps(uid) {
-    console.log(`loadAndListenForStamps: Intentando cargar sellos para el UID: ${uid}`);
-    if (!uid) {
-        console.error("loadAndListenForStamps: No se proporcionó un UID.");
-        return;
-    }
-
-    const docRef = doc(db, 'loyaltyCards', uid);
-
-    if (clientListener) { // Desuscribir listener previo si existe
-        clientListener();
-        clientListener = null;
-    }
-
-    clientListener = onSnapshot(docRef, docSnapshot => {
-        console.log("onSnapshot callback (cliente): Recibiendo datos del documento.");
-        if (docSnapshot.exists()) {
-            const data = docSnapshot.data();
-            const stamps = data.stamps || 0;
-            console.log(`[CLIENTE] Sellos recibidos del documento para UID ${uid}: ${stamps}`);
-            renderStamps(stamps);
-        } else {
-            console.log(`onSnapshot (cliente): Documento NO existe para ${uid}.`);
-            renderStamps(0);
-            messageDisplay.textContent = '¡Bienvenido! Tu nueva tarjeta de lealtad ha sido creada.';
-            messageDisplay.style.color = '#555';
-            // Crear la tarjeta inicial si no existe, solo si es el usuario actual logueado
-            if (currentUser && currentUser.uid === uid) {
-                 setDoc(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: currentUser.email })
-                    .then(() => console.log(`setDoc: Tarjeta inicial creada para UID: ${uid}`))
-                    .catch(e => console.error("setDoc: Error al crear la tarjeta inicial:", e));
-            }
-        }
-    }, error => {
-        console.error("onSnapshot ERROR (cliente): Error al cargar o escuchar la tarjeta de lealtad:", error);
-        messageDisplay.textContent = `Lo sentimos, no pudimos cargar tu tarjeta de lealtad. Por favor, intenta de nuevo.`;
-        messageDisplay.style.color = '#d9534f';
-    });
-}
 
 // Función auxiliar para actualizar la visualización y controles del admin
 async function updateAdminClientDisplayAndControls(clientId, docSnapshot) {
@@ -789,7 +757,7 @@ addStampBtn.addEventListener('click', async () => {
                 userEmail = docSnapshot.data().userEmail || '';
             } else {
                 console.log(`addStampBtn: Documento no existe para UID: ${targetClientEmail}. Creando con 0 sellos.`);
-                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || 'desconocido' });
+                transaction.set(docRef, { stamps: 0, lastUpdate: new Date(), userEmail: userEmail || targetClientEmail }); // Usar targetClientEmail si userEmail no está disponible
             }
 
             if (currentStampsBeforeTransaction < MAX_STAMPS) {
