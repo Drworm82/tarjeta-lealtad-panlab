@@ -1,19 +1,23 @@
-// --- Configuración de Firebase (asegúrate de que estas credenciales sean correctas) ---
-// DEBES REEMPLAZAR ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE
+// --- Importaciones de Firebase SDK (Versión 9 Modular) ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// --- Configuración de Firebase (tus credenciales proporcionadas) ---
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
+    apiKey: "AIzaSyCe8vr10Y8eSv38H6oRJdHJVjHnMZOnspo",
+    authDomain: "mi-cafeteria-lealtad.firebaseapp.com",
+    projectId: "mi-cafeteria-lealtad",
+    storageBucket: "mi-cafeteria-lealtad.firebasestorage.app",
+    messagingSenderId: "1098066759983",
+    appId: "1:1098066759983:web:99be4197dbbb81f6f9d1da"
 };
 
 // Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Obtener la instancia de Auth
+const db = getFirestore(app); // Obtener la instancia de Firestore
+const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
 
 // --- Constantes y Variables Globales ---
 const MAX_STAMPS = 10;
@@ -41,7 +45,7 @@ const confettiContainer = document.querySelector('.confetti-container');
 // --- Funciones de Autenticación ---
 
 // Manejar el estado de autenticación
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, user => { // Usamos onAuthStateChanged de la versión 9
     if (user) {
         currentUser = user;
         userDisplay.textContent = `Bienvenido, ${currentUser.displayName || currentUser.email}`;
@@ -78,9 +82,13 @@ auth.onAuthStateChanged(user => {
 // Función para iniciar/cerrar sesión
 authBtn.addEventListener('click', () => {
     if (currentUser) {
-        auth.signOut();
+        signOut(auth) // Usamos signOut de la versión 9
+            .catch(error => {
+                console.error("Error al cerrar sesión:", error);
+                alert("Error al cerrar sesión: " + error.message);
+            });
     } else {
-        auth.signInWithPopup(googleProvider)
+        signInWithPopup(auth, googleProvider) // Usamos signInWithPopup de la versión 9
             .catch(error => {
                 console.error("Error al iniciar sesión:", error);
                 alert("Error al iniciar sesión: " + error.message);
@@ -92,19 +100,19 @@ authBtn.addEventListener('click', () => {
 
 // Carga y suscribe un listener a los sellos de un usuario específico
 async function loadAndListenForStamps(userEmail) {
-    const userDocRef = db.collection('loyaltyCards').doc(userEmail);
+    const userDocRef = doc(db, 'loyaltyCards', userEmail); // Usamos doc de la versión 9
 
     // Si ya hay un listener activo, desuscribirse primero
     if (clientListener) {
         clientListener();
     }
 
-    clientListener = userDocRef.onSnapshot(docSnapshot => {
-        if (docSnapshot.exists) {
+    clientListener = onSnapshot(userDocRef, docSnapshot => { // Usamos onSnapshot de la versión 9
+        if (docSnapshot.exists()) { // exists() es un método en V9
             currentStamps = docSnapshot.data().stamps || 0;
         } else {
             // Si el documento no existe, crearlo con 0 sellos
-            userDocRef.set({ stamps: 0 })
+            setDoc(userDocRef, { stamps: 0 }) // Usamos setDoc de la versión 9
                 .then(() => {
                     currentStamps = 0;
                     console.log("Documento de usuario creado.");
@@ -198,8 +206,10 @@ searchClientBtn.addEventListener('click', async () => {
     }
 
     try {
-        const clientDoc = await db.collection('loyaltyCards').doc(email).get();
-        if (clientDoc.exists) {
+        const clientDocRef = doc(db, 'loyaltyCards', email); // Usamos doc de la versión 9
+        const clientDoc = await getDoc(clientDocRef); // Usamos getDoc de la versión 9
+
+        if (clientDoc.exists()) { // exists() es un método en V9
             targetClientEmail = email;
             const clientData = clientDoc.data();
             adminClientInfo.innerHTML = `
@@ -214,8 +224,8 @@ searchClientBtn.addEventListener('click', async () => {
             if (clientListener) { // Si ya hay un listener para el usuario actual, lo cerramos para evitar conflictos
                 clientListener();
             }
-            clientListener = db.collection('loyaltyCards').doc(email).onSnapshot(docSnapshot => {
-                if (docSnapshot.exists) {
+            clientListener = onSnapshot(clientDocRef, docSnapshot => { // onSnapshot de V9
+                if (docSnapshot.exists()) {
                     const latestStamps = docSnapshot.data().stamps || 0;
                     document.getElementById('admin-current-stamps').textContent = latestStamps;
                 }
@@ -264,7 +274,7 @@ function clearAdminClientInfo() {
 }
 
 // Lógica para añadir/quitar/canjear sellos (para administrador)
-async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (para reset), o MAX_STAMPS (para canjear)
+async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (para reset), o 'redeem'
     if (!targetClientEmail) {
         adminMessage.textContent = 'Primero busca un cliente.';
         adminMessage.style.color = '#d9534f';
@@ -276,20 +286,20 @@ async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (par
         return;
     }
 
-    const clientDocRef = db.collection('loyaltyCards').doc(targetClientEmail);
+    const clientDocRef = doc(db, 'loyaltyCards', targetClientEmail); // Usamos doc de la versión 9
     adminMessage.textContent = 'Actualizando sellos...';
     adminMessage.style.color = '#007bff';
 
     try {
-        await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(clientDocRef);
+        await runTransaction(db, async (transaction) => { // Usamos runTransaction de la versión 9
+            const docSnapshot = await transaction.get(clientDocRef); // Usamos get de la transacción
+
             let currentClientStamps = 0;
 
-            if (doc.exists) {
-                currentClientStamps = doc.data().stamps || 0;
-            } else if (change > 0) {
-                // Si el documento no existe y estamos añadiendo sellos, crearlo
-                transaction.set(clientDocRef, { stamps: 0 });
+            if (docSnapshot.exists()) {
+                currentClientStamps = docSnapshot.data().stamps || 0;
+            } else if (change === 1) { // Si el documento no existe y estamos añadiendo sellos, crearlo
+                transaction.set(clientDocRef, { stamps: 0 }); // Usamos set de la transacción
             } else {
                 adminMessage.textContent = 'El cliente no tiene sellos para quitar/canjear/resetear.';
                 adminMessage.style.color = '#f0ad4e';
@@ -332,7 +342,7 @@ async function updateClientStamps(change) { // 'change' puede ser +1, -1, 0 (par
                     adminMessage.style.color = '#28a745';
                 }
             }
-            transaction.update(clientDocRef, { stamps: newStamps });
+            transaction.update(clientDocRef, { stamps: newStamps }); // Usamos update de la transacción
         });
         
     } catch (error) {
