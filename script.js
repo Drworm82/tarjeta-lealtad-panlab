@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Funciones del Panel de Administración ---
-    // (Estas funciones no necesitan cambios, ya que Firestore las actualizará directamente)
+    // (Estas funciones no necesitan cambios, ya que Firestore las actualizarán directamente)
 
     async function loadAdminDashboard() {
         try {
