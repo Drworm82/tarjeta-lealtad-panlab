@@ -22,13 +22,6 @@
         <section id="user-section" style="display:none;">
             <h2>Tu Tarjeta de Lealtad</h2>
 
-            <div id="user-qr-container" class="qr-container">
-                <p>Muestra este código para acumular sellos:</p>
-                <canvas id="user-qr-code"></canvas>
-            </div>
-
-            <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
-
             <div id="stamps-display" class="stamps-grid">
                 </div>
             <p id="progress-message"></p>
@@ -36,8 +29,15 @@
             <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
 
             <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
+            
+            <div id="user-qr-container" class="qr-container">
+                <p>Muestra este código para acumular sellos:</p>
+                <canvas id="user-qr-code"></canvas>
+            </div>
 
             <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
+
+            <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
             
             <h3>Historial de Transacciones</h3>
             <div id="user-transactions-history" class="transactions-list">
