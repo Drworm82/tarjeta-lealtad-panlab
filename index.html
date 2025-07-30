@@ -16,8 +16,10 @@
             <div id="user-info-display">
                 <p id="user-name-display"></p>
                 <p id="user-email-display"></p>
-                <p id="user-uid-display"></p> </div>
-            <p id="login-prompt">Por favor, inicia sesión.</p> <button id="auth-btn">Iniciar Sesión con Google</button>
+                <p id="user-uid-display"></p>
+            </div>
+            <p id="login-prompt">Por favor, inicia sesión.</p>
+            <button id="auth-btn">Iniciar Sesión con Google</button>
         </div>
     </header>
 
@@ -25,14 +27,14 @@
         <section id="loyalty-card" class="card hidden">
             <h2>Tu Tarjeta de Lealtad</h2>
             <div id="stamps-display" class="stamps-grid">
-            </div>
+                </div>
             <p id="message">Cargando tu tarjeta de lealtad...</p>
 
             <div class="qr-code-section">
                 <h3>Escanea tu código para sumar sellos</h3>
                 <canvas id="qrcode-canvas" class="qr-canvas"></canvas>
                 <p id="qr-instruction">Muestra este código al personal para añadir sellos.</p>
-                </div>
+            </div>
 
             <div class="history-section">
                 <h3>Historial de Transacciones</h3>
@@ -104,7 +106,6 @@
                     <li>Historial de transacciones del cliente seleccionado aparecerá aquí.</li>
                 </ul>
             </div>
-
         </section>
     </main>
 
@@ -123,8 +124,7 @@
     </div>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+    <script src="html5-qrcode.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
     <script type="module" src="script.js"></script>
 
 </body>
