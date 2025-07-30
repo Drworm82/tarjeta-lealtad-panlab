@@ -259,6 +259,14 @@ button:active {
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
+.action-button.error-button { /* Para botones de acción con "error" como Detener Escaneo */
+    background-color: #dc3545;
+}
+
+.action-button.error-button:hover {
+    background-color: #c82333;
+}
+
 
 /* Estilos específicos de botones en admin-actions (para que tengan prioridad) */
 .admin-actions button {
@@ -408,5 +416,8 @@ footer {
     .action-button { /* Asegurar que los botones de acción también se ajusten */
         width: 100%;
         margin-right: 0;
+    }
+    #qr-reader {
+        width: 100% !important; /* Adaptar el ancho del escáner en móviles */
     }
 }
