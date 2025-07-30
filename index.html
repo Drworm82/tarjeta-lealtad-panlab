@@ -13,8 +13,11 @@
         <div class="header-content">
             <h1 class="title">Mi Cafetería</h1>
             <p class="subtitle">Programa de Lealtad</p>
-            <p id="user-display">Por favor, inicia sesión.</p>
-            <button id="auth-btn">Iniciar Sesión con Google</button>
+            <div id="user-info-display">
+                <p id="user-name-display"></p>
+                <p id="user-email-display"></p>
+                <p id="user-uid-display"></p> </div>
+            <p id="login-prompt">Por favor, inicia sesión.</p> <button id="auth-btn">Iniciar Sesión con Google</button>
         </div>
     </header>
 
@@ -29,7 +32,7 @@
                 <h3>Escanea tu código para sumar sellos</h3>
                 <canvas id="qrcode-canvas" class="qr-canvas"></canvas>
                 <p id="qr-instruction">Muestra este código al personal para añadir sellos.</p>
-            </div>
+                </div>
 
             <div class="history-section">
                 <h3>Historial de Transacciones</h3>
