@@ -1,110 +1,40 @@
+/* --- Mejoras de Transiciones Globales --- */
+/* Aplica transiciones suaves a elementos comunes que cambian su estado */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
-    line-height: 1.6;
-}
-
-header {
-    background-color: #4CAF50;
-    color: white;
-    padding: 1rem 0;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-header h1 {
-    margin: 0;
-    font-size: 2.5rem;
-}
-
-nav {
-    margin-top: 10px;
-}
-
-nav button {
-    background-color: #5cb85c;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 0 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
     transition: background-color 0.3s ease;
 }
 
-nav button:hover {
-    background-color: #4cae4c;
+header, nav button, .action-button, .admin-actions button, section {
+    transition: all 0.3s ease-in-out;
 }
 
-main {
-    padding: 20px;
-    max-width: 900px;
-    margin: 20px auto;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-section {
-    margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #fdfdfd;
-}
-
-h2, h3 {
-    color: #333;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-    margin-top: 0;
-}
-
+/* --- Feedback Visual para Mensajes --- */
 .message {
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 5px;
-    text-align: center;
-    font-weight: bold;
+    /* Ya tienes transiciones para background-color y color */
+    opacity: 0; /* Empieza invisible */
+    transform: translateY(-20px); /* Un poco hacia arriba */
+    animation: fadeInSlideDown 0.5s forwards; /* Animación de entrada */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra para destacarlo */
+    font-size: 1.1em; /* Un poco más grande */
+    padding: 15px; /* Más padding */
 }
 
-.message.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border-color: #bee5eb;
+@keyframes fadeInSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-}
+/* Animación de salida (se manejará con JS al ocultarlo, quitando la clase 'show') */
+/* Si quisieras una animación de salida puramente CSS, necesitarías una clase adicional y manejarla en JS */
 
-.message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
 
-.message.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-color: #ffeeba;
-}
-
-/* Estilos de la tarjeta de sellos */
-.stamps-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columnas */
-    gap: 10px;
-    margin-top: 20px;
-    justify-items: center;
-}
-
+/* --- Animación de Sellos (ya la tienes, pero la dejamos para referencia) --- */
 .stamp {
     width: 50px;
     height: 50px;
@@ -117,180 +47,70 @@ h2, h3 {
     font-weight: bold;
     color: #ccc;
     background-color: #fff;
-    /* AÑADIDO: Transición para animación */
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bounce effect */
-    overflow: hidden; /* Asegura que la imagen no se salga */
+    overflow: hidden;
 }
 
-/* MODIFICADO: Estilo para los sellos obtenidos (con imagen y animación) */
 .stamp.obtained {
     border-color: #4CAF50;
     background-color: #4CAF50;
     color: white;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
     transform: scale(1.1); /* Ligeramente más grande al ser obtenido */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    animation: stampFill 0.5s ease-out forwards; /* Animación al llenarse */
+}
+
+@keyframes stampFill {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+        border-color: #ccc;
+        background-color: #fff;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+        border-color: #4CAF50;
+        background-color: #4CAF50;
+    }
+    100% {
+        transform: scale(1.0);
+        opacity: 1;
+        border-color: #4CAF50;
+        background-color: #4CAF50;
+    }
 }
 
 .stamp.obtained img {
-    width: 100%; /* Ajusta la imagen al tamaño del círculo */
+    width: 100%;
     height: 100%;
-    object-fit: cover; /* Recorta la imagen para que quepa */
+    object-fit: cover;
 }
 
-
-/* Estilos para el panel de administración */
-input[type="email"], select {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+/* --- Estilos para secciones ocultas que aparecen con JS --- */
+/* Asegurarse de que las secciones que se muestran dinámicamente tengan una transición */
+section {
+    opacity: 0;
+    transform: translateY(20px);
+    /* Las mostraremos con JS añadiendo una clase 'active' que las haga visibles */
 }
 
-/* Estilo para el contenedor del QR del usuario */
-.qr-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+section.active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-.qr-container p {
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-    color: #555;
+/* --- Mejoras para botones --- */
+button {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+button:active {
+    transform: translateY(1px); /* Pequeño efecto de "presionado" */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-/* CAMBIADO: Estilo para el canvas del QR */
-.qr-container canvas {
-    border: 1px solid #ccc;
-    padding: 5px;
-    background-color: white;
-    max-width: 100%; /* Asegura que el QR no se desborde en móviles */
-    height: auto;
-}
-
-
-/* Nuevo estilo para botones de acción generales, como buscar cliente, generar reporte, mostrar QR, etc. */
-.action-button {
-    background-color: #007bff; /* Color azul */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin-right: 10px; /* Para separar si hay varios en fila */
-    margin-bottom: 10px; /* Para separar de elementos debajo */
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
-}
-
-.action-button:hover {
-    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
-}
-
-/* Estilos específicos de botones en admin-actions (para que tengan prioridad) */
-.admin-actions button {
-    background-color: #007bff; /* Este ya existía, pero lo reafirmo */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
-}
-
-.admin-actions button:hover {
-    background-color: #0056b3;
-}
-
-#add-stamp-btn { background-color: #28a745; }
-#add-stamp-btn:hover { background-color: #218838; }
-#remove-stamp-btn { background-color: #dc3545; }
-#remove-stamp-btn:hover { background-color: #c82333; }
-#redeem-coffee-btn { background-color: #ffc107; color: #333; }
-#redeem-coffee-btn:hover { background-color: #e0a800; }
-#reset-card-btn { background-color: #6c757d; }
-#reset-card-btn:hover { background-color: #5a6268; }
-
-/* Para los botones de QR en el admin, que también tienen la clase action-button */
-#show-client-qr-btn, #admin-scan-qr-btn { background-color: #17a2b8; margin-top: 10px; }
-#show-client-qr-btn:hover, #admin-scan-qr-btn:hover { background-color: #138496; }
-
-
-#client-qr-display { /* Solo el admin QR display tiene botones de cerrar */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
-
-/* Estilo para el canvas del QR del admin */
-#client-qr-display canvas {
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    padding: 5px;
-    background-color: white;
-}
-
-#client-qr-display button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-#client-qr-display button:hover {
-    background-color: #5a6268;
-}
-
-#report-results ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-#report-results ul li {
-    background-color: #e9ecef;
-    margin-bottom: 5px;
-    padding: 8px;
-    border-radius: 4px;
-}
-
-footer {
-    text-align: center;
-    padding: 20px;
-    margin-top: 30px;
-    background-color: #333;
-    color: white;
-    font-size: 0.9rem;
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-    .stamps-grid {
-        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Más flexible en pantallas pequeñas */
-    }
-    .admin-actions button,
-    .action-button { /* Asegurar que los botones de acción también se ajusten */
-        width: 100%;
-        margin-right: 0;
-    }
-}
+/* Estilo para iconos (si decides añadirlos con Font Awesome o similar) */
+/* .icon {
+    margin-right: 5px;
+} */
