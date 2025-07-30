@@ -1,16 +1,16 @@
 // Importaciones de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, getDocs, where, collectionGroup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Tu configuración de Firebase
+// Tu configuración de Firebase - ¡REEMPLAZA CON TUS PROPIAS CLAVES!
 const firebaseConfig = {
-    apiKey: "TU_API_KEY", // Reemplaza con tu clave API
-    authDomain: "TU_AUTH_DOMAIN", // Reemplaza con tu dominio de autenticación
-    projectId: "TU_PROJECT_ID", // Reemplaza con tu ID de proyecto
-    storageBucket: "TU_STORAGE_BUCKET", // Reemplaza con tu Storage Bucket
-    messagingSenderId: "TU_MESSAGING_SENDER_ID", // Reemplaza con tu Sender ID
-    appId: "TU_APP_ID" // Reemplaza con tu App ID
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_AUTH_DOMAIN",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_STORAGE_BUCKET",
+    messagingSenderId: "TU_MESSAGING_SENDER_ID",
+    appId: "TU_APP_ID"
 };
 
 // Inicializar Firebase
@@ -52,7 +52,7 @@ const generateReportBtn = document.getElementById('generate-report-btn');
 const reportResultsDiv = document.getElementById('report-results');
 const stampsHistoryListAdmin = document.getElementById('stamps-history-list-admin');
 
-// Nuevas referencias a elementos del DOM para la información del usuario
+// Referencias para la información del usuario en el header
 const userInfoDisplay = document.getElementById('user-info-display');
 const userNameDisplay = document.getElementById('user-name-display');
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -188,7 +188,6 @@ async function loadAndDisplayHistory(uid, targetList = stampsHistoryList) {
 
         querySnapshot.forEach(doc => {
             const transaction = doc.data();
-            const li = document.createElement('li');
             const date = transaction.timestamp ? new Date(transaction.timestamp.toDate()).toLocaleString() : 'Fecha desconocida';
             li.textContent = `${date}: ${transaction.type} (${transaction.stampsAfter} sellos)`;
             targetList.appendChild(li);
@@ -228,13 +227,14 @@ authBtn.addEventListener('click', () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         authBtn.textContent = 'Cerrar Sesión';
-        loginPrompt.classList.add('hidden'); // Ocultar el mensaje de inicio de sesión
+        loginPrompt.classList.add('hidden'); // Ocultar el mensaje de "inicia sesión"
 
-        // Mostrar y rellenar la información del usuario
-        userInfoDisplay.classList.remove('hidden');
-        userNameDisplay.textContent = `Bienvenido, ${user.displayName || 'Usuario'}`;
-        userEmailDisplay.textContent = `Email: ${user.email}`;
-        userUidDisplay.textContent = `UID: ${user.uid}`;
+        // Mostrar y rellenar la información del usuario en el header
+        if (userInfoDisplay) userInfoDisplay.classList.remove('hidden');
+        if (userNameDisplay) userNameDisplay.textContent = `Bienvenido, ${user.displayName || 'Usuario'}`;
+        if (userEmailDisplay) userEmailDisplay.textContent = `Email: ${user.email}`;
+        if (userUidDisplay) userUidDisplay.textContent = `UID: ${user.uid}`;
+
 
         console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user.email);
 
@@ -243,7 +243,6 @@ onAuthStateChanged(auth, async (user) => {
             adminSection.classList.remove('hidden');
             loyaltyCardSection.classList.add('hidden');
             loadAdminDashboardSummary();
-            // Asegúrate de que los reportes se carguen o se habilite el botón
             generateReportBtn.disabled = false;
         } else {
             // Lógica para usuario normal
@@ -256,11 +255,14 @@ onAuthStateChanged(auth, async (user) => {
         authBtn.textContent = 'Iniciar Sesión con Google';
         loyaltyCardSection.classList.add('hidden');
         adminSection.classList.add('hidden');
-        loginPrompt.classList.remove('hidden'); // Mostrar el mensaje de inicio de sesión
-        userInfoDisplay.classList.add('hidden'); // Ocultar la información del usuario
-        userNameDisplay.textContent = ''; // Limpiar información
-        userEmailDisplay.textContent = '';
-        userUidDisplay.textContent = '';
+        loginPrompt.classList.remove('hidden'); // Mostrar el mensaje de "inicia sesión"
+
+        // Ocultar y limpiar la información del usuario en el header
+        if (userInfoDisplay) userInfoDisplay.classList.add('hidden');
+        if (userNameDisplay) userNameDisplay.textContent = '';
+        if (userEmailDisplay) userEmailDisplay.textContent = '';
+        if (userUidDisplay) userUidDisplay.textContent = '';
+        
         console.log("onAuthStateChanged: No hay usuario autenticado.");
     }
 });
@@ -481,7 +483,7 @@ async function updateStamps(changeType, clientUid = selectedClientUID) {
     } catch (error) {
         console.error(`Error al ${changeType} sello:`, error);
         showToast(`Error al ${changeType} sello: ` + error.message, 'error'); // Mostrar mensaje de error de Firebase
-        adminMessageDisplay.textContent = `Error al ${changeType} sellos.`;
+        adminMessageDisplay.textContent = `Error al ${changeType} sellos.`
     }
 }
 
@@ -513,6 +515,13 @@ closeScannerBtn.addEventListener('click', () => {
 });
 
 function startQrScanner() {
+    // Asegurarse de que el div 'reader' exista antes de inicializar el escáner
+    if (!readerDiv) {
+        console.error("Error: El elemento 'reader' para el escáner QR no se encontró en el DOM.");
+        showToast("Error al iniciar el escáner: falta el elemento HTML.", 'error');
+        return;
+    }
+
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     html5QrCodeScanner = new Html5QrcodeScanner(readerDiv.id, config, false);
 
