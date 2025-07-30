@@ -117,17 +117,19 @@ h2, h3 {
     font-weight: bold;
     color: #ccc;
     background-color: #fff;
-    transition: all 0.3s ease;
+    /* AÑADIDO: Transición para animación */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bounce effect */
     overflow: hidden; /* Asegura que la imagen no se salga */
 }
 
-/* MODIFICADO: Estilo para los sellos obtenidos (con imagen) */
+/* MODIFICADO: Estilo para los sellos obtenidos (con imagen y animación) */
 .stamp.obtained {
     border-color: #4CAF50;
-    background-color: #4CAF50; /* Puedes dejar un color de fondo si la imagen es transparente */
-    color: white; /* El texto 1-10 no se mostrará, pero lo dejo por si acaso */
+    background-color: #4CAF50;
+    color: white;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-    display: flex; /* Asegura que la imagen esté centrada */
+    transform: scale(1.1); /* Ligeramente más grande al ser obtenido */
+    display: flex;
     align-items: center;
     justify-content: center;
 }
