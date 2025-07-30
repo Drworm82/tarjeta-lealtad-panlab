@@ -1,4 +1,52 @@
-<section id="admin-section" style="display:none;">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Cafetería Lealtad</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    </head>
+<body>
+    <header>
+        <h1>Mi Cafetería Lealtad</h1>
+        <nav>
+            <button id="loginBtn">Iniciar Sesión con Google</button>
+            <button id="logoutBtn" style="display:none;">Cerrar Sesión</button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="messageDisplay" class="message" style="display:none;"></div>
+
+        <section id="user-section" style="display:none;">
+            <h2>Tu Tarjeta de Lealtad</h2>
+
+            <div id="stamps-display" class="stamps-grid">
+                </div>
+            <p id="progress-message"></p>
+
+            <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
+
+            <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
+            
+            <div id="user-qr-container" class="qr-container">
+                <p>Muestra este código para acumular sellos:</p>
+                <canvas id="user-qr-code"></canvas>
+            </div>
+
+            <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
+
+            <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
+            
+            <h3>Historial de Transacciones</h3>
+            <div id="user-transactions-history" class="transactions-list">
+                <p>Cargando historial...</p>
+                </div>
+        </section>
+
+        <section id="admin-section" style="display:none;">
             <h2>Panel de Administración</h2>
 
             <h3>Estadísticas Rápidas</h3>
@@ -11,6 +59,14 @@
             <button id="search-client-btn" class="action-button">Buscar Cliente</button>
             
             <button id="admin-scan-qr-btn" class="action-button" style="margin-top: 10px;">Escanear QR (Admin)</button>
+
+            <div id="qr-reader" style="width: 500px; display: none;"></div>
+            <div id="qr-reader-results" style="display: none;">
+                <h4>Resultado del escaneo:</h4>
+                <p id="qr-scanned-uid">Ningún UID escaneado.</p>
+                <button id="confirm-scanned-uid-btn" class="action-button">Cargar Cliente Escaneado</button>
+                <button id="stop-qr-scan-btn" class="action-button error-button">Detener Escaneo</button>
+            </div>
 
             <div id="client-info">
                 <p>No hay cliente cargado.</p>
@@ -37,3 +93,12 @@
             <div id="report-results">
                 </div>
         </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Mi Cafetería Lealtad. Todos los derechos reservados.</p>
+    </footer>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
