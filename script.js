@@ -213,4 +213,701 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentStamps = userData.stamps || 0;
                 const freeCoffees = userData.freeCoffees || 0;
 
-                if (userId
+                if (userIdDisplay) userIdDisplay.textContent = `${userData.uid || uid}`;
+                if (userEmailDisplay) userEmailDisplay.textContent = userData.email || 'N/A';
+                if (userPointsDisplay) userPointsDisplay.textContent = `${currentStamps}`;
+                if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees;
+
+                updateStampsDisplay(currentStamps);
+                updateProgressMessage(currentStamps);
+
+                // Generar QR (ahora con qrious)
+                if (userQrCodeDisplay) {
+                    try {
+                        // Limpiar el canvas antes de dibujar un nuevo QR
+                        const canvas = userQrCodeDisplay;
+                        const context = canvas.getContext('2d');
+                        if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+
+                        new QRious({
+                            element: userQrCodeDisplay,
+                            value: uid,
+                            size: 150,
+                            level: 'H'
+                        });
+                        if (userQrCodeContainer) userQrCodeContainer.style.display = 'flex';
+                    } catch (qrError) {
+                        console.error("Error al generar QR con qrious:", qrError);
+                        if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+                    }
+                } else {
+                    console.error("Elemento canvas 'user-qr-code' no encontrado.");
+                    if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+                }
+
+            } else {
+                console.warn("Documento de usuario no encontrado o eliminado.");
+                clearUserCard();
+            }
+        }, (error) => {
+            console.error("Error al escuchar cambios en la tarjeta del usuario:", error);
+            showMessage("Error al cargar tu tarjeta en tiempo real.", 'error');
+            clearUserCard();
+        });
+    }
+
+    function updateStampsDisplay(stamps) {
+        if (!stampsDisplay) return;
+        stampsDisplay.innerHTML = '';
+        const totalStamps = STAMPS_PER_FREE_COFFEE;
+
+        for (let i = 1; i <= totalStamps; i++) {
+            const stampDiv = document.createElement('div');
+            stampDiv.classList.add('stamp');
+            if (i <= stamps) {
+                stampDiv.classList.add('obtained');
+                stampDiv.innerHTML = '<img src="https://img.icons8.com/emoji/48/hot-beverage.png" alt="Café">';
+            } else {
+                stampDiv.textContent = i;
+            }
+            stampsDisplay.appendChild(stampDiv);
+        }
+    }
+
+    function updateProgressMessage(stamps) {
+        if (!progressMessage) return;
+        const remainingStamps = STAMPS_PER_FREE_COFFEE - stamps;
+        if (remainingStamps <= 0) {
+            progressMessage.textContent = '¡Felicidades! Tienes un café gratis para canjear.';
+            progressMessage.style.backgroundColor = '#d4edda';
+            progressMessage.style.color = '#155724';
+        } else {
+            progressMessage.textContent = `¡Casi lo tienes! Te faltan ${remainingStamps} sellos para tu café gratis.`;
+            progressMessage.style.backgroundColor = '#ffeeba';
+            progressMessage.style.color = '#856404';
+        }
+    }
+
+    // --- Función: Cargar historial de transacciones del usuario ---
+    async function loadUserTransactions(uid) {
+        if (!userTransactionsHistoryDiv) return;
+
+        userTransactionsHistoryDiv.innerHTML = '<p>Cargando historial...</p>';
+
+        try {
+            const transactionsRef = collection(db, 'transactions');
+            // Consulta las transacciones para este usuario, ordenadas por fecha descendente
+            const q = query(transactionsRef,
+                            where('userId', '==', uid),
+                            orderBy('timestamp', 'desc'));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                userTransactionsHistoryDiv.innerHTML = '<p>No hay transacciones registradas aún.</p>';
+                return;
+            }
+
+            const ul = document.createElement('ul');
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                const date = data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Fecha desconocida';
+
+                let description = '';
+                switch (data.type) {
+                    case 'stamp_added':
+                        description = `Sello añadido (total: ${data.stampsAfter})`;
+                        li.classList.add('transaction-type-stamp_added');
+                        break;
+                    case 'free_coffee_earned':
+                        description = `¡Café gratis ganado! (Tienes ${data.earnedCoffeeCount})`;
+                        li.classList.add('transaction-type-free_coffee_earned');
+                        break;
+                    case 'coffee_redeemed':
+                        description = `Café gratis canjeado (restantes: ${data.freeCoffeesRemaining})`;
+                        li.classList.add('transaction-type-coffee_redeemed');
+                        break;
+                    case 'stamp_removed':
+                        description = `Sello quitado (total: ${data.stampsAfter})`;
+                        li.classList.add('transaction-type-stamp_removed');
+                        break;
+                    case 'card_reset':
+                        description = `Tarjeta reiniciada`;
+                        li.classList.add('transaction-type-card_reset');
+                        break;
+                    default:
+                        description = `Transacción tipo: ${data.type}`;
+                }
+
+                li.innerHTML = `<span>${description}</span><span>${date}</span>`;
+                ul.appendChild(li);
+            });
+            userTransactionsHistoryDiv.innerHTML = '';
+            userTransactionsHistoryDiv.appendChild(ul);
+
+        } catch (error) {
+            console.error("Error al cargar el historial de transacciones:", error);
+            userTransactionsHistoryDiv.innerHTML = '<p class="message error">Error al cargar el historial. Inténtalo de nuevo.</p>';
+        }
+    }
+
+
+    function clearUserCard() {
+        if (userIdDisplay) userIdDisplay.textContent = 'N/A';
+        if (userEmailDisplay) userEmailDisplay.textContent = 'N/A';
+        if (userPointsDisplay) userPointsDisplay.textContent = '0';
+        if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
+        if (stampsDisplay) stampsDisplay.innerHTML = '';
+        if (progressMessage) {
+            progressMessage.textContent = '';
+            progressMessage.style.backgroundColor = '';
+            progressMessage.style.color = '';
+        }
+        // Limpiar y ocultar el contenedor del QR del usuario
+        if (userQrCodeContainer) userQrCodeContainer.style.display = 'none';
+        if (userQrCodeDisplay) {
+            // Si es canvas, también se puede limpiar
+            const canvas = userQrCodeDisplay;
+            const context = canvas.getContext('2d');
+            if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        // Limpiar el historial de transacciones del usuario
+        if (userTransactionsHistoryDiv) userTransactionsHistoryDiv.innerHTML = '<p>No hay transacciones registradas aún.</p>';
+    }
+
+
+    // --- Funciones del Panel de Administración ---
+
+    async function loadAdminDashboard() {
+        try {
+            await loadAdminStats();
+            await generateReport();
+        }
+        catch (error) {
+            console.error("Error al cargar el panel de administración:", error);
+            showMessage("Error al cargar el panel de administración.", 'error');
+        }
+    }
+
+    async function loadAdminStats() {
+        try {
+            const usersRef = collection(db, 'users');
+            const querySnapshot = await getDocs(usersRef);
+
+            let totalClients = 0;
+            let totalStamps = 0;
+            let totalFreeCoffeesPending = 0;
+
+            querySnapshot.forEach(doc => {
+                totalClients++;
+                const userData = doc.data();
+                totalStamps += userData.stamps || 0;
+                totalFreeCoffeesPending += userData.freeCoffees || 0;
+            });
+
+            if (totalClientsDisplay) totalClientsDisplay.textContent = totalClients;
+            if (pendingFreeCoffeesDisplay) pendingFreeCoffeesDisplay.textContent = totalFreeCoffeesPending;
+            if (averageStampsDisplay) averageStampsDisplay.textContent = totalClients > 0 ? (totalStamps / totalClients).toFixed(1) : 0;
+
+        } catch (error) {
+            console.error("Error al cargar estadísticas de administración:", error);
+            showMessage("Error al cargar estadísticas.", 'error');
+        }
+    }
+
+    // Refactorización: Centralizar la actualización de la UI del cliente admin
+    function updateAdminClientUI() {
+        if (!clientInfoDiv) return;
+
+        if (!currentAdminClient) {
+            clientInfoDiv.innerHTML = '<p>No hay cliente cargado.</p>';
+            return;
+        }
+
+        clientInfoDiv.innerHTML = `
+            <p><strong>ID:</strong> ${currentAdminClient.id}</p>
+            <p><strong>Email:</strong> ${currentAdminClient.email}</p>
+            <p><strong>Nombre:</strong> ${currentAdminClient.displayName || 'N/A'}</p>
+            <p><strong>Sellos Actuales:</strong> <span id="admin-client-stamps">${currentAdminClient.stamps || 0}</span></p>
+            <p><strong>Cafés Gratis Pendientes:</strong> <span id="admin-client-freecoffees">${currentAdminClient.freeCoffees || 0}</span></p>
+            <div id="admin-client-stamps-display" class="stamps-grid"></div>
+            <p><button id="show-client-qr-btn" class="action-button">Mostrar QR del Cliente</button></p>
+        `;
+        const adminClientStampsDisplay = clientInfoDiv.querySelector('#admin-client-stamps-display');
+        updateAdminClientStampsDisplay(currentAdminClient.stamps || 0, adminClientStampsDisplay);
+
+        const showClientQrBtn = clientInfoDiv.querySelector('#show-client-qr-btn');
+        if (showClientQrBtn) {
+            showClientQrBtn.addEventListener('click', () => {
+                showClientQR(currentAdminClient.id);
+            });
+        }
+    }
+
+
+    if (searchClientBtn) {
+        searchClientBtn.addEventListener('click', async () => {
+            const searchTerm = adminEmailInput.value.trim();
+            if (!searchTerm) {
+                showMessage("Por favor, ingresa un Email o UID.", 'warning');
+                return;
+            }
+
+            try {
+                let clientDoc;
+                let clientDocRef;
+
+                // Intenta buscar por UID primero
+                clientDocRef = doc(db, 'users', searchTerm);
+                clientDoc = await getDoc(clientDocRef);
+
+                // Si no se encuentra por UID, busca por email
+                if (!clientDoc.exists()) {
+                    const q = query(collection(db, 'users'), where('email', '==', searchTerm));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        clientDoc = querySnapshot.docs[0];
+                        clientDocRef = doc(db, 'users', clientDoc.id); // Establece la referencia correcta
+                    }
+                }
+
+                if (clientDoc && clientDoc.exists()) {
+                    currentAdminClient = { id: clientDoc.id, ...clientDoc.data() };
+                    updateAdminClientUI();
+                    showMessage("Cliente cargado exitosamente.", 'success');
+                } else {
+                    currentAdminClient = null;
+                    updateAdminClientUI();
+                    showMessage("Cliente no encontrado.", 'error');
+                }
+
+            } catch (error) {
+                console.error("Error al buscar cliente:", error);
+                showMessage(`Error al buscar cliente: ${error.message}`, 'error');
+                currentAdminClient = null;
+                updateAdminClientUI();
+            }
+        });
+    }
+
+
+    function updateAdminClientStampsDisplay(stamps, displayElement) {
+        if (!displayElement) return;
+        displayElement.innerHTML = '';
+        const totalStamps = STAMPS_PER_FREE_COFFEE;
+
+        for (let i = 1; i <= totalStamps; i++) {
+            const stampDiv = document.createElement('div');
+            stampDiv.classList.add('stamp');
+            stampDiv.classList.add('admin-stamp');
+            if (i <= stamps) {
+                stampDiv.classList.add('obtained');
+                stampDiv.innerHTML = '<img src="https://img.icons8.com/emoji/48/hot-beverage.png" alt="Café">';
+            } else {
+                stampDiv.textContent = i;
+            }
+            displayElement.appendChild(stampDiv);
+        }
+    }
+
+    // Instancia del escáner de QR
+    let html5QrCode = null; // Definido aquí para que sea accesible en todo el ámbito
+
+    if (adminScanQRBtn) {
+        adminScanQRBtn.addEventListener('click', () => {
+            startQrScanner();
+        });
+    }
+
+    if (stopQrScanBtn) {
+        stopQrScanBtn.addEventListener('click', () => {
+            stopQrScanner();
+        });
+    }
+
+    if (confirmScannedUidBtn) {
+        confirmScannedUidBtn.addEventListener('click', async () => {
+            const scannedUid = qrScannedUidP.textContent;
+            if (scannedUid && scannedUid !== 'Ningún UID escaneado.') {
+                adminEmailInput.value = scannedUid; // Poner el UID escaneado en el campo de búsqueda
+                stopQrScanner(); // Detener el escáner
+                searchClientBtn.click(); // Simular clic en el botón de búsqueda
+            } else {
+                showMessage("No hay UID válido para cargar.", 'warning');
+            }
+        });
+    }
+
+    async function startQrScanner() {
+        if (!qrReaderDiv) {
+            console.error("Elemento 'qr-reader' no encontrado.");
+            showMessage("Error interno: Elemento de escáner QR no encontrado.", 'error');
+            return;
+        }
+
+        qrReaderDiv.style.display = 'block'; // Mostrar el contenedor del escáner
+        adminScanQRBtn.style.display = 'none'; // Ocultar el botón "Escanear QR"
+        qrReaderResultsDiv.style.display = 'none'; // Ocultar resultados previos
+
+        // Es buena práctica detener cualquier escáner previo antes de iniciar uno nuevo
+        if (html5QrCode && html5QrCode.isScanning) { // Corregido: .isScanning es una propiedad/método
+            await html5QrCode.stop().catch(err => console.warn("Error al detener escáner existente:", err));
+        }
+
+        html5QrCode = new Html5Qrcode("qr-reader"); // "qr-reader" es el ID del div donde se mostrará la cámara
+
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            // Se encontró un QR
+            stopQrScanner(); // Detener el escáner tan pronto como se escanea algo
+            qrScannedUidP.textContent = decodedText; // Mostrar el UID escaneado
+            qrReaderResultsDiv.style.display = 'block'; // Mostrar resultados
+            showMessage(`QR escaneado: ${decodedText}`, 'success');
+        };
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        try {
+            // Iniciar el escáner. html5QrCode.start devolverá una promesa
+            await html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, (errorMessage) => {
+                // Errores de escaneo (no fatal) - ej. no se encontró QR
+                // console.log(`No QR code detected: ${errorMessage}`);
+            });
+            showMessage("Escáner QR iniciado. Apunta la cámara al código.", 'info');
+        } catch (err) {
+            // Errores fatales: permisos de cámara denegados, no hay cámara, etc.
+            console.error("Error al iniciar escáner QR:", err);
+            stopQrScanner(); // Asegurarse de detener y limpiar en caso de error
+            showMessage(`Error al iniciar escáner QR: ${err.message || 'Verifica permisos de cámara.'}`, 'error');
+        }
+    }
+
+    async function stopQrScanner() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            try {
+                await html5QrCode.stop();
+                showMessage("Escáner QR detenido.", 'info');
+            } catch (err) {
+                console.error("Error al detener el escáner QR:", err);
+                showMessage("Error al detener el escáner.", 'error');
+            }
+        }
+        if (qrReaderDiv) qrReaderDiv.style.display = 'none'; // Ocultar el contenedor del escáner
+        if (qrReaderResultsDiv) qrReaderResultsDiv.style.display = 'none'; // Ocultar resultados
+        if (adminScanQRBtn) adminScanQRBtn.style.display = 'block'; // Mostrar de nuevo el botón "Escanear QR"
+        qrScannedUidP.textContent = 'Ningún UID escaneado.'; // Limpiar resultado
+    }
+
+    function showClientQR(uid) {
+        if (!uid) {
+            showMessage("No hay UID de cliente para generar QR.", 'error');
+            return;
+        }
+        if (clientQRDisplay) {
+            const canvas = document.createElement('canvas');
+            clientQRDisplay.innerHTML = ''; // Limpiar cualquier contenido previo
+            clientQRDisplay.appendChild(canvas);
+            new QRious({
+                element: canvas,
+                value: uid,
+                size: 150,
+                level: 'H'
+            });
+            clientQRDisplay.style.display = 'flex';
+        }
+    }
+
+    if (closeQrDisplayBtn) {
+        closeQrDisplayBtn.addEventListener('click', () => {
+            if (clientQRDisplay) {
+                clientQRDisplay.style.display = 'none';
+                clientQRDisplay.innerHTML = '';
+            }
+        });
+    }
+
+
+    // --- Lógica de Sellos y Café Gratis (Admin) ---
+
+    if (addStampBtn) {
+        addStampBtn.addEventListener('click', async () => {
+            if (!currentAdminClient) {
+                showMessage("Carga un cliente primero.", 'warning');
+                return;
+            }
+            if (currentAdminClient.stamps >= STAMPS_PER_FREE_COFFEE) {
+                showMessage("El cliente ya tiene el máximo de sellos. Canjea su café gratis primero.", 'warning');
+                return;
+            }
+
+            try {
+                const newStamps = currentAdminClient.stamps + 1;
+                await updateDoc(doc(db, 'users', currentAdminClient.id), { stamps: newStamps });
+                currentAdminClient.stamps = newStamps;
+
+                await addDoc(collection(db, 'transactions'), {
+                    type: 'stamp_added',
+                    userId: currentAdminClient.id,
+                    adminId: auth.currentUser.uid,
+                    timestamp: Timestamp.now(),
+                    stampsBefore: newStamps - 1,
+                    stampsAfter: newStamps
+                });
+
+                if (newStamps === STAMPS_PER_FREE_COFFEE) {
+                    const newFreeCoffees = (currentAdminClient.freeCoffees || 0) + 1;
+                    await updateDoc(doc(db, 'users', currentAdminClient.id), {
+                        stamps: 0,
+                        freeCoffees: newFreeCoffees
+                    });
+                    currentAdminClient.stamps = 0;
+                    currentAdminClient.freeCoffees = newFreeCoffees;
+
+                    await addDoc(collection(db, 'transactions'), {
+                        type: 'free_coffee_earned',
+                        userId: currentAdminClient.id,
+                        adminId: auth.currentUser.uid,
+                        timestamp: Timestamp.now(),
+                        earnedCoffeeCount: newFreeCoffees
+                    });
+
+                    showMessage(`¡Se añadió un sello y el cliente ganó un café gratis!`, 'success');
+                } else {
+                    showMessage(`Se añadió un sello. Nuevo total: ${newStamps}.`, 'success');
+                }
+
+                updateAdminClientUI();
+                loadAdminStats();
+
+            } catch (error) {
+                console.error("Error al añadir sello:", error);
+                showMessage(`Error al añadir sello: ${error.message}`, 'error');
+            }
+        });
+    }
+
+
+    if (removeStampBtn) {
+        removeStampBtn.addEventListener('click', async () => {
+            if (!currentAdminClient) {
+                showMessage("Carga un cliente primero.", 'warning');
+                return;
+            }
+            if (currentAdminClient.stamps <= 0) {
+                showMessage("El cliente no tiene sellos para quitar.", 'warning');
+                return;
+            }
+
+            try {
+                const newStamps = currentAdminClient.stamps - 1;
+                await updateDoc(doc(db, 'users', currentAdminClient.id), { stamps: newStamps });
+                currentAdminClient.stamps = newStamps;
+
+                await addDoc(collection(db, 'transactions'), {
+                    type: 'stamp_removed',
+                    userId: currentAdminClient.id,
+                    adminId: auth.currentUser.uid,
+                    timestamp: Timestamp.now(),
+                    stampsBefore: newStamps + 1,
+                    stampsAfter: newStamps
+                });
+
+                showMessage(`Se quitó un sello. Nuevo total: ${newStamps}.`, 'success');
+                updateAdminClientUI();
+                loadAdminStats();
+
+            } catch (error) {
+                console.error("Error al quitar sello:", error);
+                showMessage(`Error al quitar sello: ${error.message}`, 'error');
+            }
+        });
+    }
+
+
+    if (redeemCoffeeBtn) {
+        redeemCoffeeBtn.addEventListener('click', async () => {
+            if (!currentAdminClient) {
+                showMessage("Carga un cliente primero.", 'warning');
+                return;
+            }
+            if ((currentAdminClient.freeCoffees || 0) <= 0) {
+                showMessage("El cliente no tiene cafés gratis pendientes para canjear.", 'warning');
+                return;
+            }
+
+            try {
+                const newFreeCoffees = currentAdminClient.freeCoffees - 1;
+                await updateDoc(doc(db, 'users', currentAdminClient.id), { freeCoffees: newFreeCoffees });
+                currentAdminClient.freeCoffees = newFreeCoffees;
+
+                await addDoc(collection(db, 'transactions'), {
+                    type: 'coffee_redeemed',
+                    userId: currentAdminClient.id,
+                    adminId: auth.currentUser.uid,
+                    timestamp: Timestamp.now(),
+                    freeCoffeesRemaining: newFreeCoffees
+                });
+
+                showMessage(`Se canjeó un café gratis. Quedan ${newFreeCoffees}.`, 'success');
+                updateAdminClientUI();
+                loadAdminStats();
+
+            } catch (error) {
+                console.error("Error al canjear café:", error);
+                showMessage(`Error al canjear café: ${error.message}`, 'error');
+            }
+        });
+    }
+
+
+    if (resetCardBtn) {
+        resetCardBtn.addEventListener('click', async () => {
+            if (!currentAdminClient) {
+                showMessage("Carga un cliente primero.", 'warning');
+                return;
+            }
+            if (!confirm("¿Estás seguro de reiniciar la tarjeta de este cliente? Esto pondrá sus sellos a 0 y sus cafés gratis a 0.")) {
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'users', currentAdminClient.id), {
+                    stamps: 0,
+                    freeCoffees: 0
+                });
+                currentAdminClient.stamps = 0;
+                currentAdminClient.freeCoffees = 0;
+
+                await addDoc(collection(db, 'transactions'), {
+                    type: 'card_reset',
+                    userId: currentAdminClient.id,
+                    adminId: auth.currentUser.uid,
+                    timestamp: Timestamp.now()
+                });
+
+                showMessage("Tarjeta reiniciada exitosamente.", 'success');
+                updateAdminClientUI();
+                loadAdminStats();
+
+            } catch (error) {
+                console.error("Error al reiniciar tarjeta:", error);
+                showMessage(`Error al reiniciar tarjeta: ${error.message}`, 'error');
+            }
+        });
+    }
+
+
+    // --- Reportes y Analíticas (Admin) ---
+
+    if (reportPeriodSelect) reportPeriodSelect.addEventListener('change', generateReport);
+    if (generateReportBtn) generateReportBtn.addEventListener('click', generateReport);
+
+
+    async function generateReport() {
+        const period = reportPeriodSelect ? reportPeriodSelect.value : 'alltime';
+        let startDate = new Date();
+
+        switch (period) {
+            case '7days':
+                startDate.setDate(startDate.getDate() - 7);
+                break;
+            case '30days':
+                startDate.setDate(startDate.getDate() - 30);
+                break;
+            case '90days':
+                startDate.setDate(startDate.getDate() - 90);
+                break;
+            case 'alltime':
+            default:
+                startDate = new Date(0); // Desde el Epoch (1 de enero de 1970)
+                break;
+        }
+
+        const startDateTimestamp = Timestamp.fromDate(startDate);
+
+        try {
+            const transactionsRef = collection(db, 'transactions');
+            const q = query(transactionsRef, where('timestamp', '>=', startDateTimestamp));
+            const querySnapshot = await getDocs(q);
+
+            let stampsAdded = 0;
+            let coffeesRedeemed = 0;
+            let cardsReset = 0;
+            let stampsRemoved = 0;
+
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                switch (data.type) {
+                    case 'stamp_added':
+                        stampsAdded++;
+                        break;
+                    case 'free_coffee_earned':
+                        // Estos se registran como transacciones separadas pero se contabilizan al añadir sello
+                        break;
+                    case 'coffee_redeemed':
+                        coffeesRedeemed++;
+                        break;
+                    case 'card_reset':
+                        cardsReset++;
+                        break;
+                    case 'stamp_removed':
+                        stampsRemoved++;
+                        break;
+                }
+            });
+
+            if (reportResultsDiv) {
+                reportResultsDiv.innerHTML = `
+                    <p><strong>Reporte de los últimos ${period === 'alltime' ? 'tiempos' : period.replace('days', ' días')}:</strong></p>
+                    <ul>
+                        <li>Sellos Añadidos: ${stampsAdded}</li>
+                        <li>Cafés Gratuitos Canjeados: ${coffeesRedeemed}</li>
+                        <li>Tarjetas Reiniciadas: ${cardsReset}</li>
+                        <li>Sellos Quitados: ${stampsRemoved}</li>
+                    </ul>
+                `;
+            }
+
+        } catch (error) {
+            console.error("Error al generar reporte:", error);
+            showMessage(`Error al generar reporte: ${error.message}`, 'error');
+        }
+    }
+
+    function clearAdminDashboard() {
+        if (totalClientsDisplay) totalClientsDisplay.textContent = '0';
+        if (pendingFreeCoffeesDisplay) pendingFreeCoffeesDisplay.textContent = '0';
+        if (averageStampsDisplay) averageStampsDisplay.textContent = '0';
+        if (adminEmailInput) adminEmailInput.value = '';
+        if (reportResultsDiv) reportResultsDiv.innerHTML = '';
+        if (clientQRDisplay) {
+            clientQRDisplay.style.display = 'none';
+            clientQRDisplay.innerHTML = '';
+        }
+        // Asegurarse de ocultar los elementos del escáner del admin también
+        if (qrReaderDiv) qrReaderDiv.style.display = 'none';
+        if (qrReaderResultsDiv) qrReaderResultsDiv.style.display = 'none';
+        if (adminScanQRBtn) adminScanQRBtn.style.display = 'block'; // Mostrar de nuevo el botón "Escanear QR"
+        qrScannedUidP.textContent = 'Ningún UID escaneado.'; // Limpiar resultado
+
+        currentAdminClient = null;
+        updateAdminClientUI();
+    }
+
+    // --- Función para mostrar mensajes al usuario ---
+    function showMessage(msg, type = 'info') {
+        if (!messageDisplay) {
+            console.warn("Elemento 'messageDisplay' no encontrado. No se pueden mostrar mensajes.");
+            return;
+        }
+        messageDisplay.textContent = msg;
+        messageDisplay.className = 'message ' + type;
+        messageDisplay.style.display = 'block';
+
+        setTimeout(() => {
+            messageDisplay.style.display = 'none';
+            messageDisplay.textContent = '';
+            messageDisplay.className = 'message';
+        }, 5000);
+    }
+
+}); // Fin del DOMContentLoaded
