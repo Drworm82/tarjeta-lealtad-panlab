@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginBtn = document.getElementById('loginBtn');
     logoutBtn = document.getElementById('logoutBtn');
     userIdDisplay = document.getElementById('userIdDisplay');
-    userEmailDisplay = document.getElementById('userEmailDisplay');
+    userEmailDisplay = document.getElementById('userEmailDisplay'); // Se inicializa aquí
     userPointsDisplay = document.getElementById('userPointsDisplay');
     messageDisplay = document.getElementById('messageDisplay');
     adminSection = document.getElementById('admin-section');
@@ -206,9 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentStamps = userData.stamps || 0;
                 const freeCoffees = userData.freeCoffees || 0;
 
-                if (userIdDisplay) userIdDisplay.textContent = `ID: ${userData.uid || uid}`;
-                if (userEmailDisplay) userEmailDisplay.textContent = `Email: ${userData.email || 'N/A'}`;
-                if (userPointsDisplay) userPointsDisplay.textContent = `Sellos: ${currentStamps}`;
+                if (userIdDisplay) userIdDisplay.textContent = `${userData.uid || uid}`; // Solo el UID, la etiqueta "ID de Usuario:" ya está en HTML
+                // *** CORRECCIÓN DEL EMAIL DUPLICADO AQUÍ ***
+                if (userEmailDisplay) userEmailDisplay.textContent = userData.email || 'N/A'; // Solo el email, la etiqueta "Email:" ya está en HTML
+                if (userPointsDisplay) userPointsDisplay.textContent = `${currentStamps}`; // Solo el número, la etiqueta "Sellos Actuales:" ya está en HTML
                 if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees;
 
                 updateStampsDisplay(currentStamps);
@@ -347,9 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function clearUserCard() {
-        if (userIdDisplay) userIdDisplay.textContent = 'ID: N/A';
-        if (userEmailDisplay) userEmailDisplay.textContent = 'Email: N/A';
-        if (userPointsDisplay) userPointsDisplay.textContent = 'Sellos: 0';
+        if (userIdDisplay) userIdDisplay.textContent = 'N/A';
+        if (userEmailDisplay) userEmailDisplay.textContent = 'N/A';
+        if (userPointsDisplay) userPointsDisplay.textContent = '0';
         if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = '0';
         if (stampsDisplay) stampsDisplay.innerHTML = '';
         if (progressMessage) {
