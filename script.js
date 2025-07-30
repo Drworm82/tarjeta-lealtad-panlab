@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, async (user) => {
         // Ocultar todas las secciones por defecto para evitar "flashes" de contenido
         // y para que la animación de entrada funcione desde 0
-        if (userSection) userSection.classList.remove('active'); // Remover para animar la entrada
-        if (adminSection) adminSection.classList.remove('active'); // Remover para animar la entrada
+        if (userSection) userSection.style.display = 'none'; // Asegurarse de ocultar directamente
+        if (adminSection) adminSection.style.display = 'none'; // Asegurarse de ocultar directamente
         if (messageDisplay) messageDisplay.style.display = 'none'; // Ocultar mensaje inicial
 
         if (user) {
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const freeCoffees = userData.freeCoffees || 0;
 
                 if (userIdDisplay) userIdDisplay.textContent = `${userData.uid || uid}`; // Solo el UID, la etiqueta "ID de Usuario:" ya está en HTML
-                // *** CORRECCIÓN DEL EMAIL DUPLICADO AQUÍ ***
+                // CORRECCIÓN DEL EMAIL DUPLICADO AQUÍ
                 if (userEmailDisplay) userEmailDisplay.textContent = userData.email || 'N/A'; // Solo el email, la etiqueta "Email:" ya está en HTML
                 if (userPointsDisplay) userPointsDisplay.textContent = `${currentStamps}`; // Solo el número, la etiqueta "Sellos Actuales:" ya está en HTML
                 if (userFreeCoffeesDisplay) userFreeCoffeesDisplay.textContent = freeCoffees;
