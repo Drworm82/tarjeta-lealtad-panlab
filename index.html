@@ -21,13 +21,19 @@
 
         <section id="user-section" style="display:none;">
             <h2>Tu Tarjeta de Lealtad</h2>
-            <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
-            <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
-            <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
-            <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
+
             <div id="stamps-display" class="stamps-grid">
                 </div>
             <p id="progress-message"></p>
+
+            <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
+
+            <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
+
+            <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
+
+            <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
+            
             <div id="user-qr-container" class="qr-container">
                 <p>Muestra este código para acumular sellos:</p>
                 <canvas id="user-qr-code"></canvas>
@@ -41,40 +47,7 @@
 
         <section id="admin-section" style="display:none;">
             <h2>Panel de Administración</h2>
-
-            <h3>Estadísticas Rápidas</h3>
-            <p>Clientes Registrados: <span id="total-clients">0</span></p>
-            <p>Cafés Gratis Pendientes: <span id="pending-free-coffees">0</span></p>
-            <p>Sellos Promedio por Cliente: <span id="average-stamps">0</span></p>
-
-            <h3>Gestionar Cliente</h3>
-            <input type="email" id="admin-email-input" placeholder="Email o UID del cliente">
-            <button id="search-client-btn" class="action-button">Buscar Cliente</button>
-            <div id="client-info">
-                <p>No hay cliente cargado.</p>
-            </div>
-            <div class="admin-actions">
-                <button id="add-stamp-btn">Añadir Sello</button>
-                <button id="remove-stamp-btn">Quitar Sello</button>
-                <button id="redeem-coffee-btn">Canjear Café Gratis</button>
-                <button id="reset-card-btn">Reiniciar Tarjeta</button>
-            </div>
-            <button id="admin-scan-qr-btn" class="action-button">Escanear QR (Admin)</button>
-            <div id="client-qr-display" style="display:none;">
-                <button id="close-qr-display" class="action-button">Cerrar QR</button>
-            </div>
-
-            <h3>Reportes</h3>
-            <select id="report-period">
-                <option value="7days">Últimos 7 Días</option>
-                <option value="30days">Últimos 30 Días</option>
-                <option value="90days">Últimos 90 Días</option>
-                <option value="alltime">Todo el Tiempo</option>
-            </select>
-            <button id="generate-report-btn" class="action-button">Generar Reporte</button>
-            <div id="report-results">
-                </div>
-        </section>
+            </section>
     </main>
 
     <footer>
