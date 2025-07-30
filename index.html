@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cafetería Lealtad</title>
     <link rel="stylesheet" href="style.css">
-</head>
+    </head>
 <body>
     <header>
         <h1>Mi Cafetería Lealtad</h1>
@@ -21,10 +21,12 @@
         <section id="user-section" style="display:none;">
             <h2>Tu Tarjeta de Lealtad</h2>
 
-            <div id="stamps-display" class="stamps-grid"></div>
+            <div id="stamps-display" class="stamps-grid">
+                </div>
             <p id="progress-message"></p>
 
             <p><strong>Sellos Actuales:</strong> <span id="userPointsDisplay">0</span></p>
+
             <p><strong>Cafés Gratis Pendientes:</strong> <span id="userFreeCoffeesDisplay">0</span></p>
             
             <div id="user-qr-container" class="qr-container">
@@ -33,12 +35,13 @@
             </div>
 
             <p><strong>Email:</strong> <span id="userEmailDisplay">N/A</span></p>
+
             <p><strong>ID de Usuario:</strong> <span id="userIdDisplay">N/A</span></p>
             
             <h3>Historial de Transacciones</h3>
             <div id="user-transactions-history" class="transactions-list">
                 <p>Cargando historial...</p>
-            </div>
+                </div>
         </section>
 
         <section id="admin-section" style="display:none;">
@@ -52,6 +55,7 @@
             <h3>Gestionar Cliente</h3>
             <input type="email" id="admin-email-input" placeholder="Email o UID del cliente">
             <button id="search-client-btn" class="action-button">Buscar Cliente</button>
+            
             <button id="admin-scan-qr-btn" class="action-button" style="margin-top: 10px;">Escanear QR (Admin)</button>
 
             <div id="qr-reader" style="width: 500px; display: none;"></div>
@@ -65,7 +69,6 @@
             <div id="client-info">
                 <p>No hay cliente cargado.</p>
             </div>
-
             <div class="admin-actions">
                 <button id="add-stamp-btn">Añadir Sello</button>
                 <button id="remove-stamp-btn">Quitar Sello</button>
@@ -85,7 +88,8 @@
                 <option value="alltime">Todo el Tiempo</option>
             </select>
             <button id="generate-report-btn" class="action-button">Generar Reporte</button>
-            <div id="report-results"></div>
+            <div id="report-results">
+                </div>
         </section>
     </main>
 
@@ -93,11 +97,10 @@
         <p>&copy; 2024 Mi Cafetería Lealtad. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Librerías necesarias -->
     <script src="https://unpkg.com/qrious@4.0.2/dist/qrious.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
-
-    <!-- Tu script -->
-    <script src="script.js"></script>
+    
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    
+    <script type="module" src="script.js"></script>
 </body>
 </html>
