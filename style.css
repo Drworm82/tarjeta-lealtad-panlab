@@ -1,423 +1,541 @@
+/* Fuente de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #f4f2ed; /* Color crema suave */
     color: #333;
     line-height: 1.6;
 }
 
-/* --- Mejoras de Transiciones Globales --- */
-/* Aplica transiciones suaves a elementos comunes que cambian su estado */
-body {
-    transition: background-color 0.3s ease;
-}
-
-header, nav button, .action-button, .admin-actions button, section {
-    transition: all 0.3s ease-in-out;
-}
-
-
 header {
-    background-color: #4CAF50;
-    color: white;
-    padding: 1rem 0;
+    background-color: #7a4a2b; /* Marrón café oscuro */
+    color: #fff;
+    padding: 20px 0;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+.header-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
 header h1 {
+    font-family: 'Playfair Display', serif;
     margin: 0;
-    font-size: 2.5rem;
+    font-size: 2.5em;
+    letter-spacing: 1px;
 }
 
-nav {
-    margin-top: 10px;
+header p {
+    margin: 5px 0 15px;
+    font-size: 1.1em;
 }
 
-nav button {
-    background-color: #5cb85c;
+button {
+    background-color: #a06e4a; /* Marrón medio */
     color: white;
-    border: none;
     padding: 10px 20px;
-    margin: 0 5px;
+    border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 5px;
 }
 
-nav button:hover {
-    background-color: #4cae4c;
+button:hover {
+    background-color: #8b5f3d; /* Marrón más oscuro al pasar el ratón */
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }
 
 main {
-    padding: 20px;
     max-width: 900px;
-    margin: 20px auto;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 30px auto;
+    padding: 0 20px;
 }
 
-section {
+.card {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #fdfdfd;
-    /* Estilos iniciales para la animación de entrada */
-    opacity: 0;
-    transform: translateY(20px);
+    border-top: 5px solid #a06e4a; /* Borde superior con color distintivo */
 }
 
-/* Clase para activar la animación de entrada de la sección */
-section.active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-}
-
-h2, h3 {
-    color: #333;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-    margin-top: 0;
-}
-
-/* --- Feedback Visual para Mensajes --- */
-.message {
-    padding: 15px; /* Más padding */
-    margin-bottom: 20px;
-    border-radius: 5px;
+.card h2 {
+    color: #7a4a2b;
     text-align: center;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra para destacarlo */
-    font-size: 1.1em; /* Un poco más grande */
-    opacity: 0; /* Empieza invisible */
-    transform: translateY(-20px); /* Un poco hacia arriba */
-    animation: fadeInSlideDown 0.5s forwards; /* Animación de entrada */
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-family: 'Playfair Display', serif;
 }
 
-@keyframes fadeInSlideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.message.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border-color: #bee5eb;
-}
-
-.message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-}
-
-.message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-.message.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-color: #ffeeba;
-}
-
-/* Estilos de la tarjeta de sellos */
 .stamps-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* 5 columnas */
-    gap: 10px;
-    margin-top: 20px;
-    justify-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    justify-items: center; /* Centra los items en la celda */
+    align-items: center;
 }
 
 .stamp {
-    width: 50px;
-    height: 50px;
-    border: 2px dashed #ccc;
+    width: 60px;
+    height: 60px;
+    background-color: #e0e0e0; /* Gris claro para sellos vacíos */
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2rem;
+    font-size: 1.5em;
     font-weight: bold;
-    color: #ccc;
-    background-color: #fff;
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bounce effect */
-    overflow: hidden;
+    color: #7a4a2b; /* Color del número del sello */
+    border: 2px dashed #b0b0b0; /* Borde punteado para sellos vacíos */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Estilo para los sellos obtenidos (con imagen y animación) */
 .stamp.obtained {
-    border-color: #4CAF50;
-    background-color: #4CAF50;
-    color: white;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-    transform: scale(1.1); /* Ligeramente más grande al ser obtenido */
-    animation: stampFill 0.5s ease-out forwards; /* Animación al llenarse */
+    background-color: #a06e4a; /* Marrón café para sellos llenos */
+    color: #fff; /* Texto blanco para sellos llenos */
+    border: 2px solid #7a4a2b; /* Borde sólido para sellos llenos */
+    font-size: 2.5em; /* Icono más grande */
 }
 
-@keyframes stampFill {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.5;
-        border-color: #ccc;
-        background-color: #fff;
-    }
-    50% {
-        transform: scale(1.2);
-        opacity: 1;
-        border-color: #4CAF50;
-        background-color: #4CAF50;
-    }
-    100% {
-        transform: scale(1.0);
-        opacity: 1;
-        border-color: #4CAF50;
-        background-color: #4CAF50;
-    }
+p#message {
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 20px;
+    font-weight: bold;
 }
 
-.stamp.obtained img {
+.hidden {
+    display: none !important;
+}
+
+/* Sección de Administración */
+.admin-controls, .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.admin-controls label {
+    flex-basis: 100%;
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #7a4a2b;
+}
+
+.admin-controls input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    min-width: 180px; /* Para asegurar que no sea demasiado pequeño en móvil */
+}
+
+#admin-client-info {
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#admin-client-info p {
+    margin: 5px 0;
+}
+
+#admin-client-info strong {
+    color: #7a4a2b;
+}
+
+.message {
+    text-align: center;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* Confetti */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    pointer-events: none; /* Permite hacer clic a través de los confetis */
+    overflow: hidden;
+    z-index: 9999;
+    opacity: 0; /* Oculto por defecto */
+    transition: opacity 0.5s ease-out;
 }
 
-
-/* Estilos para el panel de administración */
-input[type="email"], select {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+.confetti-container.active {
+    opacity: 1;
 }
 
-/* Estilo para el contenedor del QR del usuario */
-.qr-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00; /* Color de fallback */
+    border-radius: 50%; /* Para confeti redondo */
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
-.qr-container p {
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-    color: #555;
+/* Animaciones de caída de confeti */
+@keyframes confetti-fall-1 {
+    0% { transform: translate(0, -100px) rotate(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 1px), calc(100vh + var(--rand-y) * 1px)) rotate(720deg); opacity: 0; }
+}
+@keyframes confetti-fall-2 {
+    0% { transform: translate(0, -100px) rotate(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * -1px), calc(100vh + var(--rand-y) * 1px)) rotate(-720deg); opacity: 0; }
+}
+@keyframes confetti-fall-3 {
+    0% { transform: translate(0, -100px) scale(0.5); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 2px), calc(100vh + var(--rand-y) * 1px)) scale(1.5) rotate(360deg); opacity: 0; }
+}
+@keyframes confetti-fall-4 {
+    0% { transform: translate(0, -100px) skewX(0deg); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * -2px), calc(100vh + var(--rand-y) * 1px)) skewX(90deg); opacity: 0; }
+}
+@keyframes confetti-fall-5 {
+    0% { transform: translate(0, -100px) scale(1); opacity: 1; }
+    100% { transform: translate(calc(var(--rand-x) * 0.5px), calc(100vh + var(--rand-y) * 1px)) scale(0.8) rotate(1080deg); opacity: 0; }
 }
 
-/* Estilo para el canvas del QR */
-.qr-container canvas {
-    border: 1px solid #ccc;
-    padding: 5px;
-    background-color: white;
-    max-width: 100%; /* Asegura que el QR no se desborde en móviles */
-    height: auto;
+/* Sección del QR del Cliente */
+.qr-code-section {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #e0e0e0;
 }
 
-
-/* Nuevo estilo para botones de acción generales, como buscar cliente, generar reporte, mostrar QR, etc. */
-.action-button {
-    background-color: #007bff; /* Color azul */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin-right: 10px; /* Para separar si hay varios en fila */
-    margin-bottom: 10px; /* Para separar de elementos debajo */
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.action-button:hover {
-    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
-}
-button:active {
-    transform: translateY(1px); /* Pequeño efecto de "presionado" */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-.action-button.error-button { /* Para botones de acción con "error" como Detener Escaneo */
-    background-color: #dc3545;
-}
-
-.action-button.error-button:hover {
-    background-color: #c82333;
-}
-
-
-/* Estilos específicos de botones en admin-actions (para que tengan prioridad) */
-.admin-actions button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.admin-actions button:hover {
-    background-color: #0056b3;
-}
-.admin-actions button:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-
-#add-stamp-btn { background-color: #28a745; }
-#add-stamp-btn:hover { background-color: #218838; }
-#remove-stamp-btn { background-color: #dc3545; }
-#remove-stamp-btn:hover { background-color: #c82333; }
-#redeem-coffee-btn { background-color: #ffc107; color: #333; }
-#redeem-coffee-btn:hover { background-color: #e0a800; }
-#reset-card-btn { background-color: #6c757d; }
-#reset-card-btn:hover { background-color: #5a6268; }
-
-/* Para los botones de QR en el admin, que también tienen la clase action-button */
-#show-client-qr-btn, #admin-scan-qr-btn { background-color: #17a2b8; margin-top: 10px; }
-#show-client-qr-btn:hover, #admin-scan-qr-btn:hover { background-color: #138496; }
-
-
-#client-qr-display { /* Solo el admin QR display tiene botones de cerrar */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
-
-/* Estilo para el canvas del QR del admin */
-#client-qr-display canvas {
+.qr-code-section h3 {
+    color: #7a4a2b;
     margin-bottom: 15px;
+}
+
+.qr-canvas {
+    display: block !important; /* Asegura que el canvas siempre se muestre cuando sea visible */
+    margin: 20px auto;
+    max-width: 200px; /* Tamaño fijo para el QR del cliente */
+    height: auto;
     border: 1px solid #ccc;
-    padding: 5px;
-    background-color: white;
-}
-
-#client-qr-display button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border-radius: 5px;
-    cursor: pointer;
-}
-#client-qr-display button:hover {
-    background-color: #5a6268;
 }
 
-#report-results ul {
-    list-style-type: none;
+#qr-instruction {
+    font-style: italic;
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* Estilos para la sección de Historial de Sellos */
+.history-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #e0e0e0;
+}
+
+.history-section h3 {
+    color: #7a4a2b;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#stamps-history-list {
+    list-style: none;
     padding: 0;
-}
-
-#report-results ul li {
-    background-color: #e9ecef;
-    margin-bottom: 5px;
-    padding: 8px;
-    border-radius: 4px;
-}
-
-/* --- Historial de Transacciones --- */
-.transactions-list {
-    margin-top: 20px;
+    max-height: 300px; /* Limita la altura para que sea scrollable */
+    overflow-y: auto; /* Permite scroll vertical */
     border: 1px solid #eee;
     border-radius: 8px;
     background-color: #fcfcfc;
-    padding: 15px;
-    max-height: 300px; /* Limita la altura */
-    overflow-y: auto; /* Habilita el scroll si hay muchas transacciones */
 }
 
-.transactions-list ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-.transactions-list li {
-    padding: 10px;
-    border-bottom: 1px dashed #e0e0e0;
+#stamps-history-list li {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95em;
+    color: #555;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.95em;
 }
 
-.transactions-list li:last-child {
+#stamps-history-list li:last-child {
     border-bottom: none;
 }
 
-.transactions-list li span:first-child {
-    font-weight: bold;
-    color: #555;
+#stamps-history-list li:nth-child(even) {
+    background-color: #f5f5f5; /* Un poco de sombreado para filas alternas */
 }
 
-.transactions-list li span:last-child {
+/* Estilo para el texto de descripción de la transacción */
+#stamps-history-list li span.description {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+/* Estilo para la fecha/hora de la transacción */
+#stamps-history-list li span.timestamp {
     font-size: 0.85em;
     color: #888;
+    white-space: nowrap; /* Evita que la fecha se rompa en varias líneas */
 }
 
-/* Colores para tipos de transacción */
-.transaction-type-stamp_added { color: #28a745; } /* Verde para sellos añadidos */
-.transaction-type-coffee_redeemed { color: #dc3545; } /* Rojo para canjeados */
-.transaction-type-free_coffee_earned { color: #007bff; } /* Azul para ganados */
-.transaction-type-stamp_removed { color: #ffc107; } /* Amarillo para quitados */
-.transaction-type-card_reset { color: #6c757d; } /* Gris para reiniciados */
+/* Estilos para el Dashboard de Administración */
+.admin-dashboard-summary {
+    background-color: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    border-top: 5px solid #5bc0de; /* Un color diferente para destacarlo */
+}
 
+.admin-dashboard-summary h2 {
+    color: #5bc0de;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    text-align: center;
+}
+
+.stats-grid div {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+.stats-grid h4 {
+    color: #7a4a2b;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.stats-grid p {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #a06e4a;
+    margin: 0;
+}
+
+/* Estilos para la sección de Reportes */
+.admin-reports-section {
+    background-color: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    border-top: 5px solid #28a745; /* Otro color distintivo */
+}
+
+.admin-reports-section h2 {
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.admin-reports-section select,
+.admin-reports-section button {
+    margin-right: 10px;
+    margin-bottom: 10px; /* Para mejor espaciado en móviles */
+}
+
+.admin-reports-section select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+#report-results p {
+    font-size: 1.1em;
+    margin: 5px 0;
+}
+
+#report-results strong {
+    color: #7a4a2b;
+}
+
+
+/* Estilos para el Escáner de QR Overlay */
+#qr-scanner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo semitransparente más oscuro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Asegura que esté por encima de todo lo demás */
+    pointer-events: auto; /* IMPORTANTE: Permite interacciones dentro del overlay */
+}
+
+.qr-scanner-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    width: 90%;
+    max-width: 500px; /* Un poco más grande para mejor visibilidad del escáner */
+    text-align: center;
+    color: #333;
+    animation: fadeInScale 0.3s ease-out forwards; /* Animación de entrada */
+}
+
+/* Animación de entrada para el card del escáner */
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+
+.qr-scanner-card h2 {
+    color: #7a4a2b;
+    margin-bottom: 15px;
+}
+
+#reader {
+    width: 100% !important; /* Asegura que ocupe el 100% del card disponible */
+    min-height: 250px; /* Altura mínima para la vista de la cámara */
+    border: 2px solid #a06e4a;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.2); /* Sombra interna para el área de video */
+}
+
+#reader video { /* Estilo específico para el elemento de video dentro del #reader */
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover; /* Asegura que el video llene el contenedor sin distorsión */
+    display: block !important; /* Asegura que el video se muestre */
+}
+
+#scanner-message {
+    color: #7a4a2b;
+    font-size: 1.1em;
+}
 
 footer {
     text-align: center;
     padding: 20px;
-    margin-top: 30px;
-    background-color: #333;
-    color: white;
-    font-size: 0.9rem;
+    margin-top: 40px;
+    background-color: #7a4a2b;
+    color: #fff;
+    font-size: 0.9em;
 }
 
-/* Responsivo */
+/* Media Queries para responsividad */
 @media (max-width: 768px) {
+    header h1 {
+        font-size: 2em;
+    }
     .stamps-grid {
-        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); /* Más flexible en pantallas pequeñas */
+        grid-template-columns: repeat(4, 1fr); /* 4 columnas en tablet */
+        gap: 10px;
     }
-    .admin-actions button,
-    .action-button { /* Asegurar que los botones de acción también se ajusten */
-        width: 100%;
-        margin-right: 0;
+    .stamp {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2em;
     }
-    #qr-reader {
-        width: 100% !important; /* Adaptar el ancho del escáner en móviles */
+    .stamp.obtained {
+        font-size: 2em;
+    }
+    .card {
+        padding: 20px;
+    }
+    .admin-controls button,
+    .admin-actions button {
+        flex-basis: 48%; /* Dos botones por fila */
+    }
+    .qr-scanner-card {
+        padding: 20px;
+        max-width: 95%; /* Más ancho en pantallas pequeñas */
+    }
+    #reader {
+        min-height: 200px; /* Ajuste para el móvil */
+    }
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.8em;
+    }
+    .stamps-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas en móvil */
+        gap: 8px;
+    }
+    .stamp {
+        width: 45px;
+        height: 45px;
+        font-size: 1em;
+    }
+    .stamp.obtained {
+        font-size: 1.8em;
+    }
+    main {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    .admin-controls input[type="text"] {
+        flex-basis: 100%;
+        margin-bottom: 10px;
+    }
+    .admin-controls button,
+    .admin-actions button {
+        flex-basis: 100%; /* Un botón por fila en móvil */
+    }
+    .qr-scanner-card {
+        padding: 15px;
+        width: 95%;
+    }
+    #reader {
+        min-height: 180px; /* Ajuste para el móvil */
+    }
+    .stats-grid {
+        grid-template-columns: 1fr; /* Una columna en móviles muy pequeños */
     }
 }
